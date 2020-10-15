@@ -33,19 +33,15 @@ tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf("--release", "9"))
 }
 
-val functionalTestSourceSet = sourceSets.create("functionalTest") {
-    compileClasspath += sourceSets.main.get().output.classesDirs
-    runtimeClasspath += sourceSets.main.get().output.classesDirs
-}
-gradlePlugin.testSourceSets(functionalTestSourceSet)
-configurations.getByName("functionalTestImplementation").extendsFrom(configurations.getByName("testImplementation"))
-val functionalTest by tasks.creating(Test::class) {
+val functionalTest: SourceSet by sourceSets.creating
+gradlePlugin.testSourceSets(functionalTest)
+val functionalTestTask = tasks.register<Test>("functionalTest") {
     group = "verification"
-    testClassesDirs = functionalTestSourceSet.output.classesDirs
-    classpath = functionalTestSourceSet.runtimeClasspath
+    testClassesDirs = functionalTest.output.classesDirs
+    classpath = functionalTest.runtimeClasspath
 }
-val check by tasks.getting(Task::class) {
-    dependsOn(functionalTest)
+tasks.check {
+    dependsOn(functionalTestTask)
 }
 
 dependencies {
@@ -85,4 +81,3 @@ license {
     exclude("**/build/*")
     exclude("**/.gradle/*")
 }
-
