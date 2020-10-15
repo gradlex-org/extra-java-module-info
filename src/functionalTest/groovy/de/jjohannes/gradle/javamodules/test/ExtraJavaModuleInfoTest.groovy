@@ -171,6 +171,124 @@ class ExtraJavaModuleInfoTest extends Specification {
         build().task(':compileJava').outcome == TaskOutcome.SUCCESS
     }
 
+    def "can add Automatic-Module-Name to libraries without MANIFEST.MF"() {
+        given:
+        new File(testFolder.root, "src/main/java/org/gradle/sample/app/data").mkdirs()
+
+        testFolder.newFile("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import javax.inject.Singleton;
+            
+            public class Main {
+            
+                public static void main(String[] args)  {
+                    printModuleDebug(Singleton.class);
+                }
+            
+                private static void printModuleDebug(Class<?> clazz) {
+                    System.out.println(clazz.getModule().getName() + " - " + clazz.getModule().getDescriptor().version().get());
+                }
+            
+            }
+        """
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires javax.inject;               
+            }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            java {
+                modularity.inferModulePath.set(true)
+            }
+            
+            dependencies {
+                implementation("javax.inject:javax.inject:1")                     
+            }
+            
+            extraJavaModuleInfo {               
+                automaticModule("javax.inject-1.jar", "javax.inject")
+            }
+            
+            application {
+                mainModule.set("org.gradle.sample.app")
+                mainClass.set("org.gradle.sample.app.Main")
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can add module-info.class to libraries without MANIFEST.MF"() {
+        given:
+        new File(testFolder.root, "src/main/java/org/gradle/sample/app/data").mkdirs()
+
+        testFolder.newFile("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import javax.inject.Singleton;
+            
+            public class Main {
+            
+                public static void main(String[] args)  {
+                    printModuleDebug(Singleton.class);
+                }
+            
+                private static void printModuleDebug(Class<?> clazz) {
+                    System.out.println(clazz.getModule().getName() + " - " + clazz.getModule().getDescriptor().version().get());
+                }
+            
+            }
+        """
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires javax.inject;               
+            }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            java {
+                modularity.inferModulePath.set(true)
+            }
+            
+            dependencies {
+                implementation("javax.inject:javax.inject:1")                     
+            }
+            
+            extraJavaModuleInfo {               
+                module("javax.inject-1.jar", "javax.inject", "") {
+                    exports("javax.inject")
+                }
+            }
+                                 
+            application {
+                mainModule.set("org.gradle.sample.app")
+                mainClass.set("org.gradle.sample.app.Main")
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
     BuildResult build() {
         gradleRunnerFor(['build']).build()
     }
