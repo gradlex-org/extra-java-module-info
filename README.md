@@ -17,7 +17,7 @@ If you do that, you can give it a proper _module name_ and Gradle can pick it up
 ```
 plugins {
     `java-library`
-    id("de.jjohannes.extra-java-module-info") version "0.1"
+    id("de.jjohannes.extra-java-module-info") version "0.2"
 }
 
 // add module information for all direct and transitive depencies that are not modules
