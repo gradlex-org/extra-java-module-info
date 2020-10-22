@@ -289,8 +289,55 @@ class ExtraJavaModuleInfoTest extends Specification {
         build().task(':compileJava').outcome == TaskOutcome.SUCCESS
     }
 
+    def "fails by default if no module info is defined for a legacy library"() {
+        given:
+        new File(testFolder.root, "src/main/java").mkdirs()
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app { }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            repositories {  mavenCentral() } 
+            java { modularity.inferModulePath.set(true) }
+            dependencies { implementation("commons-cli:commons-cli:1.4")   }
+        """
+
+        expect:
+        fail().task(':compileJava').outcome == TaskOutcome.FAILED
+    }
+
+    def "can opt-out of strict module requirement"() {
+        given:
+        new File(testFolder.root, "src/main/java").mkdirs()
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app { }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            repositories {  mavenCentral() } 
+            java { modularity.inferModulePath.set(true) }
+            dependencies { implementation("commons-cli:commons-cli:1.4")   }
+            extraJavaModuleInfo {
+                failOnMissingModuleInfo.set(false)
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
     BuildResult build() {
         gradleRunnerFor(['build']).build()
+    }
+
+    BuildResult fail() {
+        gradleRunnerFor(['build']).buildAndFail()
     }
 
     GradleRunner gradleRunnerFor(List<String> args) {

@@ -16,20 +16,21 @@
 package de.jjohannes.gradle.javamodules;
 
 import org.gradle.api.Action;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A data class to collect all the module information we want to add.
  * Here the class is used as extension that can be configured in the build script
  * and as input to the ExtraModuleInfoTransform that add the information to Jars.
  */
-public class ExtraModuleInfoPluginExtension {
+public abstract class ExtraModuleInfoPluginExtension {
 
-    private final Map<String, ModuleInfo> moduleInfo = new HashMap<>();
-    private final Map<String, String> automaticModules = new HashMap<>();
+    abstract public MapProperty<String, ModuleInfo> getModuleInfo();
+    abstract public MapProperty<String, String> getAutomaticModules();
+    abstract public Property<Boolean> getFailOnMissingModuleInfo();
 
     /**
      * Add full module information for a given Jar file.
@@ -46,21 +47,13 @@ public class ExtraModuleInfoPluginExtension {
         if (conf != null) {
             conf.execute(moduleInfo);
         }
-        this.moduleInfo.put(jarName, moduleInfo);
+        this.getModuleInfo().put(jarName, moduleInfo);
     }
 
     /**
      * Add only an automatic module name to a given jar file.
      */
     public void automaticModule(String jarName, String moduleName) {
-        automaticModules.put(jarName, moduleName);
-    }
-
-    protected Map<String, ModuleInfo> getModuleInfo() {
-        return moduleInfo;
-    }
-
-    protected Map<String, String> getAutomaticModules() {
-        return automaticModules;
+        getAutomaticModules().put(jarName, moduleName);
     }
 }

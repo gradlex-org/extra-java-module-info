@@ -20,16 +20,20 @@ import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.io.*;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.jar.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -43,36 +47,22 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
 
-    public static class Parameter implements TransformParameters, Serializable {
-        private Map<String, ModuleInfo> moduleInfo = Collections.emptyMap();
-        private Map<String, String> automaticModules = Collections.emptyMap();
-
+    public interface Parameter extends TransformParameters {
         @Input
-        public Map<String, ModuleInfo> getModuleInfo() {
-            return moduleInfo;
-        }
-
+        MapProperty<String, ModuleInfo> getModuleInfo();
         @Input
-        public Map<String, String> getAutomaticModules() {
-            return automaticModules;
-        }
-
-        public void setModuleInfo(Map<String, ModuleInfo> moduleInfo) {
-            this.moduleInfo = moduleInfo;
-        }
-
-        public void setAutomaticModules(Map<String, String> automaticModules) {
-            this.automaticModules = automaticModules;
-        }
+        MapProperty<String, String> getAutomaticModules();
+        @Input
+        Property<Boolean> getFailOnMissingModuleInfo();
     }
 
     @InputArtifact
     protected abstract Provider<FileSystemLocation> getInputArtifact();
 
     @Override
-    public void transform(TransformOutputs outputs) {
-        Map<String, ModuleInfo> moduleInfo = getParameters().moduleInfo;
-        Map<String, String> automaticModules = getParameters().automaticModules;
+    public void transform(@Nonnull TransformOutputs outputs) {
+        Map<String, ModuleInfo> moduleInfo = getParameters().getModuleInfo().get();
+        Map<String, String> automaticModules = getParameters().getAutomaticModules().get();
         File originalJar = getInputArtifact().get().getAsFile();
         String originalJarName = originalJar.getName();
 
@@ -85,7 +75,9 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         } else if (automaticModules.containsKey(originalJarName)) {
             addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), automaticModules.get(originalJarName));
         } else {
-            throw new RuntimeException("Not a module and no mapping defined: " + originalJarName);
+            if (getParameters().getFailOnMissingModuleInfo().get()) {
+                throw new RuntimeException("Not a module and no mapping defined: " + originalJarName);
+            }
         }
     }
 

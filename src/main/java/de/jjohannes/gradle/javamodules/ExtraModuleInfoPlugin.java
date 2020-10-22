@@ -25,6 +25,7 @@ import org.gradle.util.VersionNumber;
 /**
  * Entry point of the plugin.
  */
+@SuppressWarnings("unused")
 public class ExtraModuleInfoPlugin implements Plugin<Project> {
 
     @Override
@@ -34,8 +35,8 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         }
 
         // register the plugin extension as 'extraJavaModuleInfo {}' configuration block
-        ExtraModuleInfoPluginExtension extension = project.getObjects().newInstance(ExtraModuleInfoPluginExtension.class);
-        project.getExtensions().add(ExtraModuleInfoPluginExtension.class, "extraJavaModuleInfo", extension);
+        ExtraModuleInfoPluginExtension extension = project.getExtensions().create("extraJavaModuleInfo", ExtraModuleInfoPluginExtension.class);
+        extension.getFailOnMissingModuleInfo().convention(true);
 
         // setup the transform for all projects in the build
         project.getPlugins().withType(JavaPlugin.class).configureEach(javaPlugin -> configureTransform(project, extension));
@@ -55,8 +56,9 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills the input parameter
         project.getDependencies().registerTransform(ExtraModuleInfoTransform.class, t -> {
             t.parameters(p -> {
-                p.setModuleInfo(extension.getModuleInfo());
-                p.setAutomaticModules(extension.getAutomaticModules());
+                p.getModuleInfo().set(extension.getModuleInfo());
+                p.getAutomaticModules().set(extension.getAutomaticModules());
+                p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());
             });
             t.getFrom().attribute(artifactType, "jar").attribute(javaModule, false);
             t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);

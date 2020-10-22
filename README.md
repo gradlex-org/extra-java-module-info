@@ -16,12 +16,13 @@ If you do that, you can give it a proper _module name_ and Gradle can pick it up
 
 ```
 plugins {
-    `java-library`
-    id("de.jjohannes.extra-java-module-info") version "0.2"
+    id("java-library")
+    id("de.jjohannes.extra-java-module-info") version "0.3"
 }
 
 // add module information for all direct and transitive depencies that are not modules
 extraJavaModuleInfo {
+    // failOnMissingModuleInfo.set(false)
     module("commons-beanutils-1.9.4.jar", "org.apache.commons.beanutils", "1.9.4") {
         exports("org.apache.commons.beanutils")
         
