@@ -20,23 +20,23 @@ import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.file.FileSystemLocation;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.ModuleVisitor;
-import org.objectweb.asm.Opcodes;
+import org.gradle.internal.impldep.org.apache.maven.wagon.Streams;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.io.*;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Map;
 import java.util.jar.*;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+
+import static de.jjohannes.gradle.javamodules.JarRewriteUtil.addAutomaticModuleName;
+import static de.jjohannes.gradle.javamodules.JarRewriteUtil.addModuleDescriptor;
 
 /**
  * An artifact transform that applies additional information to Jars without module information.
@@ -51,7 +51,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         @Input
         MapProperty<String, ModuleInfo> getModuleInfo();
         @Input
-        MapProperty<String, String> getAutomaticModules();
+        MapProperty<String, AutomaticModuleName> getAutomaticModules();
         @Input
         Property<Boolean> getFailOnMissingModuleInfo();
     }
@@ -62,23 +62,30 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     @Override
     public void transform(@Nonnull TransformOutputs outputs) {
         Map<String, ModuleInfo> moduleInfo = getParameters().getModuleInfo().get();
-        Map<String, String> automaticModules = getParameters().getAutomaticModules().get();
+        Map<String, AutomaticModuleName> automaticModules = getParameters().getAutomaticModules().get();
         File originalJar = getInputArtifact().get().getAsFile();
         String originalJarName = originalJar.getName();
 
-        if (isModule(originalJar)) {
-            outputs.file(originalJar);
-        } else if (moduleInfo.containsKey(originalJarName)) {
+        if (moduleInfo.containsKey(originalJarName)) {
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), moduleInfo.get(originalJarName));
-        } else if (isAutoModule(originalJar)) {
-            outputs.file(originalJar);
         } else if (automaticModules.containsKey(originalJarName)) {
             addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), automaticModules.get(originalJarName));
+        } else if (isModule(originalJar)) {
+            outputs.file(originalJar);
+        } else if (isAutoModule(originalJar)) {
+            outputs.file(originalJar);
+        } else if (willBeMerged(originalJar, moduleInfo.values(), automaticModules.values())) {
+            outputs.file(originalJar);
         } else {
             if (getParameters().getFailOnMissingModuleInfo().get()) {
                 throw new RuntimeException("Not a module and no mapping defined: " + originalJarName);
             }
         }
+    }
+
+    private boolean willBeMerged(File originalJar, Collection<ModuleInfo> modules, Collection<AutomaticModuleName> automaticModules) {
+        return Stream.concat(modules.stream(), automaticModules.stream()).anyMatch(module ->
+                module.getMergedJars().stream().anyMatch(toMerge -> toMerge.equals(originalJar.getName())));
     }
 
     private boolean isModule(File jar) {
@@ -118,65 +125,4 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         return outputs.file(originalJar.getName().substring(0, originalJar.getName().lastIndexOf('.')) + "-module.jar");
     }
 
-    private static void addAutomaticModuleName(File originalJar, File moduleJar, String moduleName) {
-        try (JarInputStream inputStream = new JarInputStream(new FileInputStream(originalJar))) {
-            Manifest manifest = inputStream.getManifest();
-            if (manifest == null) {
-                manifest = new Manifest();
-                manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
-            }
-            manifest.getMainAttributes().putValue("Automatic-Module-Name", moduleName);
-            try (JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(moduleJar), manifest)) {
-                copyEntries(inputStream, outputStream);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static void addModuleDescriptor(File originalJar, File moduleJar, ModuleInfo moduleInfo) {
-        try (JarInputStream inputStream = new JarInputStream(new FileInputStream(originalJar))) {
-            try (JarOutputStream outputStream = newJarOutputStream(new FileOutputStream(moduleJar), inputStream.getManifest())) {
-                copyEntries(inputStream, outputStream);
-                outputStream.putNextEntry(new JarEntry("module-info.class"));
-                outputStream.write(addModuleInfo(moduleInfo));
-                outputStream.closeEntry();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static JarOutputStream newJarOutputStream(OutputStream out, Manifest manifest) throws IOException {
-        return manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
-    }
-
-    private static void copyEntries(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
-        JarEntry jarEntry = inputStream.getNextJarEntry();
-        while (jarEntry != null) {
-            outputStream.putNextEntry(jarEntry);
-            outputStream.write(inputStream.readAllBytes());
-            outputStream.closeEntry();
-            jarEntry = inputStream.getNextJarEntry();
-        }
-    }
-
-    private static byte[] addModuleInfo(ModuleInfo moduleInfo) {
-        ClassWriter classWriter = new ClassWriter(0);
-        classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
-        ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleInfo.getModuleVersion());
-        for (String packageName : moduleInfo.getExports()) {
-            moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
-        }
-        moduleVisitor.visitRequire("java.base", 0, null);
-        for (String requireName : moduleInfo.getRequires()) {
-            moduleVisitor.visitRequire(requireName, 0, null);
-        }
-        for (String requireName : moduleInfo.getRequiresTransitive()) {
-            moduleVisitor.visitRequire(requireName, Opcodes.ACC_TRANSITIVE, null);
-        }
-        moduleVisitor.visitEnd();
-        classWriter.visitEnd();
-        return classWriter.toByteArray();
-    }
 }
