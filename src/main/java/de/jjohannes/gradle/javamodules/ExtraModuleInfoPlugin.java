@@ -47,7 +47,7 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         Attribute<Boolean> javaModule = Attribute.of("javaModule", Boolean.class);
 
         // compile and runtime classpath express that they only accept modules by requesting the javaModule=true attribute
-        project.getConfigurations().matching(this::isResolvingJavaPluginConfiguration).all(
+        project.getConfigurations().matching(this::isNonTestResolvingJavaPluginConfiguration).all(
                 c -> c.getAttributes().attribute(javaModule, true));
 
         // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them without modification
@@ -65,8 +65,11 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         });
     }
 
-    private boolean isResolvingJavaPluginConfiguration(Configuration configuration) {
-        if (!configuration.isCanBeResolved()) {
+    private boolean isNonTestResolvingJavaPluginConfiguration(Configuration configuration) {
+        if (!configuration.isCanBeResolved()
+            || configuration.getName().endsWith(JavaPlugin.TEST_COMPILE_CLASSPATH_CONFIGURATION_NAME.substring(1))
+            || configuration.getName().endsWith(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME.substring(1))
+            || configuration.getName().endsWith(JavaPlugin.TEST_ANNOTATION_PROCESSOR_CONFIGURATION_NAME.substring(1))) {
             return false;
         }
         return configuration.getName().endsWith(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME.substring(1))
