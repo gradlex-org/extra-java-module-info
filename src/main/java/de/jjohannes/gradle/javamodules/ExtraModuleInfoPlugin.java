@@ -19,6 +19,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
+import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.util.VersionNumber;
 
@@ -43,6 +44,9 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
     }
 
     private void configureTransform(Project project, ExtraModuleInfoPluginExtension extension) {
+
+        project.getPlugins().apply(JavaLibraryPlugin.class);
+
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
         Attribute<Boolean> javaModule = Attribute.of("javaModule", Boolean.class);
 

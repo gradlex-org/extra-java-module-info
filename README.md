@@ -1,4 +1,4 @@
-A Gradle 6.4+ plugin to use legacy Java libraries as _Java Modules_ in a modular Java project.
+A Gradle 6.4+ extension of the java-library plugin to use legacy Java libraries as _Java Modules_ in a modular Java project.
 
 # Java Modules with Gradle
 
@@ -16,7 +16,6 @@ If you do that, you can give it a proper _module name_ and Gradle can pick it up
 
 ```
 plugins {
-    id("java-library")
     id("de.jjohannes.extra-java-module-info") version "0.3"
 }
 
