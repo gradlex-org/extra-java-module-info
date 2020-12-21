@@ -328,10 +328,17 @@ class ExtraJavaModuleInfoTest extends Specification {
             extraJavaModuleInfo {
                 failOnMissingModuleInfo.set(false)
             }
+            tasks.compileJava {
+                doLast { println(classpath.map { it.name }) }
+            }
         """
 
-        expect:
-        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+        when:
+        def result = build()
+
+        then:
+        result.task(':compileJava').outcome == TaskOutcome.SUCCESS
+        result.output.contains('[commons-cli-1.4.jar]')
     }
 
     def "can opt-out for selected configurations by modifying the javaModule attribute"() {

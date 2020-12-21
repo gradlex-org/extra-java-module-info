@@ -20,7 +20,6 @@ import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
 import org.gradle.api.file.FileSystemLocation;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -30,9 +29,7 @@ import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.io.*;
-import java.util.Collections;
 import java.util.Map;
 import java.util.jar.*;
 import java.util.regex.Pattern;
@@ -77,6 +74,8 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         } else {
             if (getParameters().getFailOnMissingModuleInfo().get()) {
                 throw new RuntimeException("Not a module and no mapping defined: " + originalJarName);
+            } else {
+                outputs.file(originalJar);
             }
         }
     }
