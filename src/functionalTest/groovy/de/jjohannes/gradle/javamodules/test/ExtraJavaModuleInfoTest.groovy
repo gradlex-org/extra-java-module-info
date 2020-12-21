@@ -22,6 +22,8 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
+import java.util.jar.JarFile
+
 class ExtraJavaModuleInfoTest extends Specification {
 
     @Rule
@@ -358,6 +360,59 @@ class ExtraJavaModuleInfoTest extends Specification {
         build().task(':compileTestJava').outcome == TaskOutcome.SUCCESS
     }
 
+    def "works in combination with shadow plugin"() {
+        def shadowJar = new File(testFolder.root, "app/build/libs/app-all.jar")
+
+        given:
+        new File(testFolder.root, "utilities/src/main/java").mkdirs()
+        new File(testFolder.root, "app/src/main/java").mkdirs()
+
+        testFolder.newFile("settings.gradle") << """
+            include('app', 'utilities')
+        """
+        testFolder.newFile("utilities/src/main/java/module-info.java") << """
+            module utilities { }
+        """
+        testFolder.newFile("utilities/src/main/java/Utility.java") << """
+            public class Utility { }
+        """
+        testFolder.newFile("utilities/build.gradle") << """
+            plugins {
+                id 'java-library'
+            }
+            java.modularity.inferModulePath = true
+        """
+        testFolder.newFile("app/src/main/java/module-info.java") << """
+            module app { }
+        """
+        testFolder.newFile("app/src/main/java/App.java") << """
+            public class App { }
+        """
+        testFolder.newFile("app/build.gradle") << """
+            plugins {
+                id 'application'
+                id 'de.jjohannes.extra-java-module-info'
+                id 'com.github.johnrengelman.shadow' version '6.1.0'
+            }
+            dependencies {
+                implementation project(':utilities')
+            }
+            java.modularity.inferModulePath = true
+            application.mainClassName = 'App'
+            configurations {
+                runtimeClasspath {
+                    attributes { attribute(Attribute.of("javaModule", Boolean), false) }
+                }
+            }
+        """
+
+        expect:
+        gradleRunnerFor([':app:shadowJar']).build().task(':app:shadowJar').outcome == TaskOutcome.SUCCESS
+        shadowJar.exists()
+        // 1 * module-info, 2 * class file, 1 * META-INF folder, 1 * MANIFEST
+        new JarFile(shadowJar).entries().asIterator().size() == 5
+    }
+
     BuildResult build() {
         gradleRunnerFor(['build']).build()
     }
@@ -371,6 +426,6 @@ class ExtraJavaModuleInfoTest extends Specification {
                 .forwardOutput()
                 .withPluginClasspath()
                 .withProjectDir(testFolder.root)
-                .withArguments(args)
+                .withArguments(args + '-s').withDebug(true)
     }
 }
