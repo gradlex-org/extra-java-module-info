@@ -300,7 +300,7 @@ class ExtraJavaModuleInfoTest extends Specification {
                 application
                 id("de.jjohannes.extra-java-module-info")
             }
-            repositories {  mavenCentral() } 
+            repositories { mavenCentral() } 
             java { modularity.inferModulePath.set(true) }
             dependencies { implementation("commons-cli:commons-cli:1.4")   }
         """
@@ -320,7 +320,7 @@ class ExtraJavaModuleInfoTest extends Specification {
                 application
                 id("de.jjohannes.extra-java-module-info")
             }
-            repositories {  mavenCentral() } 
+            repositories { mavenCentral() } 
             java { modularity.inferModulePath.set(true) }
             dependencies { implementation("commons-cli:commons-cli:1.4")   }
             extraJavaModuleInfo {
@@ -330,6 +330,32 @@ class ExtraJavaModuleInfoTest extends Specification {
 
         expect:
         build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can opt-out for selected configurations by modifying the javaModule attribute"() {
+        given:
+        new File(testFolder.root, "src/test/java").mkdirs()
+        testFolder.newFile("src/test/java/Test.java") << ""
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            configurations {
+                testRuntimeClasspath {
+                    attributes { attribute(Attribute.of("javaModule", Boolean::class.javaObjectType), false) }
+                }
+                testCompileClasspath {
+                    attributes { attribute(Attribute.of("javaModule", Boolean::class.javaObjectType), false) }
+                }
+            }
+            repositories { mavenCentral() } 
+            java { modularity.inferModulePath.set(true) }
+            dependencies { testImplementation("commons-cli:commons-cli:1.4") }
+        """
+
+        expect:
+        build().task(':compileTestJava').outcome == TaskOutcome.SUCCESS
     }
 
     BuildResult build() {
