@@ -17,7 +17,7 @@ If you do that, you can give it a proper _module name_ and Gradle can pick it up
 ```
 plugins {
     id("java-library")
-    id("de.jjohannes.extra-java-module-info") version "0.3"
+    id("de.jjohannes.extra-java-module-info") version "0.4"
 }
 
 // add module information for all direct and transitive depencies that are not modules
@@ -55,3 +55,29 @@ dependencies {
 ```
 
 Sample uses Gradle's Kotlin DSL (`build.gradle.kts` file). The Groovy DSL syntax is similar.
+
+# FAQ
+
+## How do I deactivate the plugin functionality for a certain classpath?
+
+This is can be useful for the test classpath if it should be used for unit testing on the classpath (rather than the module path).
+If you use the [shadow plugin](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow) and [encounter this issue](https://github.com/jjohannes/extra-java-module-info/issues/7),
+you can deactivate it for the runtime classpath as the module information is irrelevant for a fat Jar in any case.
+
+**Kotlin DSL**
+```
+configurations {
+    runtimeClasspath { // testRuntimeClasspath, testCompileClasspath, ... 
+        attributes { attribute(Attribute.of("javaModule", Boolean::class.javaObjectType), false) }
+    }
+}
+```
+
+**Groovy DSL**
+```
+configurations {
+    runtimeClasspath { // testRuntimeClasspath, testCompileClasspath, ... 
+        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
+    }
+}
+```
