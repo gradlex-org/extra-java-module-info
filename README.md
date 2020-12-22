@@ -2,12 +2,8 @@ A Gradle 6.4+ plugin to use legacy Java libraries as _Java Modules_ in a modular
 
 # Java Modules with Gradle
 
-- Documentation on Building Java Modules with Gradle 6.4+: 
-  https://docs.gradle.org/6.4-rc-1/samples/index.html#java_modules
-- Samples for Building Java Modules with Gradle 6.4+: 
-  https://docs.gradle.org/6.4-rc-1/userguide/java_library_plugin.html#sec:java_library_modular
-- Give feedback on Java Module support in Gradle: 
-  https://github.com/gradle/gradle/issues/890
+- [Documentation on Building Java Modules with Gradle 6.4+](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular)
+- [Samples for Building Java Modules with Gradle 6.4+](https://docs.gradle.org/current/samples/index.html#java_modules)
 
 # How to use this plugin
 
