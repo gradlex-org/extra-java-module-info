@@ -30,9 +30,14 @@ import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
 /**
@@ -43,6 +48,7 @@ import java.util.zip.ZipEntry;
 abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
+    private static final String SERVICES_PREFIX = "META-INF/services/";
 
     public interface Parameter extends TransformParameters {
         @Input
@@ -126,7 +132,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
             }
             manifest.getMainAttributes().putValue("Automatic-Module-Name", moduleName);
             try (JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(moduleJar), manifest)) {
-                copyEntries(inputStream, outputStream);
+                copyAndExtractProviders(inputStream, outputStream);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -136,9 +142,9 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     private static void addModuleDescriptor(File originalJar, File moduleJar, ModuleInfo moduleInfo) {
         try (JarInputStream inputStream = new JarInputStream(new FileInputStream(originalJar))) {
             try (JarOutputStream outputStream = newJarOutputStream(new FileOutputStream(moduleJar), inputStream.getManifest())) {
-                copyEntries(inputStream, outputStream);
+                Map<String, Set<String>> providers = copyAndExtractProviders(inputStream, outputStream);
                 outputStream.putNextEntry(new JarEntry("module-info.class"));
-                outputStream.write(addModuleInfo(moduleInfo));
+                outputStream.write(addModuleInfo(moduleInfo, providers));
                 outputStream.closeEntry();
             }
         } catch (IOException e) {
@@ -150,17 +156,34 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         return manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
     }
 
-    private static void copyEntries(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
+    private static Map<String, Set<String>> copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
         JarEntry jarEntry = inputStream.getNextJarEntry();
+        Map<String, Set<String>> providers = new LinkedHashMap<>();
         while (jarEntry != null) {
+            byte[] content = inputStream.readAllBytes();
+            String entryName = jarEntry.getName();
+            if (entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX)) {
+                providers.put(entryName.substring(SERVICES_PREFIX.length()).replace('.','/'), extractImplementations(content));
+            }
             outputStream.putNextEntry(jarEntry);
-            outputStream.write(inputStream.readAllBytes());
+            outputStream.write(content);
             outputStream.closeEntry();
             jarEntry = inputStream.getNextJarEntry();
         }
+        return providers;
     }
 
-    private static byte[] addModuleInfo(ModuleInfo moduleInfo) {
+    private static Set<String> extractImplementations(byte[] content) {
+        return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8))
+                .lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .filter(line -> !line.startsWith("#"))
+                .map(line -> line.replace('.','/'))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private static byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, Set<String>> providers) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
         ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleInfo.getModuleVersion());
@@ -173,6 +196,12 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         }
         for (String requireName : moduleInfo.getRequiresTransitive()) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_TRANSITIVE, null);
+        }
+        for (Map.Entry<String, Set<String>> entry : providers.entrySet()) {
+            String provider = entry.getKey();
+            String[] implementations = entry.getValue()
+                    .toArray(new String[0]);
+            moduleVisitor.visitProvide(provider, implementations);
         }
         moduleVisitor.visitEnd();
         classWriter.visitEnd();

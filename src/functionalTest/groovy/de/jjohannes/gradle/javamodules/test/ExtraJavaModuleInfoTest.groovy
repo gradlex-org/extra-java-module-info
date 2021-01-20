@@ -291,6 +291,72 @@ class ExtraJavaModuleInfoTest extends Specification {
         build().task(':compileJava').outcome == TaskOutcome.SUCCESS
     }
 
+    def "can retrofit META-INF/services/* metadata to module-info.class"() {
+        given:
+        new File(testFolder.root, "src/main/java/org/gradle/sample/app/data").mkdirs()
+
+        testFolder.newFile("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import java.util.ServiceLoader;
+            import java.util.stream.Collectors;
+            import org.apache.logging.log4j.spi.Provider;
+            
+            public class Main {
+            
+                public static void main(String[] args)  {
+                    Provider provider = ServiceLoader.load(Provider.class).findFirst()
+                                        .orElseThrow(() -> new AssertionError("No providers loaded"));
+                    System.out.println(provider.getClass());
+                }
+                          
+            }
+        """
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires org.apache.logging.log4j;
+                requires org.apache.logging.log4j.core;
+                
+                uses org.apache.logging.log4j.spi.Provider;                              
+            }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            java {
+                modularity.inferModulePath.set(true)
+            }
+            
+            dependencies {
+                implementation("org.apache.logging.log4j:log4j-core:2.14.0")                     
+            }
+            
+            extraJavaModuleInfo {               
+                module("log4j-core-2.14.0.jar", "org.apache.logging.log4j.core", "2.14.0") {
+                    requires("java.compiler")
+                    requires("java.desktop")
+                    requires("org.apache.logging.log4j")
+                    exports("org.apache.logging.log4j.core")
+                }
+            }
+                                 
+            application {
+                mainModule.set("org.gradle.sample.app")
+                mainClass.set("org.gradle.sample.app.Main")
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
     def "fails by default if no module info is defined for a legacy library"() {
         given:
         new File(testFolder.root, "src/main/java").mkdirs()
@@ -422,6 +488,10 @@ class ExtraJavaModuleInfoTest extends Specification {
 
     BuildResult build() {
         gradleRunnerFor(['build']).build()
+    }
+
+    BuildResult run() {
+        gradleRunnerFor(['run']).build()
     }
 
     BuildResult fail() {
