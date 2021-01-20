@@ -197,6 +197,9 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         for (String requireName : moduleInfo.getRequiresTransitive()) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_TRANSITIVE, null);
         }
+        for (String requireName : moduleInfo.getRequiresStatic()) {
+            moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE, null);
+        }
         for (Map.Entry<String, Set<String>> entry : providers.entrySet()) {
             String provider = entry.getKey();
             String[] implementations = entry.getValue()
