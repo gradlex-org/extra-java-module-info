@@ -13,7 +13,7 @@ If you do that, you can give it a proper _module name_ and Gradle can pick it up
 ```
 plugins {
     id("java-library")
-    id("de.jjohannes.extra-java-module-info") version "0.4"
+    id("de.jjohannes.extra-java-module-info") version "0.5"
 }
 
 // add module information for all direct and transitive depencies that are not modules
@@ -25,6 +25,9 @@ extraJavaModuleInfo {
         requires("org.apache.commons.logging")
         requires("java.sql")
         requires("java.desktop")
+        
+        // requiresTransitive(...)
+        // requiresStatic(...)
     }
     module("commons-cli-1.4.jar", "org.apache.commons.cli", "3.2.2") {
         exports("org.apache.commons.cli")
