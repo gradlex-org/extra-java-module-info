@@ -32,12 +32,9 @@ import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.jar.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
 /**
@@ -142,7 +139,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     private static void addModuleDescriptor(File originalJar, File moduleJar, ModuleInfo moduleInfo) {
         try (JarInputStream inputStream = new JarInputStream(new FileInputStream(originalJar))) {
             try (JarOutputStream outputStream = newJarOutputStream(new FileOutputStream(moduleJar), inputStream.getManifest())) {
-                Map<String, Set<String>> providers = copyAndExtractProviders(inputStream, outputStream);
+                Map<String, String[]> providers = copyAndExtractProviders(inputStream, outputStream);
                 outputStream.putNextEntry(new JarEntry("module-info.class"));
                 outputStream.write(addModuleInfo(moduleInfo, providers));
                 outputStream.closeEntry();
@@ -156,9 +153,9 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         return manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
     }
 
-    private static Map<String, Set<String>> copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
+    private static Map<String, String[]> copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
         JarEntry jarEntry = inputStream.getNextJarEntry();
-        Map<String, Set<String>> providers = new LinkedHashMap<>();
+        Map<String, String[]> providers = new LinkedHashMap<>();
         while (jarEntry != null) {
             byte[] content = inputStream.readAllBytes();
             String entryName = jarEntry.getName();
@@ -173,17 +170,18 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         return providers;
     }
 
-    private static Set<String> extractImplementations(byte[] content) {
+    private static String[] extractImplementations(byte[] content) {
         return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8))
                 .lines()
                 .map(String::trim)
                 .filter(line -> !line.isEmpty())
                 .filter(line -> !line.startsWith("#"))
                 .map(line -> line.replace('.','/'))
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+                .distinct()
+                .toArray(String[]::new);
     }
 
-    private static byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, Set<String>> providers) {
+    private static byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, String[]> providers) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
         ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleInfo.getModuleVersion());
@@ -200,11 +198,8 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         for (String requireName : moduleInfo.getRequiresStatic()) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE, null);
         }
-        for (Map.Entry<String, Set<String>> entry : providers.entrySet()) {
-            String provider = entry.getKey();
-            String[] implementations = entry.getValue()
-                    .toArray(new String[0]);
-            moduleVisitor.visitProvide(provider, implementations);
+        for (Map.Entry<String, String[]> entry : providers.entrySet()) {
+            moduleVisitor.visitProvide(entry.getKey(), entry.getValue());
         }
         moduleVisitor.visitEnd();
         classWriter.visitEnd();
