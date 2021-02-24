@@ -16,7 +16,7 @@ plugins {
     id("de.jjohannes.extra-java-module-info") version "0.5"
 }
 
-// add module information for all direct and transitive depencies that are not modules
+// add module information for all direct and transitive dependencies that are not modules
 extraJavaModuleInfo {
     // failOnMissingModuleInfo.set(false)
     module("commons-beanutils-1.9.4.jar", "org.apache.commons.beanutils", "1.9.4") {
@@ -80,3 +80,7 @@ configurations {
     }
 }
 ```
+
+## How do I add `provides ... with ...` declarations to the `module-info.class` descriptor?
+
+The plugin will automatically retrofit all the available `META-INF/services/*` descriptors into `module-info.class` for you. The `META-INF/services/*` descriptors will be preserved so that a transformed JAR will continue to work if it is placed on the classpath.
