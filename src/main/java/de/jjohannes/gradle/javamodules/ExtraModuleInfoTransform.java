@@ -15,6 +15,7 @@
  */
 package de.jjohannes.gradle.javamodules;
 
+import org.gradle.api.artifacts.CacheableRule;
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
@@ -45,6 +46,7 @@ import java.util.zip.ZipEntry;
  * The transformation fails the build if a Jar does not contain information and no extra information
  * was defined for it. This way we make sure that all Jars are turned into modules.
  */
+@CacheableRule
 abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
