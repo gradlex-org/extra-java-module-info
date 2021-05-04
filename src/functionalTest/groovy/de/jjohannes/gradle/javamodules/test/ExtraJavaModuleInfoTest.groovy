@@ -357,6 +357,82 @@ class ExtraJavaModuleInfoTest extends Specification {
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
 
+    def "can omit unwanted META-INF/services from automatic migration"() {
+        given:
+        new File(testFolder.root, "src/main/java/org/gradle/sample/app/data").mkdirs()
+
+        testFolder.newFile("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import java.util.ServiceLoader;
+            import java.util.stream.Collectors;
+            import javax.script.ScriptEngineFactory;
+            import javax.script.ScriptException;
+            
+            public class Main {
+            
+                public static void main(String[] args) throws ScriptException {
+                    ScriptEngineFactory scriptEngineFactory = ServiceLoader.load(ScriptEngineFactory.class)
+                                        .findFirst()
+                                        .orElseThrow(() -> new AssertionError("No providers loaded"));
+                    String engineName = scriptEngineFactory.getEngineName();
+                    if (!engineName.equals("Groovy Scripting Engine")) {
+                        throw new AssertionError("Incorrect Script Engine Loaded: " + engineName);
+                    }
+                    int revVal = (int) scriptEngineFactory.getScriptEngine().eval("2+2");
+                    if (revVal != 4) {
+                        throw new AssertionError("Invalid evaluation result: " + revVal);
+                    }
+                }
+                          
+            }
+        """
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires groovy.all;
+                uses javax.script.ScriptEngineFactory;                                                           
+            }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            java {
+                modularity.inferModulePath.set(true)
+            }
+            
+            dependencies {
+                implementation("org.codehaus.groovy:groovy-all:2.4.15")                     
+            }
+            
+            extraJavaModuleInfo {               
+                module("groovy-all-2.4.15.jar", "groovy.all", "2.4.15") {
+                   requiresTransitive("java.scripting")
+                   requires("java.logging")
+                   requires("java.desktop")
+                   ignoreServiceProvider("org.codehaus.groovy.runtime.ExtensionModule")
+                   ignoreServiceProvider("org.codehaus.groovy.plugins.Runners")
+                   ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+                   ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+                }
+            }
+             
+            application {
+                mainModule.set("org.gradle.sample.app")
+                mainClass.set("org.gradle.sample.app.Main")
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
     def "can add static/transitive 'requires' modifiers to legacy libraries"() {
         given:
         new File(testFolder.root, "src/main/java/org/gradle/sample/app/data").mkdirs()
