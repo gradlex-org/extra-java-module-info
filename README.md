@@ -96,7 +96,6 @@ extraJavaModuleInfo {
        ignoreServiceProvider("org.codehaus.groovy.runtime.ExtensionModule")
        ignoreServiceProvider("org.codehaus.groovy.plugins.Runners")
        ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
-       ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
     }
 }
 ```
