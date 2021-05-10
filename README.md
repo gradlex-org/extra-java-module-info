@@ -84,3 +84,19 @@ configurations {
 ## How do I add `provides ... with ...` declarations to the `module-info.class` descriptor?
 
 The plugin will automatically retrofit all the available `META-INF/services/*` descriptors into `module-info.class` for you. The `META-INF/services/*` descriptors will be preserved so that a transformed JAR will continue to work if it is placed on the classpath.
+
+The plugin also allows you to ignore some unwanted services from being automatically converted into `provides .. with ...` declarations. 
+
+```
+extraJavaModuleInfo {               
+    module("groovy-all-2.4.15.jar", "groovy.all", "2.4.15") {
+       requiresTransitive("java.scripting")
+       requires("java.logging")
+       requires("java.desktop")
+       ignoreServiceProvider("org.codehaus.groovy.runtime.ExtensionModule")
+       ignoreServiceProvider("org.codehaus.groovy.plugins.Runners")
+       ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+       ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+    }
+}
+```

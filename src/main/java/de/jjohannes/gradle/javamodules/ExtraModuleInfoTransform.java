@@ -162,7 +162,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
             byte[] content = inputStream.readAllBytes();
             String entryName = jarEntry.getName();
             if (entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX)) {
-                providers.put(entryName.substring(SERVICES_PREFIX.length()).replace('.','/'), extractImplementations(content));
+                providers.put(entryName.substring(SERVICES_PREFIX.length()), extractImplementations(content));
             }
             outputStream.putNextEntry(jarEntry);
             outputStream.write(content);
@@ -201,7 +201,11 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE, null);
         }
         for (Map.Entry<String, String[]> entry : providers.entrySet()) {
-            moduleVisitor.visitProvide(entry.getKey(), entry.getValue());
+            String name = entry.getKey();
+            String[] implementations = entry.getValue();
+            if (!moduleInfo.getIgnoredServiceProviders().contains(name)) {
+                moduleVisitor.visitProvide(name.replace('.', '/'), implementations);
+            }
         }
         moduleVisitor.visitEnd();
         classWriter.visitEnd();

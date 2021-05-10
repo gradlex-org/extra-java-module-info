@@ -17,7 +17,9 @@ package de.jjohannes.gradle.javamodules;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Data class to hold the information that should be added as module-info.class to an existing Jar file.
@@ -29,6 +31,7 @@ public class ModuleInfo implements Serializable {
     private List<String> requires = new ArrayList<>();
     private List<String> requiresTransitive = new ArrayList<>();
     private List<String> requiresStatic = new ArrayList<>();
+    private Set<String> ignoredServiceProviders = new LinkedHashSet<>();
 
     ModuleInfo(String moduleName, String moduleVersion) {
         this.moduleName = moduleName;
@@ -49,6 +52,10 @@ public class ModuleInfo implements Serializable {
 
     public void requiresStatic(String requiresStatic) {
         this.requiresStatic.add(requiresStatic);
+    }
+
+    public void ignoreServiceProvider(String ignoreServiceProvider) {
+        this.ignoredServiceProviders.add(ignoreServiceProvider);
     }
 
     public String getModuleName() {
@@ -74,4 +81,9 @@ public class ModuleInfo implements Serializable {
     protected List<String> getRequiresStatic() {
         return requiresStatic;
     }
+
+    protected Set<String> getIgnoredServiceProviders() {
+        return ignoredServiceProviders;
+    }
+
 }
