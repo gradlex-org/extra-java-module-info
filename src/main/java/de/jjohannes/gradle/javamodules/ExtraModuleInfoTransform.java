@@ -86,6 +86,20 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     }
 
     private boolean isModule(File jar) {
+        if (!jar.isFile()) {
+            // If the jar does not exist, we assume that the file, which is produced later is a local artifact and a module.
+            // For local files this behavior is ok, because this transform is targeting published artifacts.
+            // See also: https://github.com/jjohannes/extra-java-module-info/issues/15
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                jar.getParentFile().mkdirs();
+                //noinspection ResultOfMethodCallIgnored
+                jar.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return true;
+        }
         try (JarInputStream inputStream =  new JarInputStream(new FileInputStream(jar))) {
             boolean isMultiReleaseJar = containsMultiReleaseJarEntry(inputStream);
             ZipEntry next = inputStream.getNextEntry();
