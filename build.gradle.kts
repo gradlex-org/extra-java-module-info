@@ -32,6 +32,9 @@ version = "0.7"
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf("--release", "9"))
 }
+tasks.javadoc {
+    (options as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
+}
 
 val functionalTest: SourceSet by sourceSets.creating
 gradlePlugin.testSourceSets(functionalTest)
