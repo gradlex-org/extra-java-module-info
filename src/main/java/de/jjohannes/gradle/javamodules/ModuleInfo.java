@@ -16,22 +16,21 @@
 package de.jjohannes.gradle.javamodules;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
  * Data class to hold the information that should be added as module-info.class to an existing Jar file.
  */
 public class ModuleInfo implements Serializable {
-    private String moduleName;
-    private String moduleVersion;
-    private List<String> exports = new ArrayList<>();
-    private List<String> requires = new ArrayList<>();
-    private List<String> requiresTransitive = new ArrayList<>();
-    private List<String> requiresStatic = new ArrayList<>();
-    private Set<String> ignoredServiceProviders = new LinkedHashSet<>();
+
+    final String moduleName;
+    final String moduleVersion;
+    final Set<String> exports = new LinkedHashSet<>();
+    final Set<String> requires = new LinkedHashSet<>();
+    final Set<String> requiresTransitive = new LinkedHashSet<>();
+    final Set<String> requiresStatic = new LinkedHashSet<>();
+    final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
 
     ModuleInfo(String moduleName, String moduleVersion) {
         this.moduleName = moduleName;
@@ -39,51 +38,29 @@ public class ModuleInfo implements Serializable {
     }
 
     public void exports(String exports) {
-        this.exports.add(exports);
+        addOrThrow(this.exports, exports);
     }
 
     public void requires(String requires) {
-        this.requires.add(requires);
+        addOrThrow(this.requires, requires);
     }
 
     public void requiresTransitive(String requiresTransitive) {
-        this.requiresTransitive.add(requiresTransitive);
+        addOrThrow(this.requiresTransitive, requiresTransitive);
     }
 
     public void requiresStatic(String requiresStatic) {
-        this.requiresStatic.add(requiresStatic);
+        addOrThrow(this.requiresStatic, requiresStatic);
     }
 
     public void ignoreServiceProvider(String ignoreServiceProvider) {
-        this.ignoredServiceProviders.add(ignoreServiceProvider);
+        addOrThrow(this.ignoreServiceProviders, ignoreServiceProvider);
     }
 
-    public String getModuleName() {
-        return moduleName;
-    }
-
-    protected String getModuleVersion() {
-        return moduleVersion;
-    }
-
-    protected List<String> getExports() {
-        return exports;
-    }
-
-    protected List<String> getRequires() {
-        return requires;
-    }
-
-    protected List<String> getRequiresTransitive() {
-        return requiresTransitive;
-    }
-
-    protected List<String> getRequiresStatic() {
-        return requiresStatic;
-    }
-
-    protected Set<String> getIgnoredServiceProviders() {
-        return ignoredServiceProviders;
+    private static void addOrThrow(Set<String> target, String element) {
+        if (!target.add(element)) {
+            throw new IllegalArgumentException("The element '" + element + "' is already specified");
+        }
     }
 
 }

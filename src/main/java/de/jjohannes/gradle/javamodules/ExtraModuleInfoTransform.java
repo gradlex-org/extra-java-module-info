@@ -200,24 +200,24 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     private static byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, String[]> providers) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
-        ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleInfo.getModuleVersion());
-        for (String packageName : moduleInfo.getExports()) {
+        ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.moduleName, Opcodes.ACC_OPEN, moduleInfo.moduleVersion);
+        for (String packageName : moduleInfo.exports) {
             moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
         }
         moduleVisitor.visitRequire("java.base", 0, null);
-        for (String requireName : moduleInfo.getRequires()) {
+        for (String requireName : moduleInfo.requires) {
             moduleVisitor.visitRequire(requireName, 0, null);
         }
-        for (String requireName : moduleInfo.getRequiresTransitive()) {
+        for (String requireName : moduleInfo.requiresTransitive) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_TRANSITIVE, null);
         }
-        for (String requireName : moduleInfo.getRequiresStatic()) {
+        for (String requireName : moduleInfo.requiresStatic) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE, null);
         }
         for (Map.Entry<String, String[]> entry : providers.entrySet()) {
             String name = entry.getKey();
             String[] implementations = entry.getValue();
-            if (!moduleInfo.getIgnoredServiceProviders().contains(name)) {
+            if (!moduleInfo.ignoreServiceProviders.contains(name)) {
                 moduleVisitor.visitProvide(name.replace('.', '/'), implementations);
             }
         }
