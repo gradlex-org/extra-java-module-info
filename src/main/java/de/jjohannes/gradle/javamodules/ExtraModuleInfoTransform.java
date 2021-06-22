@@ -47,6 +47,7 @@ import java.util.zip.ZipEntry;
 abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
+    private static final Pattern JAR_SIGNATURE_PATH = Pattern.compile("^META-INF/[^/]+\\.(SF|RSA|DSA|sf|rsa|dsa)$");
     private static final String SERVICES_PREFIX = "META-INF/services/";
 
     public interface Parameter extends TransformParameters {
@@ -178,9 +179,11 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
             if (entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX)) {
                 providers.put(entryName.substring(SERVICES_PREFIX.length()), extractImplementations(content));
             }
-            outputStream.putNextEntry(jarEntry);
-            outputStream.write(content);
-            outputStream.closeEntry();
+            if (!JAR_SIGNATURE_PATH.matcher(jarEntry.getName()).matches()) {
+                outputStream.putNextEntry(jarEntry);
+                outputStream.write(content);
+                outputStream.closeEntry();
+            }
             jarEntry = inputStream.getNextJarEntry();
         }
         return providers;
