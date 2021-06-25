@@ -27,7 +27,7 @@ repositories {
 }
 
 group = "de.jjohannes.gradle"
-version = "0.8"
+version = "0.9"
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf("--release", "9"))
