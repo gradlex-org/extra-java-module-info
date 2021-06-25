@@ -18,7 +18,7 @@ plugins {
     `java-gradle-plugin`
     `maven-publish`
     groovy
-    id("com.gradle.plugin-publish") version "0.14.0"
+    id("com.gradle.plugin-publish") version "0.15.0"
     id("com.github.hierynomus.license") version "0.15.0"
 }
 
