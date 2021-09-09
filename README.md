@@ -10,10 +10,27 @@ A Gradle 6.4+ plugin to use legacy Java libraries as _Java Modules_ in a modular
 This plugin allows you to add module information to a Java library that does not have any.
 If you do that, you can give it a proper _module name_ and Gradle can pick it up to put it on the _module path_ during compilation, testing and execution.
 
+The plugin should be applied to **all subprojects** of your multi-project build.
+It is recommended to use a [convention plugin](https://docs.gradle.org/current/samples/sample_convention_plugins.html#organizing_build_logic) for that.
+
+## Plugin dependency
+
+Add this to the build file of your convention plugin's build
+(e.g. `build-logic/build.gradle(.kts)` or `buildSrc/build.gradle(.kts)`).
+
+```
+dependencies {
+    implementation("de.jjohannes.gradle:extra-java-module-info:0.9")
+}
+```
+
+## Defining extra module information
+In your convention plugin, apply the plugin and define the additional module info:
+
 ```
 plugins {
-    id("java-library")
-    id("de.jjohannes.extra-java-module-info") version "0.9"
+    ...
+    id("de.jjohannes.extra-java-module-info")
 }
 
 // add module information for all direct and transitive dependencies that are not modules
@@ -35,15 +52,14 @@ extraJavaModuleInfo {
     module("commons-collections-3.2.2.jar", "org.apache.commons.collections", "3.2.2")
     automaticModule("commons-logging-1.2.jar", "org.apache.commons.logging")
 }
+```
 
-repositories {
-    mavenCentral()
-}
+## Dependencies in build files
 
-java {
-    modularity.inferModulePath.set(true)
-}
+Now dependencies defined in your build files are all treated as modules if enough extra information was provided.
+For example:
 
+```
 dependencies {
     implementation("com.google.code.gson:gson:2.8.6")           // real module
     implementation("net.bytebuddy:byte-buddy:1.10.9")           // real module with multi-release jar
