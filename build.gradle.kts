@@ -19,11 +19,10 @@ plugins {
     id("maven-publish")
     id("groovy")
     id("com.gradle.plugin-publish") version "0.15.0"
-    id("com.github.hierynomus.license") version "0.15.0"
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 group = "de.jjohannes.gradle"
@@ -68,19 +67,4 @@ pluginBundle {
     website = "https://github.com/jjohannes/extra-java-module-info"
     vcsUrl = "https://github.com/jjohannes/extra-java-module-info.git"
     tags = listOf("java", "modularity", "jigsaw", "jpms")
-}
-
-license {
-    header = rootProject.file("config/HEADER.txt")
-    strictCheck = true
-    ignoreFailures = false
-    mapping(mapOf(
-        "java"   to "SLASHSTAR_STYLE",
-        "kt"     to "SLASHSTAR_STYLE",
-        "groovy" to "SLASHSTAR_STYLE",
-        "kts"    to "SLASHSTAR_STYLE"
-    ))
-    ext.set("year", "2020")
-    exclude("**/build/*")
-    exclude("**/.gradle/*")
 }
