@@ -164,7 +164,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
             if (entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX)) {
                 providers.put(entryName.substring(SERVICES_PREFIX.length()), extractImplementations(content));
             }
-            if (!JAR_SIGNATURE_PATH.matcher(jarEntry.getName()).matches()) {
+            if (!JAR_SIGNATURE_PATH.matcher(jarEntry.getName()).matches() && !"META-INF/MANIFEST.MF".equals(jarEntry.getName())) {
                 outputStream.putNextEntry(jarEntry);
                 outputStream.write(content);
                 outputStream.closeEntry();

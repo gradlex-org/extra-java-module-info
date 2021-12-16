@@ -624,6 +624,57 @@ class ExtraJavaModuleInfoTest extends Specification {
         new JarFile(shadowJar).entries().asIterator().size() == 5
     }
 
+    // See: https://github.com/jjohannes/extra-java-module-info/issues/23
+    def "ignores MANIFEST.MF files that are not correctly positioned in Jar"() {
+        given:
+        new File(testFolder.root, "src/main/java/org/gradle/sample/app/data").mkdirs()
+
+        testFolder.newFile("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            public class Main {
+                public static void main(String[] args) throws Exception {                
+                }
+            }
+        """
+
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                requires com.google.javascript.closure.compiler;
+            }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            java {
+                modularity.inferModulePath.set(true)
+            }
+            
+            dependencies {
+                implementation("com.google.javascript:closure-compiler:v20211201")    
+            }
+            
+            extraJavaModuleInfo {
+                automaticModule("closure-compiler-v20211201.jar", "com.google.javascript.closure.compiler")
+            }
+            
+            application {
+                mainModule.set("org.gradle.sample.app")
+                mainClass.set("org.gradle.sample.app.Main")
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
     BuildResult build() {
         gradleRunnerFor(['build']).build()
     }
