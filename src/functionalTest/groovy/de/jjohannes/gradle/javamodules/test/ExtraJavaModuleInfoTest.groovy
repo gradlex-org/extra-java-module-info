@@ -675,6 +675,58 @@ class ExtraJavaModuleInfoTest extends Specification {
         build().task(':compileJava').outcome == TaskOutcome.SUCCESS
     }
 
+    // See: https://github.com/jjohannes/extra-java-module-info/issues/27
+    def "correctly handles copying JAR contents on JDKs < 16"() {
+        given:
+        new File(testFolder.root, "src/main/java/org/gradle/sample/app/data").mkdirs()
+
+        testFolder.newFile("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            public class Main {
+                public static void main(String[] args) {     
+                    System.out.println(org.w3c.css.sac.Parser.class);           
+                }
+            }
+        """
+
+        testFolder.newFile("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                requires sac;
+            }
+        """
+        testFolder.newFile("build.gradle.kts") << """
+            plugins {
+                application
+                id("de.jjohannes.extra-java-module-info")
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            java {
+                modularity.inferModulePath.set(true)
+            }
+            
+            dependencies {
+                implementation("org.w3c.css:sac:1.3")    
+            }
+            
+            extraJavaModuleInfo {
+                automaticModule("sac-1.3.jar", "sac")
+            }
+            
+            application {
+                mainModule.set("org.gradle.sample.app")
+                mainClass.set("org.gradle.sample.app.Main")
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
     BuildResult build() {
         gradleRunnerFor(['build']).build()
     }
