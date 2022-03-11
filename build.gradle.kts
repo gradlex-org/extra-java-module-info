@@ -12,8 +12,9 @@ repositories {
 group = "de.jjohannes.gradle"
 version = "0.11"
 
-tasks.withType<JavaCompile> {
-    options.compilerArgs.addAll(listOf("--release", "9"))
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 tasks.javadoc {
     (options as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
@@ -31,7 +32,6 @@ tasks.check {
 }
 
 dependencies {
-    implementation(gradleApi())
     implementation("org.ow2.asm:asm:8.0.1")
     "functionalTestImplementation"("org.spockframework:spock-core:1.2-groovy-2.5")
 }
