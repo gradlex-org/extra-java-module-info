@@ -6,25 +6,25 @@ import java.util.List;
 
 abstract public class ModuleSpec implements Serializable {
 
-    private final String jarName;
+    private final String identifier;
     private final String moduleName;
     private final List<String> mergedJars = new ArrayList<>();
 
-    public ModuleSpec(String jarName, String moduleName) {
-        this.jarName = jarName;
+    public ModuleSpec(String identifier, String moduleName) {
+        this.identifier = identifier;
         this.moduleName = moduleName;
     }
 
-    public String getJarName() {
-        return jarName;
+    public String getIdentifier() {
+        return identifier;
     }
 
     public String getModuleName() {
         return moduleName;
     }
 
-    public void mergeJar(String jar) {
-        mergedJars.add(jar);
+    public void mergeJar(String identifier) {
+        mergedJars.add(identifier);
     }
 
     public List<String> getMergedJars() {

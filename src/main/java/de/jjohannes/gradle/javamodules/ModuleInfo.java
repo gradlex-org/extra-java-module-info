@@ -16,8 +16,8 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> requiresStatic = new LinkedHashSet<>();
     final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
 
-    ModuleInfo(String jarName, String moduleName, String moduleVersion) {
-        super(jarName, moduleName);
+    ModuleInfo(String identifier, String moduleName, String moduleVersion) {
+        super(identifier, moduleName);
         this.moduleVersion = moduleVersion;
     }
 

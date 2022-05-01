@@ -19,36 +19,36 @@ public abstract class ExtraModuleInfoPluginExtension {
     /**
      * Add full module information for a given Jar file.
      */
-    public void module(String jarName, String moduleName, String moduleVersion) {
-        module(jarName, moduleName, moduleVersion, null);
+    public void module(String identifier, String moduleName, String moduleVersion) {
+        module(identifier, moduleName, moduleVersion, null);
     }
 
     /**
      * Add full module information, including exported packages and dependencies, for a given Jar file.
      */
-    public void module(String jarName, String moduleName, String moduleVersion, @Nullable Action<? super ModuleInfo> conf) {
-        ModuleInfo moduleInfo = new ModuleInfo(jarName, moduleName, moduleVersion);
+    public void module(String identifier, String moduleName, String moduleVersion, @Nullable Action<? super ModuleInfo> conf) {
+        ModuleInfo moduleInfo = new ModuleInfo(identifier, moduleName, moduleVersion);
         if (conf != null) {
             conf.execute(moduleInfo);
         }
-        this.getModuleSpecs().put(jarName, moduleInfo);
+        this.getModuleSpecs().put(identifier, moduleInfo);
     }
 
     /**
      * Add only an automatic module name to a given jar file.
      */
-    public void automaticModule(String jarName, String moduleName) {
-        automaticModule(jarName, moduleName, null);
+    public void automaticModule(String identifier, String moduleName) {
+        automaticModule(identifier, moduleName, null);
     }
 
     /**
      * Add only an automatic module name to a given jar file.
      */
-    public void automaticModule(String jarName, String moduleName, @Nullable Action<? super ModuleSpec> conf) {
-        AutomaticModuleName automaticModuleName = new AutomaticModuleName(jarName, moduleName);
+    public void automaticModule(String identifier, String moduleName, @Nullable Action<? super ModuleSpec> conf) {
+        AutomaticModuleName automaticModuleName = new AutomaticModuleName(identifier, moduleName);
         if (conf != null) {
             conf.execute(automaticModuleName);
         }
-        getModuleSpecs().put(jarName, automaticModuleName);
+        getModuleSpecs().put(identifier, automaticModuleName);
     }
 }
