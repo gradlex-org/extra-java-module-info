@@ -7,6 +7,7 @@ import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 
 /**
@@ -41,9 +42,16 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
         Attribute<Boolean> javaModule = Attribute.of("javaModule", Boolean.class);
 
-        // compile and runtime classpath express that they only accept modules by requesting the javaModule=true attribute
-        project.getConfigurations().matching(this::isResolvingJavaPluginConfiguration).all(
-                c -> c.getAttributes().attribute(javaModule, true));
+        project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
+            Configuration runtimeClasspath = project.getConfigurations().getByName(sourceSet.getRuntimeClasspathConfigurationName());
+            Configuration compileClasspath = project.getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName());
+            Configuration annotationProcessor = project.getConfigurations().getByName(sourceSet.getAnnotationProcessorConfigurationName());
+
+            // compile, runtime and annotation processor classpaths express that they only accept modules by requesting the javaModule=true attribute
+            runtimeClasspath.getAttributes().attribute(javaModule, true);
+            compileClasspath.getAttributes().attribute(javaModule, true);
+            annotationProcessor.getAttributes().attribute(javaModule, true);
+        });
 
         // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them without modification
         project.getDependencies().getArtifactTypes().getByName("jar").getAttributes().attribute(javaModule, false);
@@ -58,14 +66,5 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
             t.getFrom().attribute(artifactType, "jar").attribute(javaModule, false);
             t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);
         });
-    }
-
-    private boolean isResolvingJavaPluginConfiguration(Configuration configuration) {
-        if (!configuration.isCanBeResolved()) {
-            return false;
-        }
-        return configuration.getName().endsWith(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME.substring(1))
-                || configuration.getName().endsWith(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME.substring(1))
-                || configuration.getName().endsWith(JavaPlugin.ANNOTATION_PROCESSOR_CONFIGURATION_NAME.substring(1));
     }
 }
