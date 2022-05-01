@@ -1,24 +1,23 @@
 package de.jjohannes.gradle.javamodules;
 
-import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * Data class to hold the information that should be added as module-info.class to an existing Jar file.
  */
-public class ModuleInfo implements Serializable {
+public class ModuleInfo extends ModuleSpec {
 
-    final String moduleName;
-    final String moduleVersion;
+    protected final String moduleVersion;
+
     final Set<String> exports = new LinkedHashSet<>();
     final Set<String> requires = new LinkedHashSet<>();
     final Set<String> requiresTransitive = new LinkedHashSet<>();
     final Set<String> requiresStatic = new LinkedHashSet<>();
     final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
 
-    ModuleInfo(String moduleName, String moduleVersion) {
-        this.moduleName = moduleName;
+    ModuleInfo(String jarName, String moduleName, String moduleVersion) {
+        super(jarName, moduleName);
         this.moduleVersion = moduleVersion;
     }
 

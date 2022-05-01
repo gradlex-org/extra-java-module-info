@@ -5,11 +5,13 @@ import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
@@ -17,11 +19,16 @@ import org.objectweb.asm.Opcodes;
 import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.LinkedHashMap;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.jar.*;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 
 /**
  * An artifact transform that applies additional information to Jars without module information.
@@ -37,11 +44,11 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
 
     public interface Parameter extends TransformParameters {
         @Input
-        MapProperty<String, ModuleInfo> getModuleInfo();
-        @Input
-        MapProperty<String, String> getAutomaticModules();
+        MapProperty<String, ModuleSpec> getModuleSpecs();
         @Input
         Property<Boolean> getFailOnMissingModuleInfo();
+        @InputFiles
+        ConfigurableFileCollection getMergeJars();
     }
 
     @InputArtifact
@@ -49,26 +56,30 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
 
     @Override
     public void transform(@Nonnull TransformOutputs outputs) {
-        Map<String, ModuleInfo> moduleInfo = getParameters().getModuleInfo().get();
-        Map<String, String> automaticModules = getParameters().getAutomaticModules().get();
+        Map<String, ModuleSpec> moduleSpecs = getParameters().getModuleSpecs().get();
         File originalJar = getInputArtifact().get().getAsFile();
         String originalJarName = originalJar.getName();
 
-        if (isModule(originalJar)) {
+        if (moduleSpecs.containsKey(originalJarName) && moduleSpecs.get(originalJarName) instanceof ModuleInfo) {
+            addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpecs.get(originalJarName));
+        } else if (moduleSpecs.containsKey(originalJarName) && moduleSpecs.get(originalJarName) instanceof AutomaticModuleName) {
+            addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), (AutomaticModuleName) moduleSpecs.get(originalJarName));
+        } else if (isModule(originalJar)) {
             outputs.file(originalJar);
-        } else if (moduleInfo.containsKey(originalJarName)) {
-            addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), moduleInfo.get(originalJarName));
         } else if (isAutoModule(originalJar)) {
             outputs.file(originalJar);
-        } else if (automaticModules.containsKey(originalJarName)) {
-            addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), automaticModules.get(originalJarName));
-        } else {
+        } else if (!willBeMerged(originalJar, moduleSpecs.values())) { // No output if this Jar will be merged
             if (getParameters().getFailOnMissingModuleInfo().get()) {
                 throw new RuntimeException("Not a module and no mapping defined: " + originalJarName);
             } else {
                 outputs.file(originalJar);
             }
         }
+    }
+
+    private boolean willBeMerged(File originalJar, Collection<ModuleSpec> modules) {
+        return modules.stream().anyMatch(module ->
+                module.getMergedJars().stream().anyMatch(toMerge -> toMerge.equals(originalJar.getName())));
     }
 
     private boolean isModule(File jar) {
@@ -86,7 +97,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
             }
             return true;
         }
-        try (JarInputStream inputStream =  new JarInputStream(new FileInputStream(jar))) {
+        try (JarInputStream inputStream =  new JarInputStream(Files.newInputStream(jar.toPath()))) {
             boolean isMultiReleaseJar = containsMultiReleaseJarEntry(inputStream);
             ZipEntry next = inputStream.getNextEntry();
             while (next != null) {
@@ -110,7 +121,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     }
 
     private boolean isAutoModule(File jar) {
-        try (JarInputStream inputStream = new JarInputStream(new FileInputStream(jar))) {
+        try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(jar.toPath()))) {
             Manifest manifest = inputStream.getManifest();
             return manifest != null && manifest.getMainAttributes().getValue("Automatic-Module-Name") != null;
         } catch (IOException e) {
@@ -122,26 +133,28 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         return outputs.file(originalJar.getName().substring(0, originalJar.getName().lastIndexOf('.')) + "-module.jar");
     }
 
-    private static void addAutomaticModuleName(File originalJar, File moduleJar, String moduleName) {
-        try (JarInputStream inputStream = new JarInputStream(new FileInputStream(originalJar))) {
+    private void addAutomaticModuleName(File originalJar, File moduleJar, AutomaticModuleName automaticModule) {
+        try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(originalJar.toPath()))) {
             Manifest manifest = inputStream.getManifest();
             if (manifest == null) {
                 manifest = new Manifest();
                 manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
             }
-            manifest.getMainAttributes().putValue("Automatic-Module-Name", moduleName);
-            try (JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(moduleJar), manifest)) {
+            manifest.getMainAttributes().putValue("Automatic-Module-Name", automaticModule.getModuleName());
+            try (JarOutputStream outputStream = new JarOutputStream(Files.newOutputStream(moduleJar.toPath()), manifest)) {
                 copyAndExtractProviders(inputStream, outputStream);
+                mergeJars(automaticModule, outputStream);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void addModuleDescriptor(File originalJar, File moduleJar, ModuleInfo moduleInfo) {
-        try (JarInputStream inputStream = new JarInputStream(new FileInputStream(originalJar))) {
-            try (JarOutputStream outputStream = newJarOutputStream(new FileOutputStream(moduleJar), inputStream.getManifest())) {
+    private void addModuleDescriptor(File originalJar, File moduleJar, ModuleInfo moduleInfo) {
+        try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(originalJar.toPath()))) {
+            try (JarOutputStream outputStream = newJarOutputStream(Files.newOutputStream(moduleJar.toPath()), inputStream.getManifest())) {
                 Map<String, String[]> providers = copyAndExtractProviders(inputStream, outputStream);
+                mergeJars(moduleInfo, outputStream);
                 outputStream.putNextEntry(new JarEntry("module-info.class"));
                 outputStream.write(addModuleInfo(moduleInfo, providers));
                 outputStream.closeEntry();
@@ -189,7 +202,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     private static byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, String[]> providers) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
-        ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.moduleName, Opcodes.ACC_OPEN, moduleInfo.moduleVersion);
+        ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleInfo.moduleVersion);
         for (String packageName : moduleInfo.exports) {
             moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
         }
@@ -213,5 +226,34 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         moduleVisitor.visitEnd();
         classWriter.visitEnd();
         return classWriter.toByteArray();
+    }
+
+    private void mergeJars(ModuleSpec moduleSpec, JarOutputStream outputStream) throws IOException {
+        for (String mergeJar : moduleSpec.getMergedJars()) {
+            Optional<File> mergeJarFile = getParameters().getMergeJars().getFiles().stream().filter(f -> f.getName().equals(mergeJar)).findFirst();
+            if (mergeJarFile.isPresent()) {
+                try (JarInputStream toMergeInputStream = new JarInputStream(Files.newInputStream(mergeJarFile.get().toPath()))) {
+                    copyEntries(toMergeInputStream, outputStream);
+                }
+            } else {
+                throw new RuntimeException("Jar not found: " + mergeJar);
+            }
+        }
+    }
+
+    private static void copyEntries(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
+        JarEntry jarEntry = inputStream.getNextJarEntry();
+        while (jarEntry != null) {
+            try {
+                outputStream.putNextEntry(jarEntry);
+                outputStream.write(inputStream.readAllBytes());
+                outputStream.closeEntry();
+            } catch (ZipException e) {
+                if (!e.getMessage().startsWith("duplicate entry:")) {
+                    throw new RuntimeException(e);
+                }
+            }
+            jarEntry = inputStream.getNextJarEntry();
+        }
     }
 }

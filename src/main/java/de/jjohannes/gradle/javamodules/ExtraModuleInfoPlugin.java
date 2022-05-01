@@ -4,6 +4,8 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.Category;
+import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.util.GradleVersion;
 
@@ -28,6 +30,14 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
     }
 
     private void configureTransform(Project project, ExtraModuleInfoPluginExtension extension) {
+        Configuration javaModulesMergeJars = project.getConfigurations().create("javaModulesMergeJars", c -> {
+            c.setVisible(false);
+            c.setCanBeConsumed(false);
+            c.setCanBeResolved(true);
+            c.getAttributes().attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_RUNTIME));
+            c.getAttributes().attribute(Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
+        });
+
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
         Attribute<Boolean> javaModule = Attribute.of("javaModule", Boolean.class);
 
@@ -41,9 +51,9 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills the input parameter
         project.getDependencies().registerTransform(ExtraModuleInfoTransform.class, t -> {
             t.parameters(p -> {
-                p.getModuleInfo().set(extension.getModuleInfo());
-                p.getAutomaticModules().set(extension.getAutomaticModules());
+                p.getModuleSpecs().set(extension.getModuleSpecs());
                 p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());
+                p.getMergeJars().from(javaModulesMergeJars);
             });
             t.getFrom().attribute(artifactType, "jar").attribute(javaModule, false);
             t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);

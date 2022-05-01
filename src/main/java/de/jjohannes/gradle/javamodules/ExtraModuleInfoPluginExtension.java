@@ -13,8 +13,7 @@ import javax.annotation.Nullable;
  */
 public abstract class ExtraModuleInfoPluginExtension {
 
-    abstract public MapProperty<String, ModuleInfo> getModuleInfo();
-    abstract public MapProperty<String, String> getAutomaticModules();
+    abstract public MapProperty<String, ModuleSpec> getModuleSpecs();
     abstract public Property<Boolean> getFailOnMissingModuleInfo();
 
     /**
@@ -28,17 +27,28 @@ public abstract class ExtraModuleInfoPluginExtension {
      * Add full module information, including exported packages and dependencies, for a given Jar file.
      */
     public void module(String jarName, String moduleName, String moduleVersion, @Nullable Action<? super ModuleInfo> conf) {
-        ModuleInfo moduleInfo = new ModuleInfo(moduleName, moduleVersion);
+        ModuleInfo moduleInfo = new ModuleInfo(jarName, moduleName, moduleVersion);
         if (conf != null) {
             conf.execute(moduleInfo);
         }
-        this.getModuleInfo().put(jarName, moduleInfo);
+        this.getModuleSpecs().put(jarName, moduleInfo);
     }
 
     /**
      * Add only an automatic module name to a given jar file.
      */
     public void automaticModule(String jarName, String moduleName) {
-        getAutomaticModules().put(jarName, moduleName);
+        automaticModule(jarName, moduleName, null);
+    }
+
+    /**
+     * Add only an automatic module name to a given jar file.
+     */
+    public void automaticModule(String jarName, String moduleName, @Nullable Action<? super ModuleSpec> conf) {
+        AutomaticModuleName automaticModuleName = new AutomaticModuleName(jarName, moduleName);
+        if (conf != null) {
+            conf.execute(automaticModuleName);
+        }
+        getModuleSpecs().put(jarName, automaticModuleName);
     }
 }
