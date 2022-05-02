@@ -14,6 +14,7 @@ import org.gradle.util.GradleVersion;
  * Entry point of the plugin.
  */
 @SuppressWarnings("unused")
+@NonNullApi
 public class ExtraModuleInfoPlugin implements Plugin<Project> {
 
     @Override

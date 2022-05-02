@@ -16,10 +16,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
-tasks.javadoc {
-    (options as CoreJavadocOptions).addStringOption("Xdoclint:none", "-quiet")
-}
-
 val functionalTest: SourceSet by sourceSets.creating
 gradlePlugin.testSourceSets(functionalTest)
 val functionalTestTask = tasks.register<Test>("functionalTest") {

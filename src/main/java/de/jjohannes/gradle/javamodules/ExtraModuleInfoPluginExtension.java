@@ -18,15 +18,45 @@ public abstract class ExtraModuleInfoPluginExtension {
 
     /**
      * Add full module information for a given Jar file.
+     *
+     * @param identifier group:name coordinates _or_ Jar file name
+     * @param moduleName the Module Name of the Module to construct
+     */
+    public void module(String identifier, String moduleName) {
+        module(identifier, moduleName, null, null);
+    }
+
+    /**
+     * Add full module information for a given Jar file.
+     *
+     * @param identifier group:name coordinates _or_ Jar file name
+     * @param moduleName the Module Name of the Module to construct
+    *  @param moduleVersion version to write into the module-info.class
      */
     public void module(String identifier, String moduleName, String moduleVersion) {
         module(identifier, moduleName, moduleVersion, null);
     }
 
     /**
-     * Add full module information, including exported packages and dependencies, for a given Jar file.
+     * Add full module information for a given Jar file.
+     *
+     * @param identifier group:name coordinates _or_ Jar file name
+     * @param moduleName the Module Name of the Module to construct
+     * @param conf configure exported packages and dependencies, see {@link ModuleInfo}
      */
-    public void module(String identifier, String moduleName, String moduleVersion, @Nullable Action<? super ModuleInfo> conf) {
+    public void module(String identifier, String moduleName, @Nullable Action<? super ModuleInfo> conf) {
+        module(identifier, moduleName, null, conf);
+    }
+
+    /**
+     * Add full module information for a given Jar file.
+     *
+     * @param identifier group:name coordinates _or_ Jar file name
+     * @param moduleName the Module Name of the Module to construct
+     * @param moduleVersion version to write into the module-info.class
+     * @param conf configure exported packages, dependencies and Jar merging, see {@link ModuleInfo}
+     */
+    public void module(String identifier, String moduleName, @Nullable String moduleVersion, @Nullable Action<? super ModuleInfo> conf) {
         ModuleInfo moduleInfo = new ModuleInfo(identifier, moduleName, moduleVersion);
         if (conf != null) {
             conf.execute(moduleInfo);
@@ -35,16 +65,23 @@ public abstract class ExtraModuleInfoPluginExtension {
     }
 
     /**
-     * Add only an automatic module name to a given jar file.
+     * Add an Automatic-Module-Name to a given Jar file.
+     *
+     * @param identifier group:name coordinates _or_ Jar file name
+     * @param moduleName the Module Name of the Module to construct
      */
     public void automaticModule(String identifier, String moduleName) {
         automaticModule(identifier, moduleName, null);
     }
 
     /**
-     * Add only an automatic module name to a given jar file.
+     * Add an Automatic-Module-Name to a given Jar file.
+     *
+     * @param identifier group:name coordinates _or_ Jar file name
+     * @param moduleName the Module Name of the Module to construct
+     * @param conf configure Jar merging, see {@link AutomaticModuleName}
      */
-    public void automaticModule(String identifier, String moduleName, @Nullable Action<? super ModuleSpec> conf) {
+    public void automaticModule(String identifier, String moduleName, @Nullable Action<? super AutomaticModuleName> conf) {
         AutomaticModuleName automaticModuleName = new AutomaticModuleName(identifier, moduleName);
         if (conf != null) {
             conf.execute(automaticModuleName);
