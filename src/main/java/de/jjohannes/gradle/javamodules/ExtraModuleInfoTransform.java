@@ -21,8 +21,10 @@ import org.objectweb.asm.Opcodes;
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -234,7 +236,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         JarEntry jarEntry = inputStream.getNextJarEntry();
         Map<String, String[]> providers = new LinkedHashMap<>();
         while (jarEntry != null) {
-            byte[] content = inputStream.readAllBytes();
+            byte[] content = readAllBytes(inputStream);
             String entryName = jarEntry.getName();
             if (entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX)) {
                 providers.put(entryName.substring(SERVICES_PREFIX.length()), extractImplementations(content));
@@ -324,7 +326,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         while (jarEntry != null) {
             try {
                 outputStream.putNextEntry(jarEntry);
-                outputStream.write(inputStream.readAllBytes());
+                outputStream.write(readAllBytes(inputStream));
                 outputStream.closeEntry();
             } catch (ZipException e) {
                 if (!e.getMessage().startsWith("duplicate entry:")) {
@@ -332,6 +334,18 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
                 }
             }
             jarEntry = inputStream.getNextJarEntry();
+        }
+    }
+
+    public static byte[] readAllBytes(InputStream inputStream) throws IOException {
+        final int bufLen = 4 * 0x400;
+        byte[] buf = new byte[bufLen];
+        int readLen;
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            while ((readLen = inputStream.read(buf, 0, bufLen)) != -1) {
+                outputStream.write(buf, 0, readLen);
+            }
+            return outputStream.toByteArray();
         }
     }
 }

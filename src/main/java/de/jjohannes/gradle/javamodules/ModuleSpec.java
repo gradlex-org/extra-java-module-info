@@ -7,6 +7,7 @@ import java.util.List;
 /**
  * Details that real Modules and Automatic-Module-Names share.
  */
+@SuppressWarnings("unused")
 abstract public class ModuleSpec implements Serializable {
 
     private final String identifier;

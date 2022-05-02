@@ -6,6 +6,7 @@ import java.util.Set;
 /**
  * Data class to hold the information that should be added as module-info.class to an existing Jar file.
  */
+@SuppressWarnings("unused")
 public class ModuleInfo extends ModuleSpec {
 
     private final String moduleVersion;
