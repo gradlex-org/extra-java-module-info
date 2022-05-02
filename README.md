@@ -30,7 +30,7 @@ Add this to the build file of your convention plugin's build
 
 ```
 dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
+    implementation("de.jjohannes.gradle:extra-java-module-info:0.12")
 }
 ```
 

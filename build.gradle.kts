@@ -10,7 +10,7 @@ repositories {
 }
 
 group = "de.jjohannes.gradle"
-version = "0.11"
+version = "0.12"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
