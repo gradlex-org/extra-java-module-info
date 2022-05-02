@@ -36,7 +36,7 @@ plugins {
 // add module information for all direct and transitive dependencies that are not modules
 extraJavaModuleInfo {
     // failOnMissingModuleInfo.set(false)
-    module("commons-beanutils-1.9.4.jar", "org.apache.commons.beanutils", "1.9.4") {
+    module("commons-beanutils:commons-beanutils", "org.apache.commons.beanutils") {
         exports("org.apache.commons.beanutils")
         
         requires("org.apache.commons.logging")
@@ -46,11 +46,11 @@ extraJavaModuleInfo {
         // requiresTransitive(...)
         // requiresStatic(...)
     }
-    module("commons-cli-1.4.jar", "org.apache.commons.cli", "3.2.2") {
+    module("commons-cli:commons-cli", "org.apache.commons.cli") {
         exports("org.apache.commons.cli")
     }
-    module("commons-collections-3.2.2.jar", "org.apache.commons.collections", "3.2.2")
-    automaticModule("commons-logging-1.2.jar", "org.apache.commons.logging")
+    module("commons-collections:commons-collections", "org.apache.commons.collections")
+    automaticModule("commons-logging:commons-logging", "org.apache.commons.logging")
 }
 ```
 
@@ -75,7 +75,7 @@ Sample uses Gradle's Kotlin DSL (`build.gradle.kts` file). The Groovy DSL syntax
 
 ## How do I deactivate the plugin functionality for a certain classpath?
 
-This is can be useful for the test classpath if it should be used for unit testing on the classpath (rather than the module path).
+This can be useful for the test classpath if it should be used for unit testing on the classpath (rather than the module path).
 If you use the [shadow plugin](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow) and [encounter this issue](https://github.com/jjohannes/extra-java-module-info/issues/7),
 you can deactivate it for the runtime classpath as the module information is irrelevant for a fat Jar in any case.
 
@@ -115,3 +115,24 @@ extraJavaModuleInfo {
     }
 }
 ```
+
+## What do I do in a 'split package' situation?
+
+The Java Module System does not allow the same package to be used in more than one _module_.
+This is an issue with legacy libraries, where it was common practice to use the same package in multiple Jars.
+This plugin offers the option to merge multiple Jars into one in such situations:
+
+```
+ extraJavaModuleInfo {
+    module("org.apache.zookeeper:zookeeper", "org.apache.zookeeper") {
+        mergeJar("org.apache.zookeeper:zookeeper-jute")
+        
+        // ...
+    }
+    automaticModule("org.slf4j:slf4j-api", "org.slf4j") {
+        mergeJar("org.slf4j:slf4j-ext")
+    }
+}
+```
+
+Note: The merged Jar will include the *first* appearance of duplicated files (like the `MANIFEST.MF`).

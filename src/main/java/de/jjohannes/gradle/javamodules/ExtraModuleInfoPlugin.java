@@ -1,14 +1,28 @@
 package de.jjohannes.gradle.javamodules;
 
+import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.file.Directory;
+import org.gradle.api.file.ProjectLayout;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Entry point of the plugin.
@@ -38,6 +52,18 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
             c.setCanBeResolved(true);
             c.getAttributes().attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_RUNTIME));
             c.getAttributes().attribute(Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
+
+            // Automatically add dependencies for Jars where we know the coordinates
+            // Note: User still needs to provide versions in through constraints/platforms or consistent resolution.
+            c.withDependencies(d -> extension.getModuleSpecs().get().values().stream().flatMap(m ->
+                    m.getMergedJars().stream()).filter(s -> s.contains(":")).forEach(s ->
+                    d.add(project.getDependencies().create(s))));
+
+            // Automatically get versions from the runtime classpath
+            if (GradleVersion.current().compareTo(GradleVersion.version("6.8")) >= 0) {
+                //noinspection UnstableApiUsage
+                c.shouldResolveConsistentlyWith(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+            }
         });
 
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
@@ -62,10 +88,42 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
             t.parameters(p -> {
                 p.getModuleSpecs().set(extension.getModuleSpecs());
                 p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());
-                p.getMergeJars().from(javaModulesMergeJars);
+
+                // See: https://github.com/adammurdoch/dependency-graph-as-task-inputs/blob/main/plugins/src/main/java/TestPlugin.java
+                Provider<Set<ResolvedArtifactResult>> artifacts = project.provider(() -> javaModulesMergeJars.getIncoming().getArtifacts().getArtifacts());
+                p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
+                p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
             });
             t.getFrom().attribute(artifactType, "jar").attribute(javaModule, false);
             t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);
         });
+    }
+
+    private static class IdExtractor implements Transformer<List<String>, Collection<ResolvedArtifactResult>> {
+        @Override
+        public List<String> transform(Collection<ResolvedArtifactResult> artifacts) {
+            return artifacts.stream().map(a -> {
+                ComponentIdentifier componentIdentifier = a.getId().getComponentIdentifier();
+                if (componentIdentifier instanceof ModuleComponentIdentifier) {
+                    return ((ModuleComponentIdentifier) componentIdentifier).getModuleIdentifier().toString();
+                } else {
+                    return componentIdentifier.getDisplayName();
+                }
+            }).collect(Collectors.toList());
+        }
+    }
+
+    private static class FileExtractor implements Transformer<List<RegularFile>, Collection<ResolvedArtifactResult>> {
+        private final ProjectLayout projectLayout;
+
+        public FileExtractor(ProjectLayout projectLayout) {
+            this.projectLayout = projectLayout;
+        }
+
+        @Override
+        public List<RegularFile> transform(Collection<ResolvedArtifactResult> artifacts) {
+            Directory projectDirectory = projectLayout.getProjectDirectory();
+            return artifacts.stream().map(a -> projectDirectory.file(a.getFile().getAbsolutePath())).collect(Collectors.toList());
+        }
     }
 }
