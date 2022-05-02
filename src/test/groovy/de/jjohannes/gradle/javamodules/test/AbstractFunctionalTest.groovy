@@ -1,0 +1,456 @@
+package de.jjohannes.gradle.javamodules.test
+
+import de.jjohannes.gradle.javamodules.test.fixture.GradleBuild
+import de.jjohannes.gradle.javamodules.test.fixture.LegacyLibraries
+import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.Specification
+
+abstract class AbstractFunctionalTest extends Specification {
+
+    abstract LegacyLibraries getLibs()
+
+    @Delegate
+    GradleBuild build = new GradleBuild()
+
+    def setup() {
+        settingsFile << 'rootProject.name = "test-project"'
+        buildFile << '''
+            plugins {
+                id("application")
+                id("de.jjohannes.extra-java-module-info")
+            }
+            application {
+                mainModule.set("org.gradle.sample.app")
+                mainClass.set("org.gradle.sample.app.Main")
+            }
+        '''
+    }
+
+    def "can add module information to legacy library"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import com.google.gson.Gson;
+            import org.apache.commons.beanutils.BeanUtils;
+            import org.apache.commons.cli.CommandLine;
+            import org.apache.commons.cli.CommandLineParser;
+            import org.apache.commons.cli.DefaultParser;
+            import org.apache.commons.cli.Options;
+            import org.apache.commons.lang3.StringUtils;
+            import org.gradle.sample.app.data.Message;
+            
+            public class Main {
+            
+                public static void main(String[] args) throws Exception {
+                    Options options = new Options();
+                    options.addOption("json", true, "data to parse");
+                    options.addOption("debug", false, "prints module infos");
+                    CommandLineParser parser = new DefaultParser();
+                    CommandLine cmd = parser.parse(options, args);
+            
+                    if (cmd.hasOption("debug")) {
+                        printModuleDebug(Main.class);
+                        printModuleDebug(Gson.class);
+                        printModuleDebug(StringUtils.class);
+                        printModuleDebug(CommandLine.class);
+                        printModuleDebug(BeanUtils.class);
+                    }
+            
+                    String json = cmd.getOptionValue("json");
+                    Message message = new Gson().fromJson(json == null ? "{}" : json, Message.class);
+            
+                    Object copy = BeanUtils.cloneBean(message);
+                    System.out.println();
+                    System.out.println("Original: " + copy.toString());
+                    System.out.println("Copy:     " + copy.toString());
+            
+                }
+            
+                private static void printModuleDebug(Class<?> clazz) {
+                    System.out.println(clazz.getModule().getName() + " - " + clazz.getModule().getDescriptor().version().get());
+                }
+            
+            }
+        """
+        file("src/main/java/org/gradle/sample/app/data/Message.java") << """
+            package org.gradle.sample.app.data;
+            
+            import java.util.List;
+            import java.util.ArrayList;
+            
+            public class Message {
+                private String message;
+                private List<String> receivers = new ArrayList<>();
+            
+                public String getMessage() {
+                    return message;
+                }
+            
+                public void setMessage(String message) {
+                    this.message = message;
+                }
+            
+                public List<String> getReceivers() {
+                    return receivers;
+                }
+            
+                public void setReceivers(List<String> receivers) {
+                    this.receivers = receivers;
+                }
+            
+                @Override
+                public String toString() {
+                    return "Message{message='" + message + '\\'' +
+                        ", receivers=" + receivers + '}';
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                exports org.gradle.sample.app;
+                opens org.gradle.sample.app.data; // allow Gson to access via reflection
+            
+                requires com.google.gson;
+                requires org.apache.commons.lang3;
+                requires org.apache.commons.cli;
+                requires org.apache.commons.beanutils;
+            }
+        """
+        buildFile << """          
+            dependencies {
+                implementation("com.google.code.gson:gson:2.8.6")           // real module
+                implementation("net.bytebuddy:byte-buddy:1.10.9")           // real module with multi-release jar
+                implementation("org.apache.commons:commons-lang3:3.10")     // automatic module
+                implementation("commons-beanutils:commons-beanutils:1.9.4") // plain library (also brings in other libraries transitively)
+                implementation("commons-cli:commons-cli:1.4")               // plain library        
+            }
+            
+            extraJavaModuleInfo {
+                module("${libs.commonsBeanutils}", "org.apache.commons.beanutils") {
+                    exports("org.apache.commons.beanutils")
+                    
+                    requires("org.apache.commons.logging")
+                    requires("java.sql")
+                    requires("java.desktop")
+                }
+                module("${libs.commonsCli}", "org.apache.commons.cli") {
+                    exports("org.apache.commons.cli")
+                }
+                module("${libs.commonsCollections}", "org.apache.commons.collections")
+                automaticModule("${libs.commonsLogging}", "org.apache.commons.logging")
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can add Automatic-Module-Name to libraries without MANIFEST.MF"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import javax.inject.Singleton;
+            
+            public class Main {
+            
+                public static void main(String[] args)  {
+                    printModuleDebug(Singleton.class);
+                }
+            
+                private static void printModuleDebug(Class<?> clazz) {
+                    System.out.println(clazz.getModule().getName() + " - " + clazz.getModule().getDescriptor().version().get());
+                }
+            
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires javax.inject;               
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("javax.inject:javax.inject:1")                     
+            }
+            
+            extraJavaModuleInfo {               
+                automaticModule("${libs.javaxInject}", "javax.inject")
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can add module-info.class to libraries without MANIFEST.MF"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import javax.inject.Singleton;
+            
+            public class Main {
+            
+                public static void main(String[] args)  {
+                    printModuleDebug(Singleton.class);
+                }
+            
+                private static void printModuleDebug(Class<?> clazz) {
+                    System.out.println(clazz.getModule().getName() + " - " + clazz.getModule().getDescriptor().version().get());
+                }
+            
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires javax.inject;               
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("javax.inject:javax.inject:1")                     
+            }
+            
+            extraJavaModuleInfo {               
+                module("${libs.javaxInject}", "javax.inject") {
+                    exports("javax.inject")
+                }
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can retrofit META-INF/services/* metadata to module-info.class"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import java.util.ServiceLoader;
+            import java.util.stream.Collectors;
+            import org.apache.logging.log4j.spi.Provider;
+            
+            public class Main {
+            
+                public static void main(String[] args)  {
+                    Provider provider = ServiceLoader.load(Provider.class).findFirst()
+                                        .orElseThrow(() -> new AssertionError("No providers loaded"));
+                    System.out.println(provider.getClass());
+                }
+                          
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires org.apache.logging.log4j;
+                requires org.apache.logging.log4j.core;
+                
+                uses org.apache.logging.log4j.spi.Provider;                              
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("org.apache.logging.log4j:log4j-core:2.14.0")                     
+            }
+            
+            extraJavaModuleInfo {               
+                module("${libs.log4jCore}", "org.apache.logging.log4j.core", "2.14.0") {
+                    requires("java.compiler")
+                    requires("java.desktop")
+                    requires("org.apache.logging.log4j")
+                    exports("org.apache.logging.log4j.core")
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can omit unwanted META-INF/services from automatic migration"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import java.util.ServiceLoader;
+            import java.util.stream.Collectors;
+            import javax.script.ScriptEngineFactory;
+            import javax.script.ScriptException;
+            
+            public class Main {
+            
+                public static void main(String[] args) throws ScriptException {
+                    ScriptEngineFactory scriptEngineFactory = ServiceLoader.load(ScriptEngineFactory.class)
+                                        .findFirst()
+                                        .orElseThrow(() -> new AssertionError("No providers loaded"));
+                    String engineName = scriptEngineFactory.getEngineName();
+                    if (!engineName.equals("Groovy Scripting Engine")) {
+                        throw new AssertionError("Incorrect Script Engine Loaded: " + engineName);
+                    }
+                    int revVal = (int) scriptEngineFactory.getScriptEngine().eval("2+2");
+                    if (revVal != 4) {
+                        throw new AssertionError("Invalid evaluation result: " + revVal);
+                    }
+                }
+                          
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires groovy.all;
+                uses javax.script.ScriptEngineFactory;                                                           
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("org.codehaus.groovy:groovy-all:2.4.15")                     
+            }
+            
+            extraJavaModuleInfo {               
+                module("${libs.groovyAll}", "groovy.all", "2.4.15") {
+                   requiresTransitive("java.scripting")
+                   requires("java.logging")
+                   requires("java.desktop")
+                   ignoreServiceProvider("org.codehaus.groovy.runtime.ExtensionModule")
+                   ignoreServiceProvider("org.codehaus.groovy.plugins.Runners")
+                   ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can add static/transitive 'requires' modifiers to legacy libraries"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import static java.lang.module.ModuleDescriptor.Requires;
+            import static java.util.function.Function.identity;
+            
+            import java.lang.module.ModuleDescriptor;
+            import java.util.Map;
+            import java.util.stream.Collectors;
+            
+            public class Main {
+            
+                public static void main(String[] args) {
+                    Map<String, Requires> index = ModuleLayer.boot()
+                            .findModule("spring.boot.autoconfigure")
+                            .map(Module::getDescriptor)
+                            .map(ModuleDescriptor::requires)
+                            .orElseThrow(() -> new AssertionError("Cannot find spring.boot.autoconfigure"))
+                            .stream()
+                            .collect(Collectors.toMap(Requires::name, identity()));
+                    if (!index.get("spring.boot").modifiers().contains(Requires.Modifier.TRANSITIVE)) {
+                        throw new AssertionError("spring.boot must be declared as transitive");
+                    }
+                    if (!index.get("com.google.gson").modifiers().contains(Requires.Modifier.STATIC)) {
+                        throw new AssertionError("com.google.gson must be declared as static");
+                    }
+                    if (!index.get("spring.context").modifiers().isEmpty()) {
+                        throw new AssertionError("spring.boot must not have any modifiers");
+                    }
+                }
+            
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires spring.boot.autoconfigure;
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("org.springframework.boot:spring-boot-autoconfigure:2.4.2") 
+            }
+            
+            extraJavaModuleInfo {               
+                module("${libs.springBootAutoconfigure}", "spring.boot.autoconfigure") {
+                    requires("spring.context")
+                    requiresTransitive("spring.boot")
+                    requiresStatic("com.google.gson")
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "can merge several jars into one module"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import org.apache.zookeeper.server.persistence.Util;
+            import org.apache.zookeeper.server.persistence.FileHeader;
+            
+            import org.slf4j.Logger;
+            import org.slf4j.NDC;
+            
+            public class Main {
+                public static void main(String[] args) throws Exception {
+                    Class<?> utilFromMain = Util.class;
+                    Class<?> fileHeaderFromJute = FileHeader.class;
+                    
+                    Class<?> loggerFromApi = Logger.class;
+                    Class<?> ndcFromExt = NDC.class;
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                requires org.apache.zookeeper;
+                requires org.slf4j;
+            }
+        """
+        buildFile << """                  
+            dependencies {
+                implementation("org.apache.zookeeper:zookeeper:3.8.0")
+                implementation("org.slf4j:slf4j-ext:1.7.32")
+                
+                ${libs.jarNameOnly? 'javaModulesMergeJars("org.apache.zookeeper:zookeeper")' : '' }
+                ${libs.jarNameOnly? 'javaModulesMergeJars("org.slf4j:slf4j-ext")' : '' }
+
+                // Before Gradle 6.8, there is no consistent resolution and versions need to be defined 
+                ${gradleVersionUnderTest == "6.4.1"? 'javaModulesMergeJars("org.apache.zookeeper:zookeeper:3.8.0")' : '' }
+                ${gradleVersionUnderTest == "6.4.1"? 'javaModulesMergeJars("org.slf4j:slf4j-ext:1.7.32")' : '' }
+            }
+            
+            extraJavaModuleInfo {
+                failOnMissingModuleInfo.set(false)
+                module("${libs.zookeeper}", "org.apache.zookeeper") {
+                    mergeJar("${libs.zookeeperJute}")
+
+                    exports("org.apache.jute")
+                    exports("org.apache.zookeeper")
+                    exports("org.apache.zookeeper.server.persistence")
+                }
+                automaticModule("${libs.slf4jApi}", "org.slf4j") {
+                    mergeJar("${libs.slf4jExt}")
+                }
+            }
+            
+            tasks.named("run") {
+                doLast { println(configurations.runtimeClasspath.get().files.map { it.name }) }
+            }
+        """
+
+        when:
+        def result = run()
+
+        then:
+        result.output.contains('zookeeper-3.8.0-module.jar')
+        !result.output.contains('zookeeper-3.8.0.jar')
+        !result.output.contains('zookeeper-jute-3.8.0.jar')
+        result.output.contains('slf4j-api-1.7.32-module.jar')
+        !result.output.contains('slf4j-api-1.7.32.jar')
+        !result.output.contains('slf4j-ext-1.7.32.jar')
+    }
+}

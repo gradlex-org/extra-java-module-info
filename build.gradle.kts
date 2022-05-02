@@ -16,20 +16,11 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
-val functionalTest: SourceSet by sourceSets.creating
-gradlePlugin.testSourceSets(functionalTest)
-val functionalTestTask = tasks.register<Test>("functionalTest") {
-    group = "verification"
-    testClassesDirs = functionalTest.output.classesDirs
-    classpath = functionalTest.runtimeClasspath
-}
-tasks.check {
-    dependsOn(functionalTestTask)
-}
 
 dependencies {
     implementation("org.ow2.asm:asm:8.0.1")
-    "functionalTestImplementation"("org.spockframework:spock-core:1.2-groovy-2.5")
+
+    testImplementation("org.spockframework:spock-core:2.1-groovy-3.0")
 }
 
 gradlePlugin {
@@ -47,4 +38,24 @@ pluginBundle {
     website = "https://github.com/jjohannes/extra-java-module-info"
     vcsUrl = "https://github.com/jjohannes/extra-java-module-info.git"
     tags = listOf("java", "modularity", "jigsaw", "jpms")
+}
+
+tasks.test {
+    description = "Runs tests against the Gradle version the plugin is built with"
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform()
+}
+
+listOf("6.4.1", "6.9.2", "7.0.2").forEach { gradleVersionUnderTest ->
+    val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
+        group = "verification"
+        description = "Runs tests against Gradle $gradleVersionUnderTest"
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        useJUnitPlatform()
+        systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
+    }
+    tasks.check {
+        dependsOn(testGradle)
+    }
 }
