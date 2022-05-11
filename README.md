@@ -12,8 +12,17 @@ There is a [CHANGELOG.md](CHANGELOG.md).
 
 # Java Modules with Gradle
 
-- [Documentation on Building Java Modules with Gradle 6.4+](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular)
-- [Samples for Building Java Modules with Gradle 6.4+](https://docs.gradle.org/current/samples/index.html#java_modules)
+If you plan to build Java Modules with Gradle, you should consider using these plugins on top of Gradle core:
+
+- [`id("de.jjohannes.java-module-dependencies")`](https://github.com/jjohannes/java-module-dependencies)  
+  Avoid duplicated dependency definitions and get your Module Path under control
+- [`id("de.jjohannes.java-module-testing")`](https://github.com/jjohannes/java-module-testing)  
+  Proper test setup for Java Modules
+- [`id("de.jjohannes.extra-java-module-info")`](https://github.com/jjohannes/extra-java-module-info)  
+  Only if your (existing) project cannot avoid using non-module legacy Jars
+
+[Here is a sample](https://github.com/jjohannes/java-module-testing/tree/main/samples/use-all-java-module-plugins)
+that shows all plugins in combination.
 
 # How to use this plugin
 
