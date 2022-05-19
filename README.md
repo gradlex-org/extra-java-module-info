@@ -24,6 +24,9 @@ If you plan to build Java Modules with Gradle, you should consider using these p
 [Here is a sample](https://github.com/jjohannes/java-module-testing/tree/main/samples/use-all-java-module-plugins)
 that shows all plugins in combination.
 
+[Full Java Module System Project Setup](https://github.com/jjohannes/gradle-project-setup-howto/tree/java_module_system) is a full-fledged Java Module System project setup using these plugins.  
+[<img src="https://onepiecesoftware.github.io/img/videos/15-3.png" width="260">](https://www.youtube.com/watch?v=uRieSnovlVc&list=PLWQK2ZdV4Yl2k2OmC_gsjDpdIBTN0qqkE)
+
 # How to use this plugin
 
 This plugin allows you to add module information to a Java library that does not have any.
