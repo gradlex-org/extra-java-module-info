@@ -4,6 +4,10 @@ plugins {
 
 rootProject.name = "extra-java-module-info"
 
+dependencyResolutionManagement {
+    repositories.mavenCentral()
+}
+
 gradleEnterprise {
     buildScan {
         publishAlways()

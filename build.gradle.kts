@@ -1,12 +1,6 @@
 plugins {
-    id("java-gradle-plugin")
-    id("maven-publish")
+    id("com.gradle.plugin-publish") version "1.0.0-rc-2"
     id("groovy")
-    id("com.gradle.plugin-publish") version "0.20.0"
-}
-
-repositories {
-    mavenCentral()
 }
 
 group = "de.jjohannes.gradle"
@@ -44,6 +38,7 @@ tasks.test {
     description = "Runs tests against the Gradle version the plugin is built with"
     classpath = sourceSets.test.get().runtimeClasspath
     useJUnitPlatform()
+    maxParallelForks = 4
 }
 
 listOf("6.4.1", "6.9.2", "7.0.2").forEach { gradleVersionUnderTest ->
@@ -53,6 +48,7 @@ listOf("6.4.1", "6.9.2", "7.0.2").forEach { gradleVersionUnderTest ->
         testClassesDirs = sourceSets.test.get().output.classesDirs
         classpath = sourceSets.test.get().runtimeClasspath
         useJUnitPlatform()
+        maxParallelForks = 4
         systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
     }
     tasks.check {
