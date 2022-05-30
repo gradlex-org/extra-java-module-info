@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.jjohannes.gradle"
-version = "0.12"
+version = "0.13"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -17,21 +17,49 @@ dependencies {
     testImplementation("org.spockframework:spock-core:2.1-groovy-3.0")
 }
 
+val pluginName = "Extra Java Module Info Gradle Plugin"
+val pluginDescription = "Add module information to legacy Java libraries."
+val pluginGitHub = "https://github.com/jjohannes/extra-java-module-info"
+
 gradlePlugin {
     plugins {
         create("extra-java-module-info") {
             id = "de.jjohannes.extra-java-module-info"
             implementationClass = "de.jjohannes.gradle.javamodules.ExtraModuleInfoPlugin"
-            displayName = "Add module information to legacy Java libraries"
-            description = "Add module information to Java libraries that do not have any."
+            displayName = pluginDescription
+            description = pluginDescription
         }
     }
 }
 
 pluginBundle {
-    website = "https://github.com/jjohannes/extra-java-module-info"
-    vcsUrl = "https://github.com/jjohannes/extra-java-module-info.git"
+    website = pluginGitHub
+    vcsUrl = pluginGitHub
     tags = listOf("java", "modularity", "jigsaw", "jpms")
+}
+
+publishing {
+    publications.withType<MavenPublication>().all {
+        pom.name.set(pluginName)
+        pom.description.set(pluginDescription)
+        pom.url.set(pluginGitHub)
+        pom.licenses {
+            license {
+                name.set("Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        pom.developers {
+            developer {
+                id.set("jjohannes")
+                name.set("Jendrik Johannes")
+                email.set("jendrik@onepiece.software")
+            }
+        }
+        pom.scm {
+            url.set(pluginGitHub)
+        }
+    }
 }
 
 tasks.test {

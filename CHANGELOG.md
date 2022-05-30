@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 0.13
+* [New] [#32](https://github.com/jjohannes/extra-java-module-info/issues/32) - Add license information to POM (Thanks [Edward McKnight](https://github.com/EM-Creations) for reporting!)
+
 ## Version 0.12
 * [New] [#31](https://github.com/jjohannes/extra-java-module-info/issues/31) - Address Jars by 'group:name' coordinates (instead of file name with version)
 * [New] [#1](https://github.com/jjohannes/extra-java-module-info/issues/1) - Merging several legacy Jars into one Module Jar
