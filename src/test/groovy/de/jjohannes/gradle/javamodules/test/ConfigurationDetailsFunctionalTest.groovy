@@ -214,12 +214,16 @@ class ConfigurationDetailsFunctionalTest extends Specification {
             module org.gradle.sample.app {
                 requires org.apache.commons.cli;
                 requires org.apache.commons.collections;
+                
+                requires static jsr305;
             }
         """
         buildFile << """
             dependencies {
                 implementation("commons-cli:commons-cli:1.4")  
                 implementation("commons-collections:commons-collections:3.2.2")
+                
+                compileOnly("com.google.code.findbugs:jsr305:3.0.2")
             }
             
             extraJavaModuleInfo {
@@ -227,6 +231,8 @@ class ConfigurationDetailsFunctionalTest extends Specification {
                     exports("org.apache.commons.cli")
                 }
                 module("${libs.commonsCollections}", "org.apache.commons.collections")
+
+                automaticModule("${libs.jsr305}", "jsr305")
             }
         """
 

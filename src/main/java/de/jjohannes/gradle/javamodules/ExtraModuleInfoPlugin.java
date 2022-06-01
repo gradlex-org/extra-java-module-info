@@ -59,8 +59,11 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
                     m.getMergedJars().stream()).filter(s -> s.contains(":")).forEach(s ->
                     d.add(project.getDependencies().create(s))));
 
-            // Automatically get versions from the runtime classpath
+            // Automatically get versions from the compile and runtime classpath
             if (GradleVersion.current().compareTo(GradleVersion.version("6.8")) >= 0) {
+                //noinspection UnstableApiUsage
+                c.shouldResolveConsistentlyWith(project.getConfigurations().getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME));
+
                 //noinspection UnstableApiUsage
                 c.shouldResolveConsistentlyWith(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
             }
