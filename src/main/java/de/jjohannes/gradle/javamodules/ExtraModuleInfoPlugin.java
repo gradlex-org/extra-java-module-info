@@ -54,7 +54,6 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
             c.getAttributes().attribute(Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
 
             // Automatically add dependencies for Jars where we know the coordinates
-            // Note: User still needs to provide versions in through constraints/platforms or consistent resolution.
             c.withDependencies(d -> extension.getModuleSpecs().get().values().stream().flatMap(m ->
                     m.getMergedJars().stream()).filter(s -> s.contains(":")).forEach(s ->
                     d.add(project.getDependencies().create(s))));
