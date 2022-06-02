@@ -29,11 +29,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -41,6 +41,9 @@ import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
+
+import static de.jjohannes.gradle.javamodules.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch;
+import static de.jjohannes.gradle.javamodules.FilePathToModuleCoordinates.versionFromFilePath;
 
 /**
  * An artifact transform that applies additional information to Jars without module information.
@@ -97,12 +100,12 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     private ModuleSpec findModuleSpec(File originalJar) {
         Map<String, ModuleSpec> moduleSpecs = getParameters().getModuleSpecs().get();
 
-        String gaCoordinates = gaCoordinatesFromFilePath(originalJar.toPath());
-        String originalJarName = originalJar.getName();
-
-        if (moduleSpecs.containsKey(gaCoordinates)) {
-            return moduleSpecs.get(gaCoordinates);
+        Optional<String> gaCoordinates = moduleSpecs.keySet().stream().filter(ga -> gaCoordinatesFromFilePathMatch(originalJar.toPath(), ga)).findFirst();
+        if (gaCoordinates.isPresent()) {
+            return moduleSpecs.get(gaCoordinates.get());
         }
+
+        String originalJarName = originalJar.getName();
         if (moduleSpecs.containsKey(originalJarName)) {
             return moduleSpecs.get(originalJarName);
         }
@@ -112,38 +115,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
 
     private boolean willBeMerged(File originalJar, Collection<ModuleSpec> modules) {
         return modules.stream().anyMatch(module -> module.getMergedJars().stream().anyMatch(toMerge ->
-                toMerge.equals(gaCoordinatesFromFilePath(originalJar.toPath())) || toMerge.equals(originalJar.getName())));
-    }
-
-    /**
-     * Attempts to parse 'group' and 'name' coordinates from a path like:
-     * .gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.36/6c62681a2f655b49963a5983b8b0950a6120ae14/slf4j-api-1.7.36.jar
-     */
-    @Nullable
-    private String gaCoordinatesFromFilePath(Path path) {
-        String version = versionFromFilePath(path);
-        if (version == null) {
-            return null;
-        }
-
-        String group = path.getName(path.getNameCount() - 5).toString();
-        String name = path.getName(path.getNameCount() - 4).toString();
-
-        return group + ":" + name;
-    }
-
-    @Nullable
-    private String versionFromFilePath(Path path) {
-        if (path.getNameCount() < 5) {
-            return null;
-        }
-
-        String version = path.getName(path.getNameCount() - 3).toString();
-        if (!path.getFileName().toString().contains(version)) {
-            return null;
-        }
-
-        return version;
+                gaCoordinatesFromFilePathMatch(originalJar.toPath(), toMerge) || toMerge.equals(originalJar.getName())));
     }
 
     private boolean isModule(File jar) {
