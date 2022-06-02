@@ -17,16 +17,19 @@ dependencies {
     testImplementation("org.spockframework:spock-core:2.1-groovy-3.0")
 }
 
+val pluginId = "de.jjohannes.extra-java-module-info"
+val pluginClass = "de.jjohannes.gradle.javamodules.ExtraModuleInfoPlugin"
 val pluginName = "Extra Java Module Info Gradle Plugin"
 val pluginDescription = "Add module information to legacy Java libraries."
+val pluginBundleTags = listOf("java", "modularity", "jigsaw", "jpms")
 val pluginGitHub = "https://github.com/jjohannes/extra-java-module-info"
 
 gradlePlugin {
     plugins {
-        create("extra-java-module-info") {
-            id = "de.jjohannes.extra-java-module-info"
-            implementationClass = "de.jjohannes.gradle.javamodules.ExtraModuleInfoPlugin"
-            displayName = pluginDescription
+        create(project.name) {
+            id = pluginId
+            implementationClass = pluginClass
+            displayName = pluginName
             description = pluginDescription
         }
     }
@@ -35,7 +38,7 @@ gradlePlugin {
 pluginBundle {
     website = pluginGitHub
     vcsUrl = pluginGitHub
-    tags = listOf("java", "modularity", "jigsaw", "jpms")
+    tags = pluginBundleTags
 }
 
 publishing {
