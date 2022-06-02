@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 0.14
+* [Fixed] [#33](https://github.com/jjohannes/extra-java-module-info/issues/33) - Map 'Jar File Path' to 'group:name' correctly for Jars cached in local .m2 repository (Thanks [Leon Linhart](https://github.com/TheMrMilchmann) for reporting!)
+
 ## Version 0.13
 * [New] [#32](https://github.com/jjohannes/extra-java-module-info/issues/32) - Add license information to POM (Thanks [Edward McKnight](https://github.com/EM-Creations) for reporting!)
 

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.jjohannes.gradle"
-version = "0.13"
+version = "0.14"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
