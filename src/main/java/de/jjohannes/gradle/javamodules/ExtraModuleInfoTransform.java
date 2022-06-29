@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
@@ -178,8 +180,9 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
             }
             manifest.getMainAttributes().putValue("Automatic-Module-Name", automaticModule.getModuleName());
             try (JarOutputStream outputStream = new JarOutputStream(Files.newOutputStream(moduleJar.toPath()), manifest)) {
-                copyAndExtractProviders(inputStream, outputStream);
-                mergeJars(automaticModule, outputStream);
+                Map<String, List<String>> providers = new LinkedHashMap<>();
+                copyAndExtractProviders(inputStream, outputStream, !automaticModule.getMergedJars().isEmpty(), providers);
+                mergeJars(automaticModule, outputStream, providers);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -189,8 +192,9 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
     private void addModuleDescriptor(File originalJar, File moduleJar, ModuleInfo moduleInfo) {
         try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(originalJar.toPath()))) {
             try (JarOutputStream outputStream = newJarOutputStream(Files.newOutputStream(moduleJar.toPath()), inputStream.getManifest())) {
-                Map<String, String[]> providers = copyAndExtractProviders(inputStream, outputStream);
-                mergeJars(moduleInfo, outputStream);
+                Map<String, List<String>> providers = new LinkedHashMap<>();
+                copyAndExtractProviders(inputStream, outputStream, !moduleInfo.getMergedJars().isEmpty(), providers);
+                mergeJars(moduleInfo, outputStream, providers);
                 outputStream.putNextEntry(new JarEntry("module-info.class"));
                 outputStream.write(addModuleInfo(moduleInfo, providers, versionFromFilePath(originalJar.toPath())));
                 outputStream.closeEntry();
@@ -200,42 +204,53 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         }
     }
 
-    private static JarOutputStream newJarOutputStream(OutputStream out, @Nullable Manifest manifest) throws IOException {
+    private JarOutputStream newJarOutputStream(OutputStream out, @Nullable Manifest manifest) throws IOException {
         return manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
     }
 
-    private static Map<String, String[]> copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
+    private void copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream, boolean willMergeJars, Map<String, List<String>> providers) throws IOException {
         JarEntry jarEntry = inputStream.getNextJarEntry();
-        Map<String, String[]> providers = new LinkedHashMap<>();
         while (jarEntry != null) {
             byte[] content = readAllBytes(inputStream);
             String entryName = jarEntry.getName();
-            if (entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX)) {
-                providers.put(entryName.substring(SERVICES_PREFIX.length()), extractImplementations(content));
+            boolean isServiceProviderFile = entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX);
+            if (isServiceProviderFile) {
+                String key = entryName.substring(SERVICES_PREFIX.length());
+                if (!providers.containsKey(key)) {
+                    providers.put(key, new ArrayList<>());
+                }
+                providers.get(key).addAll(extractImplementations(content));
             }
+
             if (!JAR_SIGNATURE_PATH.matcher(jarEntry.getName()).matches() && !"META-INF/MANIFEST.MF".equals(jarEntry.getName())) {
-                jarEntry.setCompressedSize(-1);
-                outputStream.putNextEntry(jarEntry);
-                outputStream.write(content);
-                outputStream.closeEntry();
+                if (!willMergeJars || !isServiceProviderFile) { // service provider files will be merged later
+                    jarEntry.setCompressedSize(-1);
+                    try {
+                        outputStream.putNextEntry(jarEntry);
+                        outputStream.write(content);
+                        outputStream.closeEntry();
+                    } catch (ZipException e) {
+                        if (!e.getMessage().startsWith("duplicate entry:")) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
             }
             jarEntry = inputStream.getNextJarEntry();
         }
-        return providers;
     }
 
-    private static String[] extractImplementations(byte[] content) {
+    private List<String> extractImplementations(byte[] content) {
         return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8))
                 .lines()
                 .map(String::trim)
                 .filter(line -> !line.isEmpty())
                 .filter(line -> !line.startsWith("#"))
-                .map(line -> line.replace('.','/'))
                 .distinct()
-                .toArray(String[]::new);
+                .collect(Collectors.toList());
     }
 
-    private byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, String[]> providers, @Nullable String version) {
+    private byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, List<String>> providers, @Nullable String version) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
         String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
@@ -253,11 +268,12 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         for (String requireName : moduleInfo.requiresStatic) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE, null);
         }
-        for (Map.Entry<String, String[]> entry : providers.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : providers.entrySet()) {
             String name = entry.getKey();
-            String[] implementations = entry.getValue();
+            List<String> implementations = entry.getValue();
             if (!moduleInfo.ignoreServiceProviders.contains(name)) {
-                moduleVisitor.visitProvide(name.replace('.', '/'), implementations);
+                moduleVisitor.visitProvide(name.replace('.', '/'),
+                        implementations.stream().map(impl -> impl.replace('.','/')).toArray(String[]::new));
             }
         }
         moduleVisitor.visitEnd();
@@ -265,7 +281,11 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
         return classWriter.toByteArray();
     }
 
-    private void mergeJars(ModuleSpec moduleSpec, JarOutputStream outputStream) throws IOException {
+    private void mergeJars(ModuleSpec moduleSpec, JarOutputStream outputStream, Map<String, List<String>> providers) throws IOException {
+        if (moduleSpec.getMergedJars().isEmpty()) {
+            return;
+        }
+
         RegularFile mergeJarFile = null;
         for (String identifier : moduleSpec.getMergedJars()) {
             List<String> ids = getParameters().getMergeJarIds().get();
@@ -285,31 +305,29 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
 
             if (mergeJarFile != null) {
                 try (JarInputStream toMergeInputStream = new JarInputStream(Files.newInputStream(mergeJarFile.getAsFile().toPath()))) {
-                    copyEntries(toMergeInputStream, outputStream);
+                    copyAndExtractProviders(toMergeInputStream, outputStream, true, providers);
                 }
             } else {
                 throw new RuntimeException("Jar not found: " + identifier);
             }
         }
+
+        mergeServiceProviderFiles(outputStream, providers);
     }
 
-    private static void copyEntries(JarInputStream inputStream, JarOutputStream outputStream) throws IOException {
-        JarEntry jarEntry = inputStream.getNextJarEntry();
-        while (jarEntry != null) {
-            try {
-                outputStream.putNextEntry(jarEntry);
-                outputStream.write(readAllBytes(inputStream));
-                outputStream.closeEntry();
-            } catch (ZipException e) {
-                if (!e.getMessage().startsWith("duplicate entry:")) {
-                    throw new RuntimeException(e);
-                }
+    private void mergeServiceProviderFiles(JarOutputStream outputStream, Map<String, List<String>> providers) throws IOException {
+        for (Map.Entry<String, List<String>> provider : providers.entrySet()) {
+            JarEntry jarEntry = new JarEntry(SERVICES_PREFIX + provider.getKey());
+            outputStream.putNextEntry(jarEntry);
+            for (String implementation : provider.getValue()) {
+                outputStream.write(implementation.getBytes());
+                outputStream.write("\n".getBytes());
             }
-            jarEntry = inputStream.getNextJarEntry();
+            outputStream.closeEntry();
         }
     }
 
-    public static byte[] readAllBytes(InputStream inputStream) throws IOException {
+    private byte[] readAllBytes(InputStream inputStream) throws IOException {
         final int bufLen = 4 * 0x400;
         byte[] buf = new byte[bufLen];
         int readLen;

@@ -453,4 +453,81 @@ abstract class AbstractFunctionalTest extends Specification {
         !result.output.contains('slf4j-api-1.7.32.jar')
         !result.output.contains('slf4j-ext-1.7.32.jar')
     }
+
+    def "merges service provider files of several jars"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+
+            public class Main {
+                public static void main(String[] args) {
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                requires org.apache.qpid.broker;
+            }
+        """
+        buildFile << """   
+            dependencies {
+                implementation(platform("org.apache.qpid:qpid-broker-parent:8.0.6"))
+                javaModulesMergeJars(platform("org.apache.qpid:qpid-broker-parent:8.0.6"))
+                
+                implementation("org.apache.qpid:qpid-broker-core")
+                implementation("org.apache.qpid:qpid-broker-plugins-amqp-1-0-protocol")
+                implementation("org.apache.qpid:qpid-broker-plugins-memory-store")
+                implementation("org.apache.qpid:qpid-jms-client")
+                implementation("org.apache.qpid:qpid-broker-plugins-management-http")
+                implementation("org.apache.qpid:qpid-broker-plugins-websocket")
+            }               
+            
+            extraJavaModuleInfo {
+                failOnMissingModuleInfo.set(false)
+                automaticModule("org.apache.qpid:qpid-broker-core", "org.apache.qpid.broker") {
+                    mergeJar("org.apache.qpid:qpid-broker-plugins-amqp-1-0-protocol")
+                    mergeJar("org.apache.qpid:qpid-broker-plugins-memory-store")
+                    mergeJar("org.apache.qpid:qpid-jms-client")
+                    mergeJar("org.apache.qpid:qpid-broker-plugins-management-http")
+                    mergeJar("org.apache.qpid:qpid-broker-plugins-websocket")
+                }
+            }
+            
+            tasks.named("run") {
+                doLast { 
+                     println(
+                        zipTree(configurations.runtimeClasspath.get().files.find {
+                            it.name == "qpid-broker-core-8.0.6-module.jar"
+                        }).find {
+                            it.path.endsWith("/META-INF/services/org.apache.qpid.server.plugin.ConfiguredObjectRegistration")
+                        }!!.readText()
+                    )
+                }
+            }
+        """
+
+        when:
+        def result = run()
+
+        then:
+        result.output.contains('''
+            org.apache.qpid.server.security.auth.manager.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.model.adapter.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.model.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.virtualhost.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.security.group.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.security.group.cloudfoundry.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.virtualhostnode.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.security.auth.manager.oauth2.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.exchange.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.model.port.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.queue.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.security.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.protocol.v1_0.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.virtualhostnode.memory.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.store.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.virtualhost.memory.ConfiguredObjectRegistrationImpl
+            org.apache.qpid.server.management.plugin.ConfiguredObjectRegistrationImpl
+        '''.stripIndent())
+    }
 }

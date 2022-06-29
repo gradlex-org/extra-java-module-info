@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 0.15
+* [New] [#34](https://github.com/jjohannes/extra-java-module-info/issues/34) - Merge Jars - merge service provider files
+
 ## Version 0.14
 * [Fixed] [#33](https://github.com/jjohannes/extra-java-module-info/issues/33) - Map 'Jar File Path' to 'group:name' correctly for Jars cached in local .m2 repository (Thanks [Leon Linhart](https://github.com/TheMrMilchmann) for reporting!)
 
