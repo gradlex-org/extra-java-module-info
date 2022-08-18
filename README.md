@@ -43,7 +43,7 @@ It is recommended to use a [convention plugin](https://docs.gradle.org/current/s
 ## Plugin dependency
 
 Add this to the build file of your convention plugin's build
-(e.g. `build-logic/build.gradle(.kts)` or `buildSrc/build.gradle(.kts)`).
+(e.g. `gradle/plugins/build.gradle(.kts)` or `buildSrc/build.gradle(.kts)`).
 
 ```
 dependencies {
@@ -163,3 +163,8 @@ This plugin offers the option to merge multiple Jars into one in such situations
 ```
 
 Note: The merged Jar will include the *first* appearance of duplicated files (like the `MANIFEST.MF`).
+
+# Disclaimer
+
+Gradle and the Gradle logo are trademarks of Gradle, Inc.
+The GradleX project is not endorsed by, affiliated with, or associated with Gradle or Gradle, Inc. in any way.
