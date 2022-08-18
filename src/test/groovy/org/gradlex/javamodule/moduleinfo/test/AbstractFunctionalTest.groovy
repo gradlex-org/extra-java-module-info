@@ -17,7 +17,7 @@ abstract class AbstractFunctionalTest extends Specification {
         buildFile << '''
             plugins {
                 id("application")
-                id("org.gradlex.extra-java-module-info")
+                id("de.jjohannes.extra-java-module-info")
             }
             application {
                 mainModule.set("org.gradle.sample.app")

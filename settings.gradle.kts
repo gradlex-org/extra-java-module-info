@@ -5,7 +5,7 @@ plugins {
 rootProject.name = "extra-java-module-info"
 
 dependencyResolutionManagement {
-    repositories.mavenCentral()
+    repositories.gradlePluginPortal()
 }
 
 gradleEnterprise {

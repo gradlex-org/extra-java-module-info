@@ -3,25 +3,29 @@ plugins {
     id("org.gradlex.internal.plugin-publish-conventions") version "0.4"
 }
 
-group = "org.gradlex"
-version = "1.0"
+group = "de.jjohannes.gradle"
+version = "0.16"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+signing {
+    isRequired = false
+}
+
 dependencies {
-    implementation("org.ow2.asm:asm:8.0.1")
+    implementation("org.gradlex:${project.name}:1.0")
 
     testImplementation("org.spockframework:spock-core:2.1-groovy-3.0")
 }
 
 pluginPublishConventions {
-    id("${project.group}.${project.name}")
-    implementationClass("org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPlugin")
+    id("de.jjohannes.${project.name}")
+    implementationClass("de.jjohannes.gradle.javamodules.ExtraModuleInfoPlugin")
     displayName("Extra Java Module Info Gradle Plugin")
-    description("Add module information to legacy Java libraries.")
+    description("!!! Plugin ID changed to 'org.gradlex.${project.name}' !!!")
     tags("gradlex", "java", "modularity", "jigsaw", "jpms")
     gitHub("https://github.com/gradlex-org/extra-java-module-info")
     developer {
