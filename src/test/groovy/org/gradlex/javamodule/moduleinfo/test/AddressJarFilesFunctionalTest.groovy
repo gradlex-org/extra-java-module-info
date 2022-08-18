@@ -1,6 +1,6 @@
-package de.jjohannes.gradle.javamodules.test
+package org.gradlex.javamodule.moduleinfo.test
 
-import de.jjohannes.gradle.javamodules.test.fixture.LegacyLibraries
+import org.gradlex.javamodule.moduleinfo.test.fixture.LegacyLibraries
 
 class AddressJarFilesFunctionalTest extends AbstractFunctionalTest {
 

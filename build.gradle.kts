@@ -1,10 +1,10 @@
 plugins {
-    id("com.gradle.plugin-publish") version "1.0.0-rc-2"
     id("groovy")
+    id("org.gradlex.internal.plugin-publish-conventions") version "0.4"
 }
 
-group = "de.jjohannes.gradle"
-version = "0.15"
+group = "org.gradlex"
+version = "1.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -17,51 +17,17 @@ dependencies {
     testImplementation("org.spockframework:spock-core:2.1-groovy-3.0")
 }
 
-val pluginId = "de.jjohannes.extra-java-module-info"
-val pluginClass = "de.jjohannes.gradle.javamodules.ExtraModuleInfoPlugin"
-val pluginName = "Extra Java Module Info Gradle Plugin"
-val pluginDescription = "Add module information to legacy Java libraries."
-val pluginBundleTags = listOf("java", "modularity", "jigsaw", "jpms")
-val pluginGitHub = "https://github.com/jjohannes/extra-java-module-info"
-
-gradlePlugin {
-    plugins {
-        create(project.name) {
-            id = pluginId
-            implementationClass = pluginClass
-            displayName = pluginName
-            description = pluginDescription
-        }
-    }
-}
-
-pluginBundle {
-    website = pluginGitHub
-    vcsUrl = pluginGitHub
-    tags = pluginBundleTags
-}
-
-publishing {
-    publications.withType<MavenPublication>().all {
-        pom.name.set(pluginName)
-        pom.description.set(pluginDescription)
-        pom.url.set(pluginGitHub)
-        pom.licenses {
-            license {
-                name.set("Apache License, Version 2.0")
-                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-            }
-        }
-        pom.developers {
-            developer {
-                id.set("jjohannes")
-                name.set("Jendrik Johannes")
-                email.set("jendrik@onepiece.software")
-            }
-        }
-        pom.scm {
-            url.set(pluginGitHub)
-        }
+pluginPublishConventions {
+    id("${project.group}.${project.name}")
+    implementationClass("org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPlugin")
+    displayName("Extra Java Module Info Gradle Plugin")
+    description("Add module information to legacy Java libraries.")
+    tags("gradlex", "java", "modularity", "jigsaw", "jpms")
+    gitHub("https://github.com/gradlex-org/extra-java-module-info")
+    developer {
+        id.set("jjohannes")
+        name.set("Jendrik Johannes")
+        email.set("jendrik@gradlex.org")
     }
 }
 

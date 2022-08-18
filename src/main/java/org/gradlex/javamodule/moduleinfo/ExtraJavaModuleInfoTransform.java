@@ -1,4 +1,20 @@
-package de.jjohannes.gradle.javamodules;
+/*
+ * Copyright 2022 the GradleX team.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.NonNullApi;
 import org.gradle.api.artifacts.CacheableRule;
@@ -44,8 +60,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
-import static de.jjohannes.gradle.javamodules.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch;
-import static de.jjohannes.gradle.javamodules.FilePathToModuleCoordinates.versionFromFilePath;
+import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch;
+import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.versionFromFilePath;
 
 /**
  * An artifact transform that applies additional information to Jars without module information.
@@ -54,7 +70,7 @@ import static de.jjohannes.gradle.javamodules.FilePathToModuleCoordinates.versio
  */
 @CacheableRule
 @NonNullApi
-abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraModuleInfoTransform.Parameter> {
+abstract public class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
     private static final Pattern JAR_SIGNATURE_PATH = Pattern.compile("^META-INF/[^/]+\\.(SF|RSA|DSA|sf|rsa|dsa)$");

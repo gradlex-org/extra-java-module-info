@@ -1,12 +1,17 @@
+# Extra Java Module Info Gradle plugin
+
+[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fgradlex-org%2Fextra-java-module-info%2Fbadge%3Fref%3Dmain&style=flat)](https://actions-badge.atrox.dev/gradlex-org/extra-java-module-info/goto?ref=main)
+[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v?label=Plugin%20Portal&metadataUrl=https%3A%2F%2Fplugins.gradle.org%2Fm2%2Forg%2Fgradlex%extra-java-module-info%2Forg.gradlex.extra-java-module-info%2Fmaven-metadata.xml)](https://plugins.gradle.org/plugin/org.gradlex.extra-java-module-info)
+
 A Gradle 6.4+ plugin to use legacy Java libraries as _Java Modules_ in a modular Java project.
 
-This plugin is maintained by me, [Jendrik Johannes](https://github.com/jjohannes).
+This [GradleX](https://gradlex.org) plugin is maintained by me, [Jendrik Johannes](https://github.com/jjohannes).
 I offer consulting and training for Gradle and/or the Java Module System - please [reach out](mailto:jendrik.johannes@gmail.com) if you are interested.
 There is also my [YouTube channel](https://www.youtube.com/playlist?list=PLWQK2ZdV4Yl2k2OmC_gsjDpdIBTN0qqkE) on Gradle topics.
 
 Special thanks goes to [Ihor Herasymenko](https://github.com/iherasymenko) who has been contributing many features and fixes to this plugin!
 
-If you have a suggestion or a question, please [open an issue](https://github.com/jjohannes/extra-java-module-info/issues/new).
+If you have a suggestion or a question, please [open an issue](https://github.com/gradlex-org/extra-java-module-info/issues/new).
 
 There is a [CHANGELOG.md](CHANGELOG.md).
 
@@ -14,14 +19,14 @@ There is a [CHANGELOG.md](CHANGELOG.md).
 
 If you plan to build Java Modules with Gradle, you should consider using these plugins on top of Gradle core:
 
-- [`id("de.jjohannes.java-module-dependencies")`](https://github.com/jjohannes/java-module-dependencies)  
+- [`id("org.gradlex.java-module-dependencies")`](https://github.com/gradlex-org/java-module-dependencies)  
   Avoid duplicated dependency definitions and get your Module Path under control
-- [`id("de.jjohannes.java-module-testing")`](https://github.com/jjohannes/java-module-testing)  
+- [`id("org.gradlex.java-module-testing")`](https://github.com/gradlex-org/java-module-testing)  
   Proper test setup for Java Modules
-- [`id("de.jjohannes.extra-java-module-info")`](https://github.com/jjohannes/extra-java-module-info)  
+- [`id("org.gradlex.extra-java-module-info")`](https://github.com/gradlex-org/extra-java-module-info)  
   Only if your (existing) project cannot avoid using non-module legacy Jars
 
-[Here is a sample](https://github.com/jjohannes/java-module-testing/tree/main/samples/use-all-java-module-plugins)
+[Here is a sample](https://github.com/gradlex-org/java-module-testing/tree/main/samples/use-all-java-module-plugins)
 that shows all plugins in combination.
 
 [Full Java Module System Project Setup](https://github.com/jjohannes/gradle-project-setup-howto/tree/java_module_system) is a full-fledged Java Module System project setup using these plugins.  
@@ -42,7 +47,7 @@ Add this to the build file of your convention plugin's build
 
 ```
 dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.15")
+    implementation("org.gradlex:extra-java-module-info:1.0")
 }
 ```
 
@@ -52,7 +57,7 @@ In your convention plugin, apply the plugin and define the additional module inf
 ```
 plugins {
     ...
-    id("de.jjohannes.extra-java-module-info")
+    id("org.gradlex.extra-java-module-info")
 }
 
 // add module information for all direct and transitive dependencies that are not modules
@@ -98,7 +103,7 @@ Sample uses Gradle's Kotlin DSL (`build.gradle.kts` file). The Groovy DSL syntax
 ## How do I deactivate the plugin functionality for a certain classpath?
 
 This can be useful for the test classpath if it should be used for unit testing on the classpath (rather than the module path).
-If you use the [shadow plugin](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow) and [encounter this issue](https://github.com/jjohannes/extra-java-module-info/issues/7),
+If you use the [shadow plugin](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow) and [encounter this issue](https://github.com/gradlex-org/extra-java-module-info/issues/7),
 you can deactivate it for the runtime classpath as the module information is irrelevant for a fat Jar in any case.
 
 **Kotlin DSL**

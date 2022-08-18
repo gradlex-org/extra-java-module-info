@@ -1,4 +1,4 @@
-package de.jjohannes.gradle.javamodules.test.fixture
+package org.gradlex.javamodule.moduleinfo.test.fixture
 
 class LegacyLibraries {
 

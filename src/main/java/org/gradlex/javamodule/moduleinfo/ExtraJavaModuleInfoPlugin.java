@@ -1,4 +1,20 @@
-package de.jjohannes.gradle.javamodules;
+/*
+ * Copyright 2022 the GradleX team.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
@@ -29,7 +45,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unused")
 @NonNullApi
-public class ExtraModuleInfoPlugin implements Plugin<Project> {
+public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
@@ -38,14 +54,14 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         }
 
         // register the plugin extension as 'extraJavaModuleInfo {}' configuration block
-        ExtraModuleInfoPluginExtension extension = project.getExtensions().create("extraJavaModuleInfo", ExtraModuleInfoPluginExtension.class);
+        ExtraJavaModuleInfoPluginExtension extension = project.getExtensions().create("extraJavaModuleInfo", ExtraJavaModuleInfoPluginExtension.class);
         extension.getFailOnMissingModuleInfo().convention(true);
 
         // setup the transform for all projects in the build
         project.getPlugins().withType(JavaPlugin.class).configureEach(javaPlugin -> configureTransform(project, extension));
     }
 
-    private void configureTransform(Project project, ExtraModuleInfoPluginExtension extension) {
+    private void configureTransform(Project project, ExtraJavaModuleInfoPluginExtension extension) {
         Configuration javaModulesMergeJars = project.getConfigurations().create("javaModulesMergeJars", c -> {
             c.setVisible(false);
             c.setCanBeConsumed(false);
@@ -83,7 +99,7 @@ public class ExtraModuleInfoPlugin implements Plugin<Project> {
         project.getDependencies().getArtifactTypes().getByName("jar").getAttributes().attribute(javaModule, false);
 
         // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills the input parameter
-        project.getDependencies().registerTransform(ExtraModuleInfoTransform.class, t -> {
+        project.getDependencies().registerTransform(ExtraJavaModuleInfoTransform.class, t -> {
             t.parameters(p -> {
                 p.getModuleSpecs().set(extension.getModuleSpecs());
                 p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());

@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.0
+* Moved project to [GradleX](https://gradlex.org) - new plugin ID: `org.gradlex.extra-java-module-info`
+
 ## Version 0.15
 * [New] [#34](https://github.com/jjohannes/extra-java-module-info/issues/34) - Merge Jars - merge service provider files
 

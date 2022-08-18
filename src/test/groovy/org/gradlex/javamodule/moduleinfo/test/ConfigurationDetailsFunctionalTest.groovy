@@ -1,7 +1,7 @@
-package de.jjohannes.gradle.javamodules.test
+package org.gradlex.javamodule.moduleinfo.test
 
-import de.jjohannes.gradle.javamodules.test.fixture.GradleBuild
-import de.jjohannes.gradle.javamodules.test.fixture.LegacyLibraries
+import org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild
+import org.gradlex.javamodule.moduleinfo.test.fixture.LegacyLibraries
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Specification
 
@@ -15,7 +15,7 @@ class ConfigurationDetailsFunctionalTest extends Specification {
         buildFile << '''
             plugins {
                 id("application")
-                id("de.jjohannes.extra-java-module-info")
+                id("org.gradlex.extra-java-module-info")
             }
             application {
                 mainModule.set("org.gradle.sample.app")

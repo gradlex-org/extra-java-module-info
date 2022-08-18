@@ -1,6 +1,6 @@
-package de.jjohannes.gradle.javamodules.test
+package org.gradlex.javamodule.moduleinfo.test
 
-import de.jjohannes.gradle.javamodules.test.fixture.GradleBuild
+import org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Specification
 
@@ -43,7 +43,7 @@ class CombinationWithOtherPluginsFunctionalTest extends Specification {
         file("app/build.gradle") << """
             plugins {
                 id 'application'
-                id 'de.jjohannes.extra-java-module-info'
+                id 'org.gradlex.extra-java-module-info'
                 id 'com.github.johnrengelman.shadow' version '6.1.0'
             }
             dependencies {

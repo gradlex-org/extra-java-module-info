@@ -1,11 +1,11 @@
-package de.jjohannes.gradle.javamodules
+package org.gradlex.javamodule.moduleinfo
 
 import spock.lang.Specification
 
 import java.nio.file.Path
 
-import static de.jjohannes.gradle.javamodules.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch
-import static de.jjohannes.gradle.javamodules.FilePathToModuleCoordinates.versionFromFilePath
+import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch
+import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.versionFromFilePath
 
 class FilePathToModuleCoordinatesTest extends Specification {
 

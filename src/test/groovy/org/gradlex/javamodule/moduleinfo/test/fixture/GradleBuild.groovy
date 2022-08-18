@@ -1,4 +1,4 @@
-package de.jjohannes.gradle.javamodules.test.fixture
+package org.gradlex.javamodule.moduleinfo.test.fixture
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
