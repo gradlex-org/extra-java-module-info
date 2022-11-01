@@ -105,7 +105,8 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                 p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());
 
                 // See: https://github.com/adammurdoch/dependency-graph-as-task-inputs/blob/main/plugins/src/main/java/TestPlugin.java
-                Provider<Set<ResolvedArtifactResult>> artifacts = project.provider(() -> javaModulesMergeJars.getIncoming().getArtifacts().getArtifacts());
+                Provider<Set<ResolvedArtifactResult>> artifacts = project.provider(() ->
+                        javaModulesMergeJars.getIncoming().artifactView(v -> v.lenient(true)).getArtifacts().getArtifacts());
                 p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
                 p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
             });

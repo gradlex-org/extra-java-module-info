@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.1
+* [Fixed] [#36](https://github.com/jjohannes/extra-java-module-info/issues/36) - mergeJar can lead to unnecessary build failures (Thanks [nieqian1230](https://github.com/nieqian1230) for reporting!)
+
 ## Version 1.0
 * Moved project to [GradleX](https://gradlex.org) - new plugin ID: `org.gradlex.extra-java-module-info`
 
