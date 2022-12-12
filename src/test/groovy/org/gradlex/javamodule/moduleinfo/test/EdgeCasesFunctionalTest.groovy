@@ -60,4 +60,40 @@ class EdgeCasesFunctionalTest extends Specification {
         expect:
         run()
     }
+
+    def "does fully merge zip files on the classpath"() {
+        given:
+        buildFile << """             
+            ${gradleVersionUnderTest == "6.4.1"? 'configurations.javaModulesMergeJars.get().extendsFrom(configurations.implementation.get())' : '' }
+            dependencies {
+                implementation("org.apache.qpid:qpid-broker-core:9.0.0")
+                implementation("org.apache.qpid:qpid-broker-plugins-management-http:9.0.0")
+            }
+            
+            extraJavaModuleInfo {
+                failOnMissingModuleInfo.set(false)
+                automaticModule("org.apache.qpid:qpid-broker-core", "org.apache.qpid.broker") {
+                    mergeJar("org.apache.qpid:qpid-broker-plugins-management-http")
+                    mergeJar("org.dojotoolkit:dojo") // This is a Zip, selected by 'distribution' classifier in dependencies of 'qpid-broker-plugins-management-http'  
+                    mergeJar("org.webjars.bower:dgrid")
+                    mergeJar("org.webjars.bower:dstore")
+                }
+            }
+            
+            tasks.named("build") {
+                doLast { println(configurations.runtimeClasspath.get().files.map { it.name }) }
+            }
+        """
+
+        when:
+        def result = build()
+
+        then:
+        result.output.contains('qpid-broker-core-9.0.0-module.jar')
+        !result.output.contains('dgrid-1.3.3.jar')
+        !result.output.contains('dojo-1.17.2-distribution.zip')
+        !result.output.contains('dstore-1.1.2.jar')
+        !result.output.contains('qpid-broker-plugins-management-http-9.0.0.jar')
+    }
+
 }

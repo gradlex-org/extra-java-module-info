@@ -95,8 +95,15 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             annotationProcessor.getAttributes().attribute(javaModule, true);
         });
 
+        // Jars may be transformed (or merged into) Module Jars
+        registerTransform("jar", project, extension, javaModulesMergeJars, artifactType, javaModule);
+        // Classpath entries may also be zip files that may be merged into Module Jars (from the docs: "Class paths to the .jar, .zip or .class files)"
+        registerTransform("zip", project, extension, javaModulesMergeJars, artifactType, javaModule);
+    }
+
+    private void registerTransform(String fileExtension, Project project, ExtraJavaModuleInfoPluginExtension extension, Configuration javaModulesMergeJars, Attribute<String> artifactType, Attribute<Boolean> javaModule) {
         // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them without modification
-        project.getDependencies().getArtifactTypes().getByName("jar").getAttributes().attribute(javaModule, false);
+        project.getDependencies().getArtifactTypes().maybeCreate(fileExtension).getAttributes().attribute(javaModule, false);
 
         // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills the input parameter
         project.getDependencies().registerTransform(ExtraJavaModuleInfoTransform.class, t -> {
@@ -110,7 +117,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                 p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
                 p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
             });
-            t.getFrom().attribute(artifactType, "jar").attribute(javaModule, false);
+            t.getFrom().attribute(artifactType, fileExtension).attribute(javaModule, false);
             t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);
         });
     }
