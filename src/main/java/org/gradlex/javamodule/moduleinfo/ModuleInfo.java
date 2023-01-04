@@ -33,6 +33,8 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> requiresStatic = new LinkedHashSet<>();
     final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
 
+    private boolean exportAllPackages;
+
     ModuleInfo(String identifier, String moduleName, String moduleVersion) {
         super(identifier, moduleName);
         this.moduleVersion = moduleVersion;
@@ -86,4 +88,11 @@ public class ModuleInfo extends ModuleSpec {
         }
     }
 
+    public void exportAllPackages(boolean exportAllPackages) {
+        this.exportAllPackages = exportAllPackages;
+    }
+
+    public boolean getExportAllPackages() {
+        return exportAllPackages;
+    }
 }
