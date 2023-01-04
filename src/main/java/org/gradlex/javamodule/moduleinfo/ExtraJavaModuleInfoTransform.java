@@ -47,10 +47,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.TreeSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -197,8 +200,9 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             manifest.getMainAttributes().putValue("Automatic-Module-Name", automaticModule.getModuleName());
             try (JarOutputStream outputStream = new JarOutputStream(Files.newOutputStream(moduleJar.toPath()), manifest)) {
                 Map<String, List<String>> providers = new LinkedHashMap<>();
-                copyAndExtractProviders(inputStream, outputStream, !automaticModule.getMergedJars().isEmpty(), providers);
-                mergeJars(automaticModule, outputStream, providers);
+                Set<String> packages = new TreeSet<>();
+                copyAndExtractProviders(inputStream, outputStream, !automaticModule.getMergedJars().isEmpty(), providers, packages);
+                mergeJars(automaticModule, outputStream, providers, packages);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -209,10 +213,12 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(originalJar.toPath()))) {
             try (JarOutputStream outputStream = newJarOutputStream(Files.newOutputStream(moduleJar.toPath()), inputStream.getManifest())) {
                 Map<String, List<String>> providers = new LinkedHashMap<>();
-                copyAndExtractProviders(inputStream, outputStream, !moduleInfo.getMergedJars().isEmpty(), providers);
-                mergeJars(moduleInfo, outputStream, providers);
+                Set<String> packages = new TreeSet<>();
+                copyAndExtractProviders(inputStream, outputStream, !moduleInfo.getMergedJars().isEmpty(), providers, packages);
+                mergeJars(moduleInfo, outputStream, providers, packages);
                 outputStream.putNextEntry(new JarEntry("module-info.class"));
-                outputStream.write(addModuleInfo(moduleInfo, providers, versionFromFilePath(originalJar.toPath())));
+                outputStream.write(addModuleInfo(moduleInfo, providers, versionFromFilePath(originalJar.toPath()),
+                        moduleInfo.getExportAllPackages() ? packages : Collections.emptySet()));
                 outputStream.closeEntry();
             }
         } catch (IOException e) {
@@ -224,7 +230,7 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         return manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
     }
 
-    private void copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream, boolean willMergeJars, Map<String, List<String>> providers) throws IOException {
+    private void copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream, boolean willMergeJars, Map<String, List<String>> providers, Set<String> packages) throws IOException {
         JarEntry jarEntry = inputStream.getNextJarEntry();
         while (jarEntry != null) {
             byte[] content = readAllBytes(inputStream);
@@ -238,7 +244,7 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 providers.get(key).addAll(extractImplementations(content));
             }
 
-            if (!JAR_SIGNATURE_PATH.matcher(jarEntry.getName()).matches() && !"META-INF/MANIFEST.MF".equals(jarEntry.getName())) {
+            if (!JAR_SIGNATURE_PATH.matcher(entryName).matches() && !"META-INF/MANIFEST.MF".equals(jarEntry.getName())) {
                 if (!willMergeJars || !isServiceProviderFile) { // service provider files will be merged later
                     jarEntry.setCompressedSize(-1);
                     try {
@@ -248,6 +254,12 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                     } catch (ZipException e) {
                         if (!e.getMessage().startsWith("duplicate entry:")) {
                             throw new RuntimeException(e);
+                        }
+                    }
+                    if (entryName.endsWith(".class")) {
+                        int i = entryName.lastIndexOf("/");
+                        if (i > 0) {
+                            packages.add(entryName.substring(0, i));
                         }
                     }
                 }
@@ -266,11 +278,14 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 .collect(Collectors.toList());
     }
 
-    private byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, List<String>> providers, @Nullable String version) {
+    private byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, List<String>> providers, @Nullable String version, Set<String> autoExportedPackages) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
         String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
         ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleVersion);
+        for (String packageName : autoExportedPackages) {
+            moduleVisitor.visitExport(packageName, 0);
+        }
         for (String packageName : moduleInfo.exports) {
             moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
         }
@@ -297,7 +312,7 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         return classWriter.toByteArray();
     }
 
-    private void mergeJars(ModuleSpec moduleSpec, JarOutputStream outputStream, Map<String, List<String>> providers) throws IOException {
+    private void mergeJars(ModuleSpec moduleSpec, JarOutputStream outputStream, Map<String, List<String>> providers, Set<String> packages) throws IOException {
         if (moduleSpec.getMergedJars().isEmpty()) {
             return;
         }
@@ -321,7 +336,7 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
             if (mergeJarFile != null) {
                 try (JarInputStream toMergeInputStream = new JarInputStream(Files.newInputStream(mergeJarFile.getAsFile().toPath()))) {
-                    copyAndExtractProviders(toMergeInputStream, outputStream, true, providers);
+                    copyAndExtractProviders(toMergeInputStream, outputStream, true, providers, packages);
                 }
             } else {
                 throw new RuntimeException("Jar not found: " + identifier);

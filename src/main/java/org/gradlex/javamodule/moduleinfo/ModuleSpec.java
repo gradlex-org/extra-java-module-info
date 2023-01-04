@@ -29,6 +29,7 @@ abstract public class ModuleSpec implements Serializable {
     private final String identifier;
     private final String moduleName;
     private final List<String> mergedJars = new ArrayList<>();
+    private boolean exportAllPackages;
 
     ModuleSpec(String identifier, String moduleName) {
         this.identifier = identifier;
@@ -61,5 +62,13 @@ abstract public class ModuleSpec implements Serializable {
      */
     public List<String> getMergedJars() {
         return mergedJars;
+    }
+
+    public void exportAllPackages(boolean exportAllPackages) {
+        this.exportAllPackages = exportAllPackages;
+    }
+
+    public boolean getExportAllPackages() {
+        return exportAllPackages;
     }
 }

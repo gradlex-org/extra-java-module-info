@@ -530,4 +530,50 @@ abstract class AbstractFunctionalTest extends Specification {
             org.apache.qpid.server.management.plugin.ConfiguredObjectRegistrationImpl
         '''.stripIndent())
     }
+
+    def "can automatically export all packages of a legacy library"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            public class Main {
+                public static void main(String[] args) throws Exception {
+                    org.apache.commons.collections.Bag a;
+                    org.apache.commons.collections.bag.HashBag b;
+                    org.apache.commons.collections.bidimap.DualHashBidiMap c;
+                    org.apache.commons.collections.buffer.BlockingBuffer e;
+                    org.apache.commons.collections.collection.CompositeCollection f;
+                    org.apache.commons.collections.comparators.BooleanComparator g;
+                    org.apache.commons.collections.functors.AllPredicate h;
+                    org.apache.commons.collections.iterators.ArrayIterator i;
+                    org.apache.commons.collections.keyvalue.MultiKey j;
+                    org.apache.commons.collections.list.LazyList k;
+                    org.apache.commons.collections.map.FixedSizeMap l;
+                    org.apache.commons.collections.set.TypedSet m;
+                }            
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                exports org.gradle.sample.app;
+                
+                requires org.apache.commons.collections;
+            }
+        """
+        buildFile << """          
+            dependencies {
+                implementation("commons-collections:commons-collections:3.2.2")
+            }
+            
+            extraJavaModuleInfo {
+                module("${libs.commonsCollections}", "org.apache.commons.collections") {
+                    exportAllPackages(true)
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
 }
