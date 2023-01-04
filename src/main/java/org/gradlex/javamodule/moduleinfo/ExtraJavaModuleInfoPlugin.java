@@ -21,8 +21,10 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
@@ -104,13 +106,15 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
     }
 
     private void registerTransform(String fileExtension, Project project, ExtraJavaModuleInfoPluginExtension extension, Configuration javaModulesMergeJars, Attribute<String> artifactType, Attribute<Boolean> javaModule) {
+        DependencyHandler dependencies = project.getDependencies();
+        ConfigurationContainer configurations = project.getConfigurations();
+        SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
+
         // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them without modification
-        project.getDependencies().getArtifactTypes().maybeCreate(fileExtension).getAttributes().attribute(javaModule, false);
-        Configuration compileClasspath = project.getConfigurations().getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME);
-        Configuration runtimeClasspath = project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+        dependencies.getArtifactTypes().maybeCreate(fileExtension).getAttributes().attribute(javaModule, false);
 
         // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills the input parameter
-        project.getDependencies().registerTransform(ExtraJavaModuleInfoTransform.class, t -> {
+        dependencies.registerTransform(ExtraJavaModuleInfoTransform.class, t -> {
             t.parameters(p -> {
                 p.getModuleSpecs().set(extension.getModuleSpecs());
                 p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());
@@ -121,14 +125,16 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                 p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
                 p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
                 p.getCompileClasspathDependencies().set(project.provider(() ->
-                        compileClasspath.getIncoming().getResolutionResult().getAllComponents().stream().collect(Collectors.toMap(
+                        sourceSets.stream().flatMap(s -> configurations.getByName(s.getCompileClasspathConfigurationName()).getIncoming().getResolutionResult().getAllComponents().stream()).collect(Collectors.toMap(
                                 c -> ga(c.getId()),
-                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet())
+                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet()),
+                                (dependencies1, dependencies2) -> dependencies1 // There can be duplications which are assumed to be the same
                 ))));
                 p.getRuntimeClasspathDependencies().set(project.provider(() ->
-                        runtimeClasspath.getIncoming().getResolutionResult().getAllComponents().stream().collect(Collectors.toMap(
+                        sourceSets.stream().flatMap(s -> configurations.getByName(s.getRuntimeClasspathConfigurationName()).getIncoming().getResolutionResult().getAllComponents().stream()).collect(Collectors.toMap(
                                 c -> ga(c.getId()),
-                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet())
+                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet()),
+                                (dependencies1, dependencies2) -> dependencies1 // There can be duplications which are assumed to be the same
                 ))));
             });
             t.getFrom().attribute(artifactType, fileExtension).attribute(javaModule, false);
