@@ -537,7 +537,7 @@ abstract class AbstractFunctionalTest extends Specification {
             package org.gradle.sample.app;
             
             public class Main {
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) {
                     org.apache.commons.collections.Bag a;
                     org.apache.commons.collections.bag.HashBag b;
                     org.apache.commons.collections.bidimap.DualHashBidiMap c;

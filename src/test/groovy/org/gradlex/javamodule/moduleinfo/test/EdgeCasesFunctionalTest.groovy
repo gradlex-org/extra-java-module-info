@@ -25,7 +25,7 @@ class EdgeCasesFunctionalTest extends Specification {
         '''
     }
 
-    def "doe not fail if an unused Jar on the merge path cannot be resolved"() {
+    def "does not fail if an unused Jar on the merge path cannot be resolved"() {
         given:
         file("src/main/java/org/gradle/sample/app/Main.java") << """
             package org.gradle.sample.app;
