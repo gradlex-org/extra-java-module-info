@@ -105,4 +105,15 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
         }
         getModuleSpecs().put(identifier, automaticModuleName);
     }
+
+    /**
+     * Let the plugin know about an existing module on the module path.
+     * This may be needed when 'requiresDirectivesFromMetadata(true)' is used.
+     *
+     * @param coordinates group:name coordinates
+     * @param moduleName the Module Name of the Module referred to by the coordinates
+     */
+    public void knownModule(String coordinates, String moduleName) {
+        getModuleSpecs().put(coordinates, new KnownModule(coordinates, moduleName));
+    }
 }

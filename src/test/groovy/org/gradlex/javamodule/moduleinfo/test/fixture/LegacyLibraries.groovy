@@ -12,6 +12,7 @@ class LegacyLibraries {
     def commonsBeanutils = jarNameOnly ? "commons-beanutils-1.9.4.jar" : "commons-beanutils:commons-beanutils"
     def commonsCli = jarNameOnly ? "commons-cli-1.4.jar" : "commons-cli:commons-cli"
     def commonsCollections = jarNameOnly ? "commons-collections-3.2.2.jar" : "commons-collections:commons-collections"
+    def commonsHttpClient = jarNameOnly ? "httpclient-4.5.14.jar" : "org.apache.httpcomponents:httpclient"
     def commonsLogging = jarNameOnly ? "commons-logging-1.2.jar" : "commons-logging:commons-logging"
     def groovyAll = jarNameOnly ? "groovy-all-2.4.15.jar" : "org.codehaus.groovy:groovy-all"
     def javaxInject = jarNameOnly ? "javax.inject-1.jar" : "javax.inject:javax.inject"

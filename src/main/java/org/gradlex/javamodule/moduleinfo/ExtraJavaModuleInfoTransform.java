@@ -88,6 +88,10 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         ListProperty<String> getMergeJarIds();
         @InputFiles
         ListProperty<RegularFile> getMergeJars();
+        @Input
+        MapProperty<String, Set<String>> getCompileClasspathDependencies();
+        @Input
+        MapProperty<String, Set<String>> getRuntimeClasspathDependencies();
     }
 
     @InputArtifact
@@ -283,13 +287,41 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
         String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
         ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleVersion);
+
         for (String packageName : autoExportedPackages) {
             moduleVisitor.visitExport(packageName, 0);
         }
         for (String packageName : moduleInfo.exports) {
             moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
         }
+
         moduleVisitor.visitRequire("java.base", 0, null);
+
+        if (moduleInfo.getRequiresDirectivesFromMetadata()) {
+            Set<String> compileDependencies = getParameters().getCompileClasspathDependencies().get().get(moduleInfo.getIdentifier());
+            Set<String> runtimeDependencies = getParameters().getRuntimeClasspathDependencies().get().get(moduleInfo.getIdentifier());
+
+            if (compileDependencies == null || runtimeDependencies  == null) {
+                throw new RuntimeException("[requires directives from metadata] " +
+                        "Cannot find dependencies for '" + moduleInfo.getModuleName() + "'. " +
+                        "Are '" + moduleInfo.getIdentifier() + "' the correct component coordinates?");
+            }
+
+            Set<String> allDependencies = new TreeSet<>();
+            allDependencies.addAll(compileDependencies);
+            allDependencies.addAll(runtimeDependencies );
+            for (String ga: allDependencies) {
+                String moduleName = gaToModuleName(ga);
+                if (compileDependencies.contains(ga) && runtimeDependencies.contains(ga)) {
+                    moduleVisitor.visitRequire(moduleName, Opcodes.ACC_TRANSITIVE, null);
+                } else if (runtimeDependencies.contains(ga)) {
+                    moduleVisitor.visitRequire(moduleName, 0, null);
+                } else if (compileDependencies.contains(ga)) {
+                    moduleVisitor.visitRequire(moduleName, Opcodes.ACC_STATIC_PHASE, null);
+                }
+            }
+        }
+
         for (String requireName : moduleInfo.requires) {
             moduleVisitor.visitRequire(requireName, 0, null);
         }
@@ -368,5 +400,16 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             }
             return outputStream.toByteArray();
         }
+    }
+
+    private String gaToModuleName(String ga) {
+        ModuleSpec moduleSpec = getParameters().getModuleSpecs().get().get(ga);
+        if (moduleSpec == null) {
+            throw new RuntimeException("[requires directives from metadata] " +
+                    "The module name of the following component is not known: " + ga +
+                    "\n - If it is already a module, make the module name known using 'knownModule(\"" + ga + "\", \"<module name>\")'" +
+                    "\n - If it is not a module, patch it using 'module()' or 'automaticModule()'");
+        }
+        return moduleSpec.getModuleName();
     }
 }

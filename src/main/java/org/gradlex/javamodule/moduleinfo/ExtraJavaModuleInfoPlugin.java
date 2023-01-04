@@ -23,7 +23,9 @@ import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
+import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
@@ -104,6 +106,8 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
     private void registerTransform(String fileExtension, Project project, ExtraJavaModuleInfoPluginExtension extension, Configuration javaModulesMergeJars, Attribute<String> artifactType, Attribute<Boolean> javaModule) {
         // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them without modification
         project.getDependencies().getArtifactTypes().maybeCreate(fileExtension).getAttributes().attribute(javaModule, false);
+        Configuration compileClasspath = project.getConfigurations().getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME);
+        Configuration runtimeClasspath = project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
 
         // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills the input parameter
         project.getDependencies().registerTransform(ExtraJavaModuleInfoTransform.class, t -> {
@@ -116,10 +120,34 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                         javaModulesMergeJars.getIncoming().artifactView(v -> v.lenient(true)).getArtifacts().getArtifacts());
                 p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
                 p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
+                p.getCompileClasspathDependencies().set(project.provider(() ->
+                        compileClasspath.getIncoming().getResolutionResult().getAllComponents().stream().collect(Collectors.toMap(
+                                c -> ga(c.getId()),
+                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet())
+                ))));
+                p.getRuntimeClasspathDependencies().set(project.provider(() ->
+                        runtimeClasspath.getIncoming().getResolutionResult().getAllComponents().stream().collect(Collectors.toMap(
+                                c -> ga(c.getId()),
+                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet())
+                ))));
             });
             t.getFrom().attribute(artifactType, fileExtension).attribute(javaModule, false);
             t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);
         });
+    }
+
+    private static String ga(DependencyResult d) {
+        if (d instanceof ResolvedDependencyResult) {
+            return ga(((ResolvedDependencyResult) d).getSelected().getId());
+        }
+        return d.getRequested().getDisplayName();
+    }
+
+    private static String ga(ComponentIdentifier id) {
+        if (id instanceof ModuleComponentIdentifier) {
+            return ((ModuleComponentIdentifier) id).getGroup() + ":" + ((ModuleComponentIdentifier) id).getModule();
+        }
+        return id.getDisplayName();
     }
 
     private static class IdExtractor implements Transformer<List<String>, Collection<ResolvedArtifactResult>> {

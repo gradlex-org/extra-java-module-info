@@ -34,6 +34,7 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
 
     private boolean exportAllPackages;
+    private boolean requiresDirectivesFromMetadata;
 
     ModuleInfo(String identifier, String moduleName, String moduleVersion) {
         super(identifier, moduleName);
@@ -94,5 +95,13 @@ public class ModuleInfo extends ModuleSpec {
 
     public boolean getExportAllPackages() {
         return exportAllPackages;
+    }
+
+    public void requiresDirectivesFromMetadata(boolean requiresDirectivesFromMetadata) {
+        this.requiresDirectivesFromMetadata = requiresDirectivesFromMetadata;
+    }
+
+    public boolean getRequiresDirectivesFromMetadata() {
+        return requiresDirectivesFromMetadata;
     }
 }
