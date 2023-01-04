@@ -65,6 +65,7 @@ extraJavaModuleInfo {
     // failOnMissingModuleInfo.set(false)
     module("commons-beanutils:commons-beanutils", "org.apache.commons.beanutils") {
         exports("org.apache.commons.beanutils")
+        // exportAllPackages()
         
         requires("org.apache.commons.logging")
         requires("java.sql")
@@ -72,6 +73,8 @@ extraJavaModuleInfo {
         
         // requiresTransitive(...)
         // requiresStatic(...)
+        
+        // requireAllDefinedDependencies()
     }
     module("commons-cli:commons-cli", "org.apache.commons.cli") {
         exports("org.apache.commons.cli")
@@ -139,6 +142,22 @@ extraJavaModuleInfo {
        ignoreServiceProvider("org.codehaus.groovy.runtime.ExtensionModule")
        ignoreServiceProvider("org.codehaus.groovy.plugins.Runners")
        ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+    }
+}
+```
+
+## Should I use real modules or automatic modules?
+
+Only if you use _real_ modules (Jars with `module-info.class`) everywhere you can use all features of the Java Module System
+(see e.g. [#38](https://github.com/gradlex-org/extra-java-module-info/issues/38) for why it may be problematic to depend on an automatic module).
+Still, using automatic modules is more convenient if you need to work with a lot of legacy libraries, because you do not need to define `exports` and `requires` directives.
+Alternatively though, this plugin offers a way to define a _real_ module, without defining all of those directives explicitly:
+
+```
+extraJavaModuleInfo {
+    module("org.apache.httpcomponents:httpclient", "org.apache.httpcomponents.httpclient") {
+        exportAllPackages() // Adds an `exports` for each package found in the Jar
+        requireAllDefinedDependencies() // Adds `requires (transitive|static)` directives based on dependencies defined in the component's metadata
     }
 }
 ```
