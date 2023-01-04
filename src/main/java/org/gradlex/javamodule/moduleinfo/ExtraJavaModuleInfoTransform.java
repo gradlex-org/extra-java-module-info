@@ -222,7 +222,7 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 mergeJars(moduleInfo, outputStream, providers, packages);
                 outputStream.putNextEntry(new JarEntry("module-info.class"));
                 outputStream.write(addModuleInfo(moduleInfo, providers, versionFromFilePath(originalJar.toPath()),
-                        moduleInfo.getExportAllPackages() ? packages : Collections.emptySet()));
+                        moduleInfo.exportAllPackages ? packages : Collections.emptySet()));
                 outputStream.closeEntry();
             }
         } catch (IOException e) {
@@ -297,7 +297,7 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
         moduleVisitor.visitRequire("java.base", 0, null);
 
-        if (moduleInfo.getRequiresDirectivesFromMetadata()) {
+        if (moduleInfo.requireAllDefinedDependencies) {
             Set<String> compileDependencies = getParameters().getCompileClasspathDependencies().get().get(moduleInfo.getIdentifier());
             Set<String> runtimeDependencies = getParameters().getRuntimeClasspathDependencies().get().get(moduleInfo.getIdentifier());
 

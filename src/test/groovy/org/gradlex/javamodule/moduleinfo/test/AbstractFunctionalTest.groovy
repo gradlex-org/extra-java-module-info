@@ -567,7 +567,7 @@ abstract class AbstractFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 module("${libs.commonsCollections}", "org.apache.commons.collections") {
-                    exportAllPackages(true)
+                    exportAllPackages()
                 }
             }
         """

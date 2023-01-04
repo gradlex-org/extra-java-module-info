@@ -33,8 +33,8 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> requiresStatic = new LinkedHashSet<>();
     final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
 
-    private boolean exportAllPackages;
-    private boolean requiresDirectivesFromMetadata;
+    boolean exportAllPackages;
+    boolean requireAllDefinedDependencies;
 
     ModuleInfo(String identifier, String moduleName, String moduleVersion) {
         super(identifier, moduleName);
@@ -89,19 +89,17 @@ public class ModuleInfo extends ModuleSpec {
         }
     }
 
-    public void exportAllPackages(boolean exportAllPackages) {
-        this.exportAllPackages = exportAllPackages;
+    /**
+     * Automatically export all packages of the Jar. Can be used instead of individual 'exports()' statements.
+     */
+    public void exportAllPackages() {
+        this.exportAllPackages = true;
     }
 
-    public boolean getExportAllPackages() {
-        return exportAllPackages;
-    }
-
-    public void requiresDirectivesFromMetadata(boolean requiresDirectivesFromMetadata) {
-        this.requiresDirectivesFromMetadata = requiresDirectivesFromMetadata;
-    }
-
-    public boolean getRequiresDirectivesFromMetadata() {
-        return requiresDirectivesFromMetadata;
+    /**
+     * Automatically add 'requires' statements for all dependencies defined in the metadata of the component.
+     */
+    public void requireAllDefinedDependencies() {
+        this.requireAllDefinedDependencies = true;
     }
 }

@@ -5,7 +5,7 @@ import org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild
 import org.gradlex.javamodule.moduleinfo.test.fixture.LegacyLibraries
 import spock.lang.Specification
 
-class RequiresFromMetadataFunctionalTest extends Specification {
+class RequireAllDefinedDependenciesFunctionalTest extends Specification {
 
     @Delegate
     GradleBuild build = new GradleBuild()
@@ -63,12 +63,12 @@ class RequiresFromMetadataFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 module("${libs.commonsHttpClient}", "org.apache.httpcomponents.httpclient") {
-                    exportAllPackages(true)
-                    requiresDirectivesFromMetadata(true)
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
                 }
                 module("${libs.commonsLogging}", "org.apache.commons.logging") {
-                    exportAllPackages(true)
-                    requiresDirectivesFromMetadata(true)
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
                 }
                 knownModule("commons-codec:commons-codec", "org.apache.commons.codec")
                 knownModule("org.apache.httpcomponents:httpcore", "org.apache.httpcomponents.httpcore")
@@ -101,12 +101,12 @@ class RequiresFromMetadataFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 module("${new LegacyLibraries(true).commonsHttpClient}", "org.apache.httpcomponents.httpclient") {
-                    exportAllPackages(true)
-                    requiresDirectivesFromMetadata(true)
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
                 }
                 module("${libs.commonsLogging}", "org.apache.commons.logging") {
-                    exportAllPackages(true)
-                    requiresDirectivesFromMetadata(true)
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
                 }
                 knownModule("commons-codec:commons-codec", "org.apache.commons.codec")
                 knownModule("org.apache.httpcomponents:httpcore", "org.apache.httpcomponents.httpcore")
@@ -141,12 +141,12 @@ class RequiresFromMetadataFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 module("${libs.commonsHttpClient}", "org.apache.httpcomponents.httpclient") {
-                    exportAllPackages(true)
-                    requiresDirectivesFromMetadata(true)
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
                 }
                 module("${libs.commonsLogging}", "org.apache.commons.logging") {
-                    exportAllPackages(true)
-                    requiresDirectivesFromMetadata(true)
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
                 }
                 knownModule("commons-codec:commons-codec", "org.apache.commons.codec")
             }
