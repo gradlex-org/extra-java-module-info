@@ -1,6 +1,6 @@
 plugins {
     id("groovy")
-    id("org.gradlex.internal.plugin-publish-conventions") version "0.4"
+    id("org.gradlex.internal.plugin-publish-conventions") version "0.5"
 }
 
 group = "org.gradlex"
@@ -38,7 +38,7 @@ tasks.test {
     maxParallelForks = 4
 }
 
-listOf("6.4.1", "6.9.2", "7.0.2").forEach { gradleVersionUnderTest ->
+listOf("6.4.1", "6.9.2", "7.0.2", "7.6").forEach { gradleVersionUnderTest ->
     val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
         group = "verification"
         description = "Runs tests against Gradle $gradleVersionUnderTest"

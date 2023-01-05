@@ -5,6 +5,8 @@ import org.gradlex.javamodule.moduleinfo.test.fixture.LegacyLibraries
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Specification
 
+import static org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild.gradleVersionUnderTest
+
 abstract class AbstractFunctionalTest extends Specification {
 
     abstract LegacyLibraries getLibs()

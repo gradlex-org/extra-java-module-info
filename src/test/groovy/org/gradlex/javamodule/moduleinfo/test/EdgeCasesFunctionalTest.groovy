@@ -4,6 +4,8 @@ import org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild
 import org.gradlex.javamodule.moduleinfo.test.fixture.LegacyLibraries
 import spock.lang.Specification
 
+import static org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild.gradleVersionUnderTest
+
 class EdgeCasesFunctionalTest extends Specification {
 
     @Delegate

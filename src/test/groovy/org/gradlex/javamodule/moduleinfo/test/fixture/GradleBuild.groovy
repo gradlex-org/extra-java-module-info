@@ -12,7 +12,7 @@ class GradleBuild {
     final File buildFile
     final File settingsFile
 
-    final String gradleVersionUnderTest = System.getProperty("gradleVersionUnderTest")
+    final static String gradleVersionUnderTest = System.getProperty("gradleVersionUnderTest")
 
     GradleBuild(File projectDir = Files.createTempDirectory("gradle-build").toFile()) {
         this.projectDir = projectDir
