@@ -1,6 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
 ## Version 1.2
+* [New] [#40](https://github.com/gradlex-org/extra-java-module-info/issues/40) - Add requireAllDefinedDependencies() functionality
+* [New] [#38](https://github.com/gradlex-org/extra-java-module-info/issues/38) - Add exportAllPackages() functionality (Thanks [Hendrik Ebbers](https://github.com/hendrikebbers) for suggesting!)
 * [New] [#37](https://github.com/gradlex-org/extra-java-module-info/issues/37) - Merge Jars - fully support merging Zip into Jar
 
 ## Version 1.1
