@@ -27,6 +27,7 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
+import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Category;
@@ -41,8 +42,10 @@ import org.gradle.util.GradleVersion;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Entry point of the plugin.
@@ -124,22 +127,37 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                         javaModulesMergeJars.getIncoming().artifactView(v -> v.lenient(true)).getArtifacts().getArtifacts());
                 p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
                 p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
+
                 p.getCompileClasspathDependencies().set(project.provider(() ->
-                        sourceSets.stream().flatMap(s -> configurations.getByName(s.getCompileClasspathConfigurationName()).getIncoming().getResolutionResult().getAllComponents().stream()).collect(Collectors.toMap(
-                                c -> ga(c.getId()),
-                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet()),
-                                (dependencies1, dependencies2) -> dependencies1 // There can be duplications which are assumed to be the same
-                ))));
+                        toStringMap(sourceSets.stream().flatMap(s -> filteredResolutionResult(configurations.getByName(s.getCompileClasspathConfigurationName()), componentsOfInterest(extension))))));
                 p.getRuntimeClasspathDependencies().set(project.provider(() ->
-                        sourceSets.stream().flatMap(s -> configurations.getByName(s.getRuntimeClasspathConfigurationName()).getIncoming().getResolutionResult().getAllComponents().stream()).collect(Collectors.toMap(
-                                c -> ga(c.getId()),
-                                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet()),
-                                (dependencies1, dependencies2) -> dependencies1 // There can be duplications which are assumed to be the same
-                ))));
+                        toStringMap(sourceSets.stream().flatMap(s -> filteredResolutionResult(configurations.getByName(s.getRuntimeClasspathConfigurationName()), componentsOfInterest(extension))))));
             });
             t.getFrom().attribute(artifactType, fileExtension).attribute(javaModule, false);
             t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);
         });
+    }
+
+    private static Set<String> componentsOfInterest(ExtraJavaModuleInfoPluginExtension extension) {
+        return extension.getModuleSpecs().get().values().stream().filter(ExtraJavaModuleInfoPlugin::needsDependencies).map(ModuleSpec::getIdentifier).collect(Collectors.toSet());
+    }
+
+    private Stream<ResolvedComponentResult> filteredResolutionResult(Configuration configuration, Set<String> componentsOfInterest) {
+        if (componentsOfInterest.isEmpty()) {
+            return Stream.empty();
+        }
+        return configuration.getIncoming().getResolutionResult().getAllComponents().stream().filter(c -> componentsOfInterest.contains(ga(c.getId())));
+    }
+
+    private Map<String, Set<String>> toStringMap(Stream<ResolvedComponentResult> result) {
+        return result.collect(Collectors.toMap(
+                c -> ga(c.getId()),
+                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet()),
+                (dependencies1, dependencies2) -> dependencies1));
+    }
+
+    private static boolean needsDependencies(ModuleSpec moduleSpec) {
+        return moduleSpec instanceof ModuleInfo && ((ModuleInfo) moduleSpec).requireAllDefinedDependencies;
     }
 
     private static String ga(DependencyResult d) {
