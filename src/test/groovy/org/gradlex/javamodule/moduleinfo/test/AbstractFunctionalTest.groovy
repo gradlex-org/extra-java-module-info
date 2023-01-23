@@ -385,6 +385,49 @@ abstract class AbstractFunctionalTest extends Specification {
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
 
+    def "can add 'uses' directives to legacy libraries"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import javax.cache.Caching;
+            import javax.cache.CacheManager;
+            
+            public class Main {
+            
+                public static void main(String[] args)  {
+                    CacheManager manager = Caching.getCachingProvider().getCacheManager();
+                    System.out.println(manager.getClass());
+                }
+            
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires cache.api;
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("javax.cache:cache-api:1.1.1") 
+                runtimeOnly("com.github.ben-manes.caffeine:caffeine:3.1.2")
+                runtimeOnly("com.github.ben-manes.caffeine:jcache:3.1.2")
+            }
+            
+            extraJavaModuleInfo {               
+                module("javax.cache:cache-api", "cache.api") {
+                    failOnMissingModuleInfo.set(false)
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                    uses("javax.cache.spi.CachingProvider")
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
     def "can merge several jars into one module"() {
         given:
         file("src/main/java/org/gradle/sample/app/Main.java") << """

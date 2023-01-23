@@ -331,6 +331,9 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         for (String requireName : moduleInfo.requiresStatic) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE, null);
         }
+        for (String usesName : moduleInfo.uses) {
+            moduleVisitor.visitUse(usesName.replace('.', '/'));
+        }
         for (Map.Entry<String, List<String>> entry : providers.entrySet()) {
             String name = entry.getKey();
             List<String> implementations = entry.getValue();
