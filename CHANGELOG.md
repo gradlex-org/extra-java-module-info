@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.3
+* [New] [#42](https://github.com/gradlex-org/extra-java-module-info/issues/42) - Added support for 'uses' directives (Thanks [Stefan Reek](https://github.com/StefanReek) for contributing!)
+
 ## Version 1.2
 * [New] [#40](https://github.com/gradlex-org/extra-java-module-info/issues/40) - Add requireAllDefinedDependencies() functionality
 * [New] [#38](https://github.com/gradlex-org/extra-java-module-info/issues/38) - Add exportAllPackages() functionality (Thanks [Hendrik Ebbers](https://github.com/hendrikebbers) for suggesting!)
