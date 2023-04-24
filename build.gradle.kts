@@ -38,7 +38,7 @@ tasks.test {
     maxParallelForks = 4
 }
 
-listOf("6.4.1", "6.9.2", "7.0.2", "7.6").forEach { gradleVersionUnderTest ->
+listOf("6.4.1", "6.9.2", "7.0.2", "7.6.1").forEach { gradleVersionUnderTest ->
     val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
         group = "verification"
         description = "Runs tests against Gradle $gradleVersionUnderTest"
