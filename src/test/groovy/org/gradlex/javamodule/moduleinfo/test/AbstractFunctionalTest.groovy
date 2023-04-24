@@ -556,24 +556,23 @@ abstract class AbstractFunctionalTest extends Specification {
 
         then:
         result.output.contains('''
-            org.apache.qpid.server.security.auth.manager.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.model.adapter.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.model.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.virtualhost.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.security.group.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.security.group.cloudfoundry.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.virtualhostnode.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.security.auth.manager.oauth2.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.exchange.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.model.port.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.queue.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.security.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.protocol.v1_0.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.virtualhostnode.memory.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.store.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.virtualhost.memory.ConfiguredObjectRegistrationImpl
-            org.apache.qpid.server.management.plugin.ConfiguredObjectRegistrationImpl
-        '''.stripIndent())
+org.apache.qpid.server.security.auth.manager.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.model.adapter.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.model.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.virtualhost.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.security.group.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.security.group.cloudfoundry.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.virtualhostnode.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.security.auth.manager.oauth2.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.exchange.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.model.port.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.queue.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.security.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.protocol.v1_0.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.virtualhostnode.memory.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.store.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.virtualhost.memory.ConfiguredObjectRegistrationImpl
+org.apache.qpid.server.management.plugin.ConfiguredObjectRegistrationImpl''')
     }
 
     def "can automatically export all packages of a legacy library"() {
