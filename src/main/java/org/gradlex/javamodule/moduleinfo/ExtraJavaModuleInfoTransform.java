@@ -239,17 +239,20 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         while (jarEntry != null) {
             byte[] content = readAllBytes(inputStream);
             String entryName = jarEntry.getName();
-            boolean isServiceProviderFile = entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX);
-            if (isServiceProviderFile) {
+            boolean isFileInServicesFolder = entryName.startsWith(SERVICES_PREFIX) && !entryName.equals(SERVICES_PREFIX);
+            if (isFileInServicesFolder) {
                 String key = entryName.substring(SERVICES_PREFIX.length());
-                if (!providers.containsKey(key)) {
-                    providers.put(key, new ArrayList<>());
+                boolean isServiceProviderFile = !key.contains("/"); // ignore files in sub-folders
+                if (isServiceProviderFile) {
+                    if (!providers.containsKey(key)) {
+                        providers.put(key, new ArrayList<>());
+                    }
+                    providers.get(key).addAll(extractImplementations(content));
                 }
-                providers.get(key).addAll(extractImplementations(content));
             }
 
             if (!JAR_SIGNATURE_PATH.matcher(entryName).matches() && !"META-INF/MANIFEST.MF".equals(jarEntry.getName())) {
-                if (!willMergeJars || !isServiceProviderFile) { // service provider files will be merged later
+                if (!willMergeJars || !isFileInServicesFolder) { // service provider files will be merged later
                     jarEntry.setCompressedSize(-1);
                     try {
                         outputStream.putNextEntry(jarEntry);

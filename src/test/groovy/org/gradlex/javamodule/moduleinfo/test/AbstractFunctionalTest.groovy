@@ -327,6 +327,35 @@ abstract class AbstractFunctionalTest extends Specification {
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
 
+    def "only takes well-defined services from META-INF/services"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+
+            public class Main {
+                public static void main(String[] args) { }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires qpid.jms.client;                                                        
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("org.apache.qpid:qpid-jms-client:2.2.0")                 
+            }
+            
+            extraJavaModuleInfo {
+                failOnMissingModuleInfo.set(false)
+                module("org.apache.qpid:qpid-jms-client", "qpid.jms.client")
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
     def "can add static/transitive 'requires' modifiers to legacy libraries"() {
         given:
         file("src/main/java/org/gradle/sample/app/Main.java") << """
