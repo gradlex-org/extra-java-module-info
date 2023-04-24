@@ -134,7 +134,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                         toStringMap(sourceSets.stream().flatMap(s -> filteredResolutionResult(configurations.getByName(s.getRuntimeClasspathConfigurationName()), componentsOfInterest(extension))))));
             });
             t.getFrom().attribute(artifactType, fileExtension).attribute(javaModule, false);
-            t.getTo().attribute(artifactType, "jar").attribute(javaModule, true);
+            t.getTo().attribute(artifactType, fileExtension).attribute(javaModule, true);
         });
     }
 
