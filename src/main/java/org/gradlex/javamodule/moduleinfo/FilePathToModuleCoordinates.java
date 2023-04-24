@@ -31,10 +31,10 @@ final class FilePathToModuleCoordinates {
     @Nullable
     static String versionFromFilePath(Path path) {
         if (isInGradleCache(path)) {
-            return path.getName(path.getNameCount() - 3).toString();
+            return getVersionFromGradleCachePath(path);
         }
         if (isInM2Cache(path)) {
-            return path.getName(path.getNameCount() - 2).toString();
+            return getVersionFromM2CachePath(path);
         }
         return null;
     }
@@ -64,7 +64,7 @@ final class FilePathToModuleCoordinates {
         if (name == null) {
             return false;
         }
-        String version = path.getName(path.getNameCount() - 3).toString();
+        String version = getVersionFromGradleCachePath(path);
         return path.getFileName().toString().startsWith(name + "-" + version);
     }
 
@@ -73,7 +73,7 @@ final class FilePathToModuleCoordinates {
         if (name == null) {
             return false;
         }
-        String version = path.getName(path.getNameCount() - 2).toString();
+        String version = getVersionFromM2CachePath(path);
         return path.getFileName().toString().startsWith(name + "-" + version);
     }
 
@@ -84,14 +84,24 @@ final class FilePathToModuleCoordinates {
         }
 
         String nameFromGradleCachePath = path.getName(path.getNameCount() - 4).toString();
-        if (path.getFileName().toString().startsWith(nameFromGradleCachePath + "-")) {
+        String versionFromGradleCachePath = getVersionFromGradleCachePath(path);
+        if (path.getFileName().toString().startsWith(nameFromGradleCachePath + "-" + versionFromGradleCachePath)) {
             return nameFromGradleCachePath;
         }
         String nameFromM2CachePath = path.getName(path.getNameCount() - 3).toString();
-        if (path.getFileName().toString().startsWith(nameFromM2CachePath + "-")) {
+        String versionFromM2CachePath = getVersionFromM2CachePath(path);
+        if (path.getFileName().toString().startsWith(nameFromM2CachePath + "-" + versionFromM2CachePath)) {
             return nameFromM2CachePath;
         }
 
         return null;
+    }
+
+    private static String getVersionFromGradleCachePath(Path path) {
+        return path.getName(path.getNameCount() - 3).toString();
+    }
+
+    private static String getVersionFromM2CachePath(Path path) {
+        return path.getName(path.getNameCount() - 2).toString();
     }
 }

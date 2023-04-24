@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.4
+* [Fixed] [#44](https://github.com/gradlex-org/extra-java-module-info/issues/44) - Name resolution for jars with '-' character failing if Jars are taken from local .m2 repository (Thanks [Aidan Do](https://github.com/REslim30) for reporting!)
+
 ## Version 1.3
 * [New] [#42](https://github.com/gradlex-org/extra-java-module-info/issues/42) - Added support for 'uses' directives (Thanks [Stefan Reek](https://github.com/StefanReek) for contributing!)
 

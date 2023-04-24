@@ -34,11 +34,19 @@ class FilePathToModuleCoordinatesTest extends Specification {
     }
 
     def "ga coordinates from m2 repo file path"() {
-        given:
-        def path = path('/Users/someone/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar.')
+        Path jarPath
 
-        expect:
-        gaCoordinatesFromFilePathMatch(path, "com.google.code.findbugs:jsr305")
+       when:
+       jarPath = path('/Users/someone/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar.')
+
+       then:
+       gaCoordinatesFromFilePathMatch(jarPath, "com.google.code.findbugs:jsr305")
+
+        when:
+        jarPath = path('/Users/someone/.m2/repository/de/odysseus/juel/juel-impl/2.2.7/juel-impl-2.2.7.jar.')
+
+        then:
+        gaCoordinatesFromFilePathMatch(jarPath, "de.odysseus.juel:juel-impl")
     }
 
     private Path path(String path) {
