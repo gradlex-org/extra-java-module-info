@@ -14,7 +14,7 @@ java {
 dependencies {
     implementation("org.ow2.asm:asm:8.0.1")
 
-    testImplementation("org.spockframework:spock-core:2.1-groovy-3.0")
+    testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
 }
 
 pluginPublishConventions {

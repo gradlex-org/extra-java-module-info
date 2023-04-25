@@ -18,6 +18,7 @@ class LegacyLibraries {
     def javaxInject = jarNameOnly ? "javax.inject-1.jar" : "javax.inject:javax.inject"
     def jsr305 = jarNameOnly ? "jsr305-3.0.2.jar" : "com.google.code.findbugs:jsr305"
     def log4jCore = jarNameOnly ? "log4j-core-2.14.0.jar" : "org.apache.logging.log4j:log4j-core"
+    def qpidJmsClient = jarNameOnly ? "qpid-jms-client-2.2.0.jar" : "org.apache.qpid:qpid-jms-client"
     def sac = jarNameOnly ? "sac-1.3.jar" : "org.w3c.css:sac"
     def slf4jApi = jarNameOnly ? "slf4j-api-1.7.32.jar" : "org.slf4j:slf4j-api"
     def slf4jExt = jarNameOnly ? "slf4j-ext-1.7.32.jar" : "org.slf4j:slf4j-ext"

@@ -348,7 +348,7 @@ abstract class AbstractFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 failOnMissingModuleInfo.set(false)
-                module("org.apache.qpid:qpid-jms-client", "qpid.jms.client")
+                module("${libs.qpidJmsClient}", "qpid.jms.client")
             }
         """
 
