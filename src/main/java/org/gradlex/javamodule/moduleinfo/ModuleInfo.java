@@ -16,6 +16,8 @@
 
 package org.gradlex.javamodule.moduleinfo;
 
+import org.gradle.api.model.ObjectFactory;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -27,7 +29,9 @@ public class ModuleInfo extends ModuleSpec {
 
     private final String moduleVersion;
 
+    boolean openModule = true;
     final Set<String> exports = new LinkedHashSet<>();
+    final Set<String> opens = new LinkedHashSet<>();
     final Set<String> requires = new LinkedHashSet<>();
     final Set<String> requiresTransitive = new LinkedHashSet<>();
     final Set<String> requiresStatic = new LinkedHashSet<>();
@@ -37,9 +41,26 @@ public class ModuleInfo extends ModuleSpec {
     boolean exportAllPackages;
     boolean requireAllDefinedDependencies;
 
-    ModuleInfo(String identifier, String moduleName, String moduleVersion) {
+    ModuleInfo(String identifier, String moduleName, String moduleVersion, ObjectFactory objectFactory) {
         super(identifier, moduleName);
         this.moduleVersion = moduleVersion;
+    }
+
+    /**
+     * Should this be a 'module' instead of an 'open module'?
+     */
+    public void closeModule() {
+        openModule = false;
+    }
+
+    /**
+     * Calling this method at least once automatically makes this a "closed" module: 'module' instead of 'open module'.
+     *
+     * @param opens corresponds to the directive in a 'module-info.java' file
+     */
+    public void opens(String opens) {
+        closeModule();
+        addOrThrow(this.opens, opens);
     }
 
     /**

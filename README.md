@@ -67,9 +67,12 @@ extraJavaModuleInfo {
         exports("org.apache.commons.beanutils")
         // exportAllPackages()
         
-        requires("org.apache.commons.logging")
+        requiresTransitive("org.apache.commons.logging")
         requires("java.sql")
         requires("java.desktop")
+        
+        // closeModule()
+        // opens("org.apache.commons.beanutils")
         
         // requiresTransitive(...)
         // requiresStatic(...)

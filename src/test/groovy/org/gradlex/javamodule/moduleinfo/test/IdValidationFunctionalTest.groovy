@@ -1,15 +1,12 @@
 package org.gradlex.javamodule.moduleinfo.test
 
 import org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild
-import org.gradlex.javamodule.moduleinfo.test.fixture.LegacyLibraries
 import spock.lang.Specification
 
 class IdValidationFunctionalTest extends Specification {
 
     @Delegate
     GradleBuild build = new GradleBuild()
-
-    LegacyLibraries libs = new LegacyLibraries(false)
 
     def setup() {
         settingsFile << 'rootProject.name = "test-project"'
@@ -39,10 +36,6 @@ class IdValidationFunctionalTest extends Specification {
     def "fails for wrong file name"() {
         given:
         buildFile << """                  
-            dependencies {
-                implementation(${libs.commonsCollections})
-            }
-            
             extraJavaModuleInfo {
                 module("/dummy/some/my.jar", "apache.commons.logging")
             }
@@ -55,11 +48,7 @@ class IdValidationFunctionalTest extends Specification {
 
     def "fails for wrong module name"() {
         given:
-        buildFile << """                  
-            dependencies {
-                implementation(${libs.commonsCollections})
-            }
-            
+        buildFile << """            
             extraJavaModuleInfo {
                 module("commons-logging:commons-logging", "apache.commons:logging")
             }

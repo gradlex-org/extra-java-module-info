@@ -18,11 +18,13 @@ package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.MinimalExternalModuleDependency;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 /**
  * A data class to collect all the module information we want to add.
@@ -32,8 +34,11 @@ import javax.annotation.Nullable;
 @SuppressWarnings("unused")
 public abstract class ExtraJavaModuleInfoPluginExtension {
 
-    abstract public MapProperty<String, ModuleSpec> getModuleSpecs();
-    abstract public Property<Boolean> getFailOnMissingModuleInfo();
+    @Inject
+    protected abstract ObjectFactory getObjects();
+
+    public abstract MapProperty<String, ModuleSpec> getModuleSpecs();
+    public abstract Property<Boolean> getFailOnMissingModuleInfo();
 
     /**
      * Add full module information for a given Jar file.
@@ -108,7 +113,7 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      * @param conf configure exported packages, dependencies and Jar merging, see {@link ModuleInfo}
      */
     public void module(String identifier, String moduleName, @Nullable String moduleVersion, @Nullable Action<? super ModuleInfo> conf) {
-        ModuleInfo moduleInfo = new ModuleInfo(identifier, moduleName, moduleVersion);
+        ModuleInfo moduleInfo = new ModuleInfo(identifier, moduleName, moduleVersion, getObjects());
         if (conf != null) {
             conf.execute(moduleInfo);
         }

@@ -34,6 +34,10 @@ class GradleBuild {
         runner('run').build()
     }
 
+    BuildResult failRun() {
+        runner('run').buildAndFail()
+    }
+
     BuildResult test() {
         runner('test').build()
     }

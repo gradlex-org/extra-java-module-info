@@ -73,7 +73,7 @@ import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.vers
  */
 @CacheableRule
 @NonNullApi
-abstract public class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
+public abstract class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
     private static final Pattern JAR_SIGNATURE_PATH = Pattern.compile("^META-INF/[^/]+\\.(SF|RSA|DSA|sf|rsa|dsa)$");
@@ -288,14 +288,19 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     private byte[] addModuleInfo(ModuleInfo moduleInfo, Map<String, List<String>> providers, @Nullable String version, Set<String> autoExportedPackages) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
+        int openModule = moduleInfo.openModule ? Opcodes.ACC_OPEN : 0;
         String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
-        ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleVersion);
+        ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), openModule, moduleVersion);
 
         for (String packageName : autoExportedPackages) {
             moduleVisitor.visitExport(packageName, 0);
         }
         for (String packageName : moduleInfo.exports) {
             moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
+        }
+
+        for (String packageName : moduleInfo.opens) {
+            moduleVisitor.visitOpen(packageName.replace('.', '/'), 0);
         }
 
         moduleVisitor.visitRequire("java.base", 0, null);
