@@ -1,6 +1,7 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
 ## Version 1.4
+* [Fixed] [#47](https://github.com/gradlex-org/extra-java-module-info/issues/47) - requireAllDefinedDependencies() gives error when dependency only appears on runtime path (Thanks [Sola](https://github.com/unlimitedsola) for reporting!)
 * [Fixed] [#45](https://github.com/gradlex-org/extra-java-module-info/issues/45) - Sub-folders in 'META-INF/services' are not ignored (Thanks [Jonas Beyer](https://github.com/j-beyer) for reporting!)
 * [Fixed] [#44](https://github.com/gradlex-org/extra-java-module-info/issues/44) - Name resolution for jars with '-' character failing if Jars are taken from local .m2 repository (Thanks [Aidan Do](https://github.com/REslim30) for reporting!)
 

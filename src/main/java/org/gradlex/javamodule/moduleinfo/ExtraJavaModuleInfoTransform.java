@@ -304,15 +304,21 @@ abstract public class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             Set<String> compileDependencies = getParameters().getCompileClasspathDependencies().get().get(moduleInfo.getIdentifier());
             Set<String> runtimeDependencies = getParameters().getRuntimeClasspathDependencies().get().get(moduleInfo.getIdentifier());
 
-            if (compileDependencies == null || runtimeDependencies  == null) {
+            if (compileDependencies == null && runtimeDependencies  == null) {
                 throw new RuntimeException("[requires directives from metadata] " +
                         "Cannot find dependencies for '" + moduleInfo.getModuleName() + "'. " +
                         "Are '" + moduleInfo.getIdentifier() + "' the correct component coordinates?");
             }
 
+            if (compileDependencies == null) {
+                compileDependencies = Collections.emptySet();
+            }
+            if (runtimeDependencies == null) {
+                runtimeDependencies = Collections.emptySet();
+            }
             Set<String> allDependencies = new TreeSet<>();
             allDependencies.addAll(compileDependencies);
-            allDependencies.addAll(runtimeDependencies );
+            allDependencies.addAll(runtimeDependencies);
             for (String ga: allDependencies) {
                 String moduleName = gaToModuleName(ga);
                 if (compileDependencies.contains(ga) && runtimeDependencies.contains(ga)) {

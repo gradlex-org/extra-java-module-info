@@ -78,6 +78,93 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
 
+    // See: https://github.com/gradlex-org/extra-java-module-info/issues/47
+    def "does not fail in case of runtime-only dependencies"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+
+            public class Main {
+                public static void main(String[] args) throws Exception {
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                exports org.gradle.sample.app;
+                
+                requires kotlin.scripting.jvm.host;
+            }
+        """
+        buildFile << """          
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.8.20")
+            }
+            
+            tasks.register("resolveRuntimeClasspath") {
+                doLast { configurations.runtimeClasspath.get().resolve() }
+            }
+            
+            extraJavaModuleInfo {
+                knownModule("org.jetbrains.kotlin:kotlin-stdlib", "kotlin.stdlib")
+                knownModule("net.java.dev.jna:jna", "com.sun.jna")
+                module("org.jetbrains.kotlin:kotlin-stdlib-common", "kotlin.stdlib.common") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains:annotations", "org.jetbrains.annotations") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-reflect", "kotlin.reflect") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-scripting-jvm-host", "kotlin.scripting.jvm.host") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-script-runtime", "kotlin.script.runtime") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-scripting-common", "kotlin.scripting.common") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-scripting-jvm", "kotlin.scripting.jvm") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-compiler-embeddable", "kotlin.compiler.embeddable") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.intellij.deps:trove4j", "trove4j") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-daemon-embeddable", "kotlin.daemon.embeddable") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable", "kotlin.scripting.compiler.embeddable") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                module("org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable", "kotlin.scripting.compiler.impl.embeddable") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+            }
+        """
+
+        expect:
+        // The patched modules in this example do not run because of split-package and service provider issues
+        // run().task(':run').outcome == TaskOutcome.SUCCESS
+        runner('resolveRuntimeClasspath').build().task(':resolveRuntimeClasspath').outcome == TaskOutcome.SUCCESS
+    }
+
     def "can automatically add requires directives based on component metadata when module is only used in test"() {
         given:
         file("src/test/java/org/gradle/sample/app/test/AppTest.java") << """
