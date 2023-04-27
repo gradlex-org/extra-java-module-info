@@ -16,6 +16,9 @@
 
 package org.gradlex.javamodule.moduleinfo;
 
+import org.gradle.api.artifacts.MinimalExternalModuleDependency;
+import org.gradle.api.provider.Provider;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +57,13 @@ abstract public class ModuleSpec implements Serializable {
      */
     public void mergeJar(String identifier) {
         mergedJars.add(identifier);
+    }
+
+    /**
+     * @param alias group:name coordinates alias from version catalog
+     */
+    public void mergeJar(Provider<MinimalExternalModuleDependency> alias) {
+        mergeJar(alias.get().getModule().toString());
     }
 
     /**

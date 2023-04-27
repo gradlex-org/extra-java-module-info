@@ -17,8 +17,10 @@
 package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.Action;
+import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 
 import javax.annotation.Nullable;
 
@@ -46,12 +48,33 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
     /**
      * Add full module information for a given Jar file.
      *
+     * @param alias group:name coordinates alias from version catalog
+     * @param moduleName the Module Name of the Module to construct
+     */
+    public void module(Provider<MinimalExternalModuleDependency> alias, String moduleName) {
+        module(alias.get().getModule().toString(), moduleName);
+    }
+
+    /**
+     * Add full module information for a given Jar file.
+     *
      * @param identifier group:name coordinates _or_ Jar file name
      * @param moduleName the Module Name of the Module to construct
-    *  @param moduleVersion version to write into the module-info.class
+     * @param moduleVersion version to write into the module-info.class
      */
     public void module(String identifier, String moduleName, String moduleVersion) {
         module(identifier, moduleName, moduleVersion, null);
+    }
+
+    /**
+     * Add full module information for a given Jar file.
+     *
+     * @param alias group:name coordinates alias from version catalog
+     * @param moduleName the Module Name of the Module to construct
+     * @param moduleVersion version to write into the module-info.class
+     */
+    public void module(Provider<MinimalExternalModuleDependency> alias, String moduleName, String moduleVersion) {
+        module(alias.get().getModule().toString(), moduleName, moduleVersion);
     }
 
     /**
@@ -63,6 +86,17 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      */
     public void module(String identifier, String moduleName, @Nullable Action<? super ModuleInfo> conf) {
         module(identifier, moduleName, null, conf);
+    }
+
+    /**
+     * Add full module information for a given Jar file.
+     *
+     * @param alias group:name coordinates alias from version catalog
+     * @param moduleName the Module Name of the Module to construct
+     * @param conf configure exported packages and dependencies, see {@link ModuleInfo}
+     */
+    public void module(Provider<MinimalExternalModuleDependency> alias, String moduleName, @Nullable Action<? super ModuleInfo> conf) {
+        module(alias.get().getModule().toString(), moduleName, conf);
     }
 
     /**
@@ -82,6 +116,18 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
     }
 
     /**
+     * Add full module information for a given Jar file.
+     *
+     * @param alias group:name coordinates alias from version catalog
+     * @param moduleName the Module Name of the Module to construct
+     * @param moduleVersion version to write into the module-info.class
+     * @param conf configure exported packages, dependencies and Jar merging, see {@link ModuleInfo}
+     */
+    public void module(Provider<MinimalExternalModuleDependency> alias, String moduleName, @Nullable String moduleVersion, @Nullable Action<? super ModuleInfo> conf) {
+        module(alias.get().getModule().toString(), moduleName, moduleVersion, conf);
+    }
+
+    /**
      * Add an Automatic-Module-Name to a given Jar file.
      *
      * @param identifier group:name coordinates _or_ Jar file name
@@ -89,6 +135,16 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      */
     public void automaticModule(String identifier, String moduleName) {
         automaticModule(identifier, moduleName, null);
+    }
+
+    /**
+     * Add an Automatic-Module-Name to a given Jar file.
+     *
+     * @param alias group:name coordinates alias from version catalog
+     * @param moduleName the Module Name of the Module to construct
+     */
+    public void automaticModule(Provider<MinimalExternalModuleDependency> alias, String moduleName) {
+        automaticModule(alias.get().getModule().toString(), moduleName, null);
     }
 
     /**
@@ -106,6 +162,18 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
         getModuleSpecs().put(identifier, automaticModuleName);
     }
 
+
+    /**
+     * Add an Automatic-Module-Name to a given Jar file.
+     *
+     * @param alias group:name coordinates alias from version catalog
+     * @param moduleName the Module Name of the Module to construct
+     * @param conf configure Jar merging, see {@link AutomaticModuleName}
+     */
+    public void automaticModule(Provider<MinimalExternalModuleDependency> alias, String moduleName, @Nullable Action<? super AutomaticModuleName> conf) {
+        automaticModule(alias.get().getModule().toString(), moduleName, conf);
+    }
+
     /**
      * Let the plugin know about an existing module on the module path.
      * This may be needed when 'requiresDirectivesFromMetadata(true)' is used.
@@ -115,5 +183,16 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      */
     public void knownModule(String coordinates, String moduleName) {
         getModuleSpecs().put(coordinates, new KnownModule(coordinates, moduleName));
+    }
+
+    /**
+     * Let the plugin know about an existing module on the module path.
+     * This may be needed when 'requiresDirectivesFromMetadata(true)' is used.
+     *
+     * @param alias group:name coordinates alias from version catalog
+     * @param moduleName the Module Name of the Module referred to by the coordinates
+     */
+    public void knownModule(Provider<MinimalExternalModuleDependency> alias, String moduleName) {
+        knownModule(alias.get().getModule().toString(), moduleName);
     }
 }

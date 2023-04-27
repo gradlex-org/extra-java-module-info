@@ -61,11 +61,11 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {
-                module("${libs.commonsHttpClient}", "org.apache.httpcomponents.httpclient") {
+                module(${libs.commonsHttpClient}, "org.apache.httpcomponents.httpclient") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
-                module("${libs.commonsLogging}", "org.apache.commons.logging") {
+                module(${libs.commonsLogging}, "org.apache.commons.logging") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
@@ -204,11 +204,11 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 automaticModule("org.hamcrest:hamcrest-core", "org.hamcrest.core")
-                module("${libs.commonsHttpClient}", "org.apache.httpcomponents.httpclient") {
+                module(${libs.commonsHttpClient}, "org.apache.httpcomponents.httpclient") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
-                module("${libs.commonsLogging}", "org.apache.commons.logging") {
+                module(${libs.commonsLogging}, "org.apache.commons.logging") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
@@ -242,11 +242,11 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {
-                module("${new LegacyLibraries(true).commonsHttpClient}", "org.apache.httpcomponents.httpclient") {
+                module(${new LegacyLibraries(true).commonsHttpClient}, "org.apache.httpcomponents.httpclient") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
-                module("${libs.commonsLogging}", "org.apache.commons.logging") {
+                module(${libs.commonsLogging}, "org.apache.commons.logging") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
@@ -282,11 +282,11 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {
-                module("${libs.commonsHttpClient}", "org.apache.httpcomponents.httpclient") {
+                module(${libs.commonsHttpClient}, "org.apache.httpcomponents.httpclient") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
-                module("${libs.commonsLogging}", "org.apache.commons.logging") {
+                module(${libs.commonsLogging}, "org.apache.commons.logging") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }

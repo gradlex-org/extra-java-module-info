@@ -49,8 +49,8 @@ class EdgeCasesFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 failOnMissingModuleInfo.set(false)
-                module("${libs.zookeeper}", "org.apache.zookeeper") {
-                    mergeJar("${libs.zookeeperJute}")
+                module(${libs.zookeeper}, "org.apache.zookeeper") {
+                    mergeJar(${libs.zookeeperJute})
 
                     exports("org.apache.jute")
                     exports("org.apache.zookeeper")

@@ -129,18 +129,18 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {
-                module("${libs.commonsBeanutils}", "org.apache.commons.beanutils") {
+                module(${libs.commonsBeanutils}, "org.apache.commons.beanutils") {
                     exports("org.apache.commons.beanutils")
                     
                     requires("org.apache.commons.logging")
                     requires("java.sql")
                     requires("java.desktop")
                 }
-                module("${libs.commonsCli}", "org.apache.commons.cli") {
+                module(${libs.commonsCli}, "org.apache.commons.cli") {
                     exports("org.apache.commons.cli")
                 }
-                module("${libs.commonsCollections}", "org.apache.commons.collections")
-                automaticModule("${libs.commonsLogging}", "org.apache.commons.logging")
+                module(${libs.commonsCollections}, "org.apache.commons.collections")
+                automaticModule(${libs.commonsLogging}, "org.apache.commons.logging")
             }
         """
 
@@ -178,7 +178,7 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {               
-                automaticModule("${libs.javaxInject}", "javax.inject")
+                automaticModule(${libs.javaxInject}, "javax.inject")
             }
         """
 
@@ -216,7 +216,7 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {               
-                module("${libs.javaxInject}", "javax.inject") {
+                module(${libs.javaxInject}, "javax.inject") {
                     exports("javax.inject")
                 }
             }
@@ -259,7 +259,7 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {               
-                module("${libs.log4jCore}", "org.apache.logging.log4j.core", "2.14.0") {
+                module(${libs.log4jCore}, "org.apache.logging.log4j.core", "2.14.0") {
                     requires("java.compiler")
                     requires("java.desktop")
                     requires("org.apache.logging.log4j")
@@ -312,7 +312,7 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {               
-                module("${libs.groovyAll}", "groovy.all", "2.4.15") {
+                module(${libs.groovyAll}, "groovy.all", "2.4.15") {
                    requiresTransitive("java.scripting")
                    requires("java.logging")
                    requires("java.desktop")
@@ -348,7 +348,7 @@ abstract class AbstractFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 failOnMissingModuleInfo.set(false)
-                module("${libs.qpidJmsClient}", "qpid.jms.client")
+                module(${libs.qpidJmsClient}, "qpid.jms.client")
             }
         """
 
@@ -402,7 +402,7 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {               
-                module("${libs.springBootAutoconfigure}", "spring.boot.autoconfigure") {
+                module(${libs.springBootAutoconfigure}, "spring.boot.autoconfigure") {
                     requires("spring.context")
                     requiresTransitive("spring.boot")
                     requiresStatic("com.google.gson")
@@ -499,15 +499,15 @@ abstract class AbstractFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 failOnMissingModuleInfo.set(false)
-                module("${libs.zookeeper}", "org.apache.zookeeper") {
-                    mergeJar("${libs.zookeeperJute}")
+                module(${libs.zookeeper}, "org.apache.zookeeper") {
+                    mergeJar(${libs.zookeeperJute})
 
                     exports("org.apache.jute")
                     exports("org.apache.zookeeper")
                     exports("org.apache.zookeeper.server.persistence")
                 }
-                automaticModule("${libs.slf4jApi}", "org.slf4j") {
-                    mergeJar("${libs.slf4jExt}")
+                automaticModule(${libs.slf4jApi}, "org.slf4j") {
+                    mergeJar(${libs.slf4jExt})
                 }
             }
             
@@ -639,7 +639,7 @@ org.apache.qpid.server.management.plugin.ConfiguredObjectRegistrationImpl''')
             }
             
             extraJavaModuleInfo {
-                module("${libs.commonsCollections}", "org.apache.commons.collections") {
+                module(${libs.commonsCollections}, "org.apache.commons.collections") {
                     exportAllPackages()
                 }
             }
