@@ -56,8 +56,8 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        if (GradleVersion.current().compareTo(GradleVersion.version("6.4-rc-1")) < 0) {
-            throw new RuntimeException("This plugin requires Gradle 6.4+");
+        if (GradleVersion.current().compareTo(GradleVersion.version("6.8")) < 0) {
+            throw new RuntimeException("This plugin requires Gradle 6.8+");
         }
 
         // register the plugin extension as 'extraJavaModuleInfo {}' configuration block
