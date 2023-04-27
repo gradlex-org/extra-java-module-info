@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.gradlex"
-version = "1.3"
+version = "1.4"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -29,6 +29,11 @@ pluginPublishConventions {
         name.set("Jendrik Johannes")
         email.set("jendrik@gradlex.org")
     }
+}
+
+// TODO This needs to be included in org.gradlex.internal.plugin-publish-conventions
+signing {
+    useInMemoryPgpKeys(providers.environmentVariable("SIGNING_KEY").orNull, providers.environmentVariable("SIGNING_PASSPHRASE").orNull)
 }
 
 tasks.test {

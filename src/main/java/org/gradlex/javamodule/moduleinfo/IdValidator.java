@@ -19,7 +19,7 @@ package org.gradlex.javamodule.moduleinfo;
 class IdValidator {
     static private final String COORDINATES_PATTERN = "^[a-zA-Z0-9._-]+:[a-zA-Z0-9._-]+$";
     static private final String FILE_NAME_PATTERN = "^[a-zA-Z0-9._-]+\\.(jar|zip)$";
-    static private final String MODULE_NAME_PATTERN = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*$";
+    static private final String MODULE_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z0-9_]+)*$";
 
     static void validateIdentifier(String identifier) {
         if (!identifier.matches(COORDINATES_PATTERN) && !identifier.matches(FILE_NAME_PATTERN)) {
