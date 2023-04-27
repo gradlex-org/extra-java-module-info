@@ -23,17 +23,22 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.gradlex.javamodule.moduleinfo.IdValidator.validateIdentifier;
+import static org.gradlex.javamodule.moduleinfo.IdValidator.validateModuleName;
+
 /**
  * Details that real Modules and Automatic-Module-Names share.
  */
 @SuppressWarnings("unused")
-abstract public class ModuleSpec implements Serializable {
+public abstract class ModuleSpec implements Serializable {
 
     private final String identifier;
     private final String moduleName;
     private final List<String> mergedJars = new ArrayList<>();
 
-    ModuleSpec(String identifier, String moduleName) {
+    protected ModuleSpec(String identifier, String moduleName) {
+        validateIdentifier(identifier);
+        validateModuleName(moduleName);
         this.identifier = identifier;
         this.moduleName = moduleName;
     }
