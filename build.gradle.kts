@@ -1,6 +1,6 @@
 plugins {
     id("groovy")
-    id("org.gradlex.internal.plugin-publish-conventions") version "0.5"
+    id("org.gradlex.internal.plugin-publish-conventions") version "0.6"
 }
 
 group = "org.gradlex"
@@ -29,11 +29,6 @@ pluginPublishConventions {
         name.set("Jendrik Johannes")
         email.set("jendrik@gradlex.org")
     }
-}
-
-// TODO This needs to be included in org.gradlex.internal.plugin-publish-conventions
-signing {
-    useInMemoryPgpKeys(providers.environmentVariable("SIGNING_KEY").orNull, providers.environmentVariable("SIGNING_PASSPHRASE").orNull)
 }
 
 tasks.test {
