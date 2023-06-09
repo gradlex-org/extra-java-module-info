@@ -98,4 +98,45 @@ class EdgeCasesFunctionalTest extends Specification {
         !result.output.contains('qpid-broker-plugins-management-http-9.0.0.jar')
     }
 
+    def "can merge jars that are already modules"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            public class Main {
+                public static void main(String[] args) throws Exception {
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                requires java.annotation;
+            }
+        """
+        buildFile << """                  
+            dependencies {
+                implementation("com.google.code.findbugs:jsr305:3.0.2")
+                implementation("javax.annotation:javax.annotation-api:1.3.2")
+            }
+            
+            extraJavaModuleInfo {
+                module("com.google.code.findbugs:jsr305", "java.annotation") {
+                    mergeJar("javax.annotation:javax.annotation-api")
+                    exports("javax.annotation")
+                    exports("javax.annotation.concurrent")
+                    exports("javax.annotation.meta")
+                }
+            }
+            
+            tasks.named("run") {
+                doLast { println(configurations.runtimeClasspath.get().files.map { it.name }) }
+            }
+        """
+
+        when:
+        def result = run()
+
+        then:
+        result.output.contains('[jsr305-3.0.2-module.jar]')
+    }
 }

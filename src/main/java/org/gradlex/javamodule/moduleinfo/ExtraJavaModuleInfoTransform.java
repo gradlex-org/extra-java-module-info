@@ -104,6 +104,10 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
         ModuleSpec moduleSpec = findModuleSpec(originalJar);
 
+        if (willBeMerged(originalJar, moduleSpecs.values())) {  // No output if this Jar will be merged
+            return;
+        }
+
         if (moduleSpec instanceof ModuleInfo) {
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
@@ -112,7 +116,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             outputs.file(originalJar);
         } else if (isAutoModule(originalJar)) {
             outputs.file(originalJar);
-        } else if (!willBeMerged(originalJar, moduleSpecs.values())) { // No output if this Jar will be merged
+        } else {
             if (getParameters().getFailOnMissingModuleInfo().get()) {
                 throw new RuntimeException("Not a module and no mapping defined: " + originalJar.getName());
             } else {

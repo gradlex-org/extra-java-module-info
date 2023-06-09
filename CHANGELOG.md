@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.4.1
+* [Fixed] [#50](https://github.com/gradlex-org/extra-java-module-info/issues/50) Remove merged Jars from classpath even if they are (automatic) modules
+
 ## Version 1.4
 * [New] Minimal Gradle version is now 6.8 for integration with recently added features like the Dependency Version Catalog
 * [New] [#46](https://github.com/gradlex-org/extra-java-module-info/issues/46) - Validation coordinates and module names
