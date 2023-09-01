@@ -15,6 +15,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.5")
 
     testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 pluginPublishConventions {
