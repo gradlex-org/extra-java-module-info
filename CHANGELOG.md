@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.4.2
+* [Fixed] [#45](https://github.com/gradlex-org/extra-java-module-info/issues/45) Preserve sub-folders of 'META-INF/services' in merged Jars
+
 ## Version 1.4.1
 * [Fixed] [#50](https://github.com/gradlex-org/extra-java-module-info/issues/50) Remove merged Jars from classpath even if they are (automatic) modules
 
