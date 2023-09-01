@@ -331,9 +331,14 @@ abstract class AbstractFunctionalTest extends Specification {
         given:
         file("src/main/java/org/gradle/sample/app/Main.java") << """
             package org.gradle.sample.app;
+            
+            import org.apache.qpid.jms.JmsConnection;
 
             public class Main {
-                public static void main(String[] args) { }
+                public static void main(String[] args) { 
+                    // Make sure files in '/META-INF/services/' that are not service provider entries are preserved
+                    JmsConnection.class.getResource("/META-INF/services/org/apache/qpid/jms/provider/amqp").toString();
+                }
             }
         """
         file("src/main/java/module-info.java") << """
@@ -347,8 +352,47 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {
-                failOnMissingModuleInfo.set(false)
-                module(${libs.qpidJmsClient}, "qpid.jms.client")
+                module(${libs.qpidJmsClient}, "qpid.jms.client") {
+                    exports("org.apache.qpid.jms")
+                    requires("jakarta.messaging")
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
+
+    def "only takes well-defined services from META-INF/services (merge Jar)"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import org.apache.qpid.jms.JmsConnection;
+
+            public class Main {
+                public static void main(String[] args) { 
+                    // Make sure files in '/META-INF/services/' that are not service provider entries are preserved
+                    JmsConnection.class.getResource("/META-INF/services/org/apache/qpid/jms/provider/amqp").toString();
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires qpid.jms.discovery;                                                        
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("org.apache.qpid:qpid-jms-discovery:2.2.0")
+            }
+            
+            extraJavaModuleInfo {
+                module(${libs.qpidJmsDiscovery}, "qpid.jms.discovery") {
+                    exports("org.apache.qpid.jms")
+                    requires("jakarta.messaging")
+                    mergeJar("org.apache.qpid:qpid-jms-client")
+                }
             }
         """
 
