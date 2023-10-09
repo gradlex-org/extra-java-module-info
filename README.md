@@ -165,6 +165,31 @@ extraJavaModuleInfo {
 }
 ```
 
+## How can I ensure there are no automatic modules in my dependency tree?
+
+If your goal is to fully modularize your application, you should enable the following configuration setting, which is disabled by default.
+
+```
+extraJavaModuleInfo {
+    failOnAutomaticModules.set(true)
+}
+```
+
+With this setting enabled, the build will fail unless you define a module override for every automatic module that appears in your dependency tree, as shown below.
+
+```
+dependencies {
+    implementation("org.yaml:snakeyaml:1.33")
+}             
+extraJavaModuleInfo {
+    failOnAutomaticModules.set(true)
+    module("org.yaml:snakeyaml", "org.yaml.snakeyaml") {
+        closeModule()
+        exports("org.yaml.snakeyaml")
+    }
+}
+```
+
 ## What do I do in a 'split package' situation?
 
 The Java Module System does not allow the same package to be used in more than one _module_.

@@ -45,6 +45,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -85,6 +86,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         @Input
         Property<Boolean> getFailOnMissingModuleInfo();
         @Input
+        Property<Boolean> getFailOnAutomaticModules();
+        @Input
         ListProperty<String> getMergeJarIds();
         @InputFiles
         ListProperty<RegularFile> getMergeJars();
@@ -99,7 +102,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
     @Override
     public void transform(TransformOutputs outputs) {
-        Map<String, ModuleSpec> moduleSpecs = getParameters().getModuleSpecs().get();
+        Parameter parameters = getParameters();
+        Map<String, ModuleSpec> moduleSpecs = parameters.getModuleSpecs().get();
         File originalJar = getInputArtifact().get().getAsFile();
 
         ModuleSpec moduleSpec = findModuleSpec(originalJar);
@@ -111,13 +115,19 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         if (moduleSpec instanceof ModuleInfo) {
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
+            if (parameters.getFailOnAutomaticModules().get()) {
+                throw new RuntimeException("Automatic modules are prohibited. Use module spec instead: " + originalJar.getName());
+            }
             addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), (AutomaticModuleName) moduleSpec);
         } else if (isModule(originalJar)) {
             outputs.file(originalJar);
         } else if (isAutoModule(originalJar)) {
+            if (parameters.getFailOnAutomaticModules().get()) {
+                throw new RuntimeException("Found an automatic module: " + originalJar.getName());
+            }
             outputs.file(originalJar);
         } else {
-            if (getParameters().getFailOnMissingModuleInfo().get()) {
+            if (parameters.getFailOnMissingModuleInfo().get()) {
                 throw new RuntimeException("Not a module and no mapping defined: " + originalJar.getName());
             } else {
                 outputs.file(originalJar);
