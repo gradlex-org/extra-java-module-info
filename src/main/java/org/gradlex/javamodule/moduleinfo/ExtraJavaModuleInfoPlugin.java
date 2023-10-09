@@ -35,8 +35,10 @@ import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFile;
+import org.gradle.api.plugins.HelpTasksPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 
@@ -65,8 +67,26 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         extension.getFailOnMissingModuleInfo().convention(true);
         extension.getFailOnAutomaticModules().convention(false);
 
-        // setup the transform for all projects in the build
-        project.getPlugins().withType(JavaPlugin.class).configureEach(javaPlugin -> configureTransform(project, extension));
+        // setup the transform and the tasks for all projects in the build
+        project.getPlugins().withType(JavaPlugin.class).configureEach(javaPlugin -> {
+            configureTransform(project, extension);
+            configureModuleDescriptorTask(project);
+        });
+    }
+
+    private void configureModuleDescriptorTask(Project project) {
+        project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
+            String name = SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName())
+                    ? "moduleDescriptorRecommendations"
+                    : sourceSet.getName() + "ModuleDescriptorRecommendations";
+            project.getTasks().register(name, ModuleDescriptorRecommendation.class, task -> {
+                task.getRelease().convention(21);
+                task.getCompileConfiguration().set(project.getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName()));
+                task.getRuntimeConfiguration().set(project.getConfigurations().getByName(sourceSet.getRuntimeClasspathConfigurationName()));
+                task.setGroup(HelpTasksPlugin.HELP_GROUP);
+                task.setDescription("Generates module descriptors for extraJavaModuleInfo plugin based on the dependency and class file analysis of automatic module and non-modular dependencies");
+            });
+        });
     }
 
     private void configureTransform(Project project, ExtraJavaModuleInfoPluginExtension extension) {

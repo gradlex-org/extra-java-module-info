@@ -165,6 +165,14 @@ extraJavaModuleInfo {
 }
 ```
 
+## I have many automatic modules in my project. How can I convert them into proper modules and control what they export or require?
+
+The plugin provides a set of `<sourceSet>moduleDescriptorRecommendations` tasks that generate the real module declarations utilizing [jdeps](https://docs.oracle.com/en/java/javase/11/tools/jdeps.html) and dependency metadata.
+
+This task generates module info spec for the JARs that do not contain the proper `module-info.class` descriptors.
+
+NOTE: This functionality requires Gradle to be run with Java 11+ and failing on missing module information should be disabled via `failOnMissingModuleInfo.set(false)`.
+
 ## How can I ensure there are no automatic modules in my dependency tree?
 
 If your goal is to fully modularize your application, you should enable the following configuration setting, which is disabled by default.
