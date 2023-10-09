@@ -45,7 +45,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -111,15 +110,21 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         if (willBeMerged(originalJar, moduleSpecs.values())) {  // No output if this Jar will be merged
             return;
         }
-
+        boolean realModule = isModule(originalJar);
         if (moduleSpec instanceof ModuleInfo) {
+            if (realModule && !((ModuleInfo) moduleSpec).patchRealModule) {
+                throw new RuntimeException("Patching of real modules must be explicitly enabled with patchRealModule()");
+            }
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
+            if (realModule) {
+                throw new RuntimeException("Patching of real modules must be explicitly enabled with patchRealModule() and can only be done with `module` spec");
+            }
             if (parameters.getFailOnAutomaticModules().get()) {
-                throw new RuntimeException("Automatic modules are prohibited. Use module spec instead: " + originalJar.getName());
+                throw new RuntimeException("Automatic modules are prohibited. Use `module` spec instead: " + originalJar.getName());
             }
             addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), (AutomaticModuleName) moduleSpec);
-        } else if (isModule(originalJar)) {
+        } else if (realModule) {
             outputs.file(originalJar);
         } else if (isAutoModule(originalJar)) {
             if (parameters.getFailOnAutomaticModules().get()) {
@@ -264,7 +269,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 providers.get(key).addAll(extractImplementations(content));
             }
 
-            if (!JAR_SIGNATURE_PATH.matcher(entryName).matches() && !"META-INF/MANIFEST.MF".equals(jarEntry.getName())) {
+            if (!JAR_SIGNATURE_PATH.matcher(entryName).matches() && !"META-INF/MANIFEST.MF".equals(entryName) && !isModuleInfoClass(entryName)) {
                 if (!willMergeJars || !isFileInServicesFolder) { // service provider files will be merged later
                     jarEntry.setCompressedSize(-1);
                     try {
@@ -441,5 +446,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                     "\n - If it is not a module, patch it using 'module()' or 'automaticModule()'");
         }
         return moduleSpec.getModuleName();
+    }
+
+    private static boolean isModuleInfoClass(String jarEntryName) {
+        return "module-info.class".equals(jarEntryName) || MODULE_INFO_CLASS_MRJAR_PATH.matcher(jarEntryName).matches();
     }
 }

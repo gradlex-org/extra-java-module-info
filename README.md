@@ -211,6 +211,22 @@ This plugin offers the option to merge multiple Jars into one in such situations
 
 Note: The merged Jar will include the *first* appearance of duplicated files (like the `MANIFEST.MF`).
 
+## How can I fix a library with a broken `module-info.class`?
+
+To fix a library with a broken `module-info.class`, you can override the modular descriptor in the same way it is done with non-modular JARs. However, you need to specify `patchRealModule()` in order to avoid unintentional overrides.
+
+```
+extraJavaModuleInfo {                
+    module("org.apache.tomcat.embed:tomcat-embed-core", "org.apache.tomcat.embed.core") {
+        patchRealModule()
+        requires("java.desktop")
+        requires("java.instrument")
+        ...
+    }
+}    
+```
+
+This opt-in behavior is designed to prevent over-patching real modules, especially during version upgrades. For example, when a newer version of a library already contains the proper `module-info.class`, the extra module info overrides should be removed.
 # Disclaimer
 
 Gradle and the Gradle logo are trademarks of Gradle, Inc.
