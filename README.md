@@ -173,7 +173,7 @@ This task generates module info spec for the JARs that do not contain the proper
 
 NOTE: This functionality requires Gradle to be run with Java 11+ and failing on missing module information should be disabled via `failOnMissingModuleInfo.set(false)`.
 
-## How can I ensure there are no automatic modules in my dependency tree?
+## How can I ensure there are no automatic modules in my dependency graph?
 
 If your goal is to fully modularize your application, you should enable the following configuration setting, which is disabled by default.
 
