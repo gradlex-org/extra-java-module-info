@@ -38,14 +38,13 @@ import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.HelpTasksPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
+import org.gradlex.javamodule.moduleinfo.tasks.ModuleDescriptorRecommendation;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.File;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,21 +69,53 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         // setup the transform and the tasks for all projects in the build
         project.getPlugins().withType(JavaPlugin.class).configureEach(javaPlugin -> {
             configureTransform(project, extension);
-            configureModuleDescriptorTask(project);
+            configureModuleDescriptorTasks(project);
         });
     }
 
-    private void configureModuleDescriptorTask(Project project) {
+    private void configureModuleDescriptorTasks(Project project) {
         project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
-            String name = SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName())
-                    ? "moduleDescriptorRecommendations"
-                    : sourceSet.getName() + "ModuleDescriptorRecommendations";
+            String name = sourceSet.getTaskName("", "moduleDescriptorRecommendations");
             project.getTasks().register(name, ModuleDescriptorRecommendation.class, task -> {
+                Transformer<@Nullable List<File>, Configuration> artifactsTransformer = configuration -> {
+                    //noinspection CodeBlock2Expr
+                    return configuration.getIncoming()
+                            .getArtifacts()
+                            .getArtifacts()
+                            .stream()
+                            .sorted(Comparator.comparing(artifact -> artifact.getId().getComponentIdentifier().toString()))
+                            .map(ResolvedArtifactResult::getFile)
+                            .collect(Collectors.toList());
+                };
+
+                Transformer<@Nullable List<ResolvedComponentResult>, Configuration> componentsTransformer = configuration -> {
+                    Set<ComponentIdentifier> artifacts = configuration.getIncoming()
+                            .getArtifacts()
+                            .getArtifacts()
+                            .stream()
+                            .map(artifact -> artifact.getId().getComponentIdentifier())
+                            .collect(Collectors.toSet());
+                    return configuration.getIncoming()
+                            .getResolutionResult()
+                            .getAllComponents()
+                            .stream()
+                            .filter(component -> artifacts.contains(component.getId()))
+                            .sorted(Comparator.comparing(artifact -> artifact.getId().toString()))
+                            .collect(Collectors.toList());
+                };
+
+                Provider<Configuration> compileClasspath = project.getConfigurations().named(sourceSet.getCompileClasspathConfigurationName());
+                task.getCompileArtifacts().set(compileClasspath.map(artifactsTransformer));
+                task.getCompileResolvedComponentResults().set(compileClasspath.map(componentsTransformer));
+
+                Provider<Configuration> runtimeClasspath = project.getConfigurations().named(sourceSet.getRuntimeClasspathConfigurationName());
+                task.getRuntimeArtifacts().set(runtimeClasspath.map(artifactsTransformer));
+                task.getRuntimeResolvedComponentResults().set(runtimeClasspath.map(componentsTransformer));
+
                 task.getRelease().convention(21);
-                task.getCompileConfiguration().set(project.getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName()));
-                task.getRuntimeConfiguration().set(project.getConfigurations().getByName(sourceSet.getRuntimeClasspathConfigurationName()));
+
                 task.setGroup(HelpTasksPlugin.HELP_GROUP);
-                task.setDescription("Generates module descriptors for extraJavaModuleInfo plugin based on the dependency and class file analysis of automatic module and non-modular dependencies");
+                task.setDescription("Generates module descriptors for 'org.gradlex.extra-java-module-info' plugin based on the dependency and class file analysis of automatic modules and non-modular dependencies");
             });
         });
     }

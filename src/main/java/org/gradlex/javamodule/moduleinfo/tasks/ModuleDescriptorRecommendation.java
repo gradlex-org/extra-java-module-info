@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package org.gradlex.javamodule.moduleinfo;
+package org.gradlex.javamodule.moduleinfo.tasks;
 
 import org.gradle.api.DefaultTask;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleIdentifier;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.result.DependencyResult;
-import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.file.FileSystemOperations;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
@@ -138,11 +138,15 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
 
     }
 
+    @InputFiles
+    public abstract ListProperty<File> getRuntimeArtifacts();
     @Input
-    public abstract Property<Configuration> getRuntimeConfiguration();
+    public abstract ListProperty<ResolvedComponentResult> getRuntimeResolvedComponentResults();
 
+    @InputFiles
+    public abstract ListProperty<File> getCompileArtifacts();
     @Input
-    public abstract Property<Configuration> getCompileConfiguration();
+    public abstract ListProperty<ResolvedComponentResult> getCompileResolvedComponentResults();
 
     @Input
     public abstract Property<Integer> getRelease();
@@ -156,8 +160,8 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
         Java8SafeToolProvider jarTool = Java8SafeToolProvider.findFirst("jar");
 
         Map<ModuleIdentifier, Artifact> artifacts = new HashMap<>();
-        extractArtifactsAndTheirDependencies(artifacts, getRuntimeConfiguration().get(), artifact -> artifact.runtimeDependencies);
-        extractArtifactsAndTheirDependencies(artifacts, getCompileConfiguration().get(), artifact -> artifact.compileDependencies);
+        extractArtifactsAndTheirDependencies(artifacts, getRuntimeArtifacts().get(), getRuntimeResolvedComponentResults().get(), artifact -> artifact.runtimeDependencies);
+        extractArtifactsAndTheirDependencies(artifacts, getCompileArtifacts().get(), getCompileResolvedComponentResults().get(), artifact -> artifact.compileDependencies);
 
         Path temporaryFolder = Files.createTempDirectory("jdeps-task");
         for (Map.Entry<ModuleIdentifier, Artifact> entry : artifacts.entrySet()) {
@@ -204,15 +208,19 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
         getFileSystemOperations().delete(spec -> spec.delete(temporaryFolder));
     }
 
-    private static void extractArtifactsAndTheirDependencies(Map<ModuleIdentifier, Artifact> jarsToAnalyze, Configuration configuration, Function<Artifact, Set<ModuleIdentifier>> depsSink) {
-        for (ResolvedArtifactResult artifact : configuration.getIncoming().getArtifacts()) {
-            ComponentIdentifier identifier = artifact.getId().getComponentIdentifier();
+    private static void extractArtifactsAndTheirDependencies(Map<ModuleIdentifier, Artifact> jarsToAnalyze,
+                                                             List<File> artifacts,
+                                                             List<ResolvedComponentResult> resolvedComponentResults,
+                                                             Function<Artifact, Set<ModuleIdentifier>> depsSink) {
+        for (ResolvedComponentResult artifact : resolvedComponentResults) {
+            ComponentIdentifier identifier = artifact.getId();
             if (identifier instanceof ModuleComponentIdentifier) {
                 ModuleIdentifier moduleIdentifier = ((ModuleComponentIdentifier) identifier).getModuleIdentifier();
-                jarsToAnalyze.computeIfAbsent(moduleIdentifier, (ignore) -> new Artifact(moduleIdentifier, artifact.getFile()));
+                int index = resolvedComponentResults.indexOf(artifact);
+                jarsToAnalyze.computeIfAbsent(moduleIdentifier, (ignore) -> new Artifact(moduleIdentifier, artifacts.get(index)));
             }
         }
-        for (ResolvedComponentResult resolvedComponent : configuration.getIncoming().getResolutionResult().getAllComponents()) {
+        for (ResolvedComponentResult resolvedComponent : resolvedComponentResults) {
             ModuleVersionIdentifier moduleVersion = resolvedComponent.getModuleVersion();
             if (moduleVersion == null) {
                 continue;
