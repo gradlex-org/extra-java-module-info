@@ -235,6 +235,7 @@ extraJavaModuleInfo {
 ```
 
 This opt-in behavior is designed to prevent over-patching real modules, especially during version upgrades. For example, when a newer version of a library already contains the proper `module-info.class`, the extra module info overrides should be removed.
+
 # Disclaimer
 
 Gradle and the Gradle logo are trademarks of Gradle, Inc.

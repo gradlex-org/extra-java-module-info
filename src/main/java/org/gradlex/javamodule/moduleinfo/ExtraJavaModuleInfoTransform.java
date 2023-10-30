@@ -113,12 +113,12 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         boolean realModule = isModule(originalJar);
         if (moduleSpec instanceof ModuleInfo) {
             if (realModule && !((ModuleInfo) moduleSpec).patchRealModule) {
-                throw new RuntimeException("Patching of real modules must be explicitly enabled with patchRealModule()");
+                throw new RuntimeException("Patching of real modules must be explicitly enabled with 'patchRealModule()'");
             }
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
             if (realModule) {
-                throw new RuntimeException("Patching of real modules must be explicitly enabled with patchRealModule() and can only be done with `module` spec");
+                throw new RuntimeException("Patching of real modules must be explicitly enabled with 'patchRealModule()' and can only be done with 'module()'");
             }
             if (parameters.getFailOnAutomaticModules().get()) {
                 throw new RuntimeException("Use of 'automaticModule()' is prohibited. Use 'module()' instead: " + originalJar.getName());

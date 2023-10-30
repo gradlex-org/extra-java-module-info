@@ -179,7 +179,7 @@ class RealModuleJarPatchingFunctionalTest extends Specification {
 
         expect:
         def out = failRun()
-        out.output.contains("Patching of real modules must be explicitly enabled with patchRealModule()")
+        out.output.contains("Patching of real modules must be explicitly enabled with 'patchRealModule()'")
     }
 
     def "a real module cannot be demoted to an automatic module"() {
@@ -196,7 +196,7 @@ class RealModuleJarPatchingFunctionalTest extends Specification {
 
         expect:
         def out = failRun()
-        out.output.contains("Patching of real modules must be explicitly enabled with patchRealModule() and can only be done with `module` spec")
+        out.output.contains("Patching of real modules must be explicitly enabled with 'patchRealModule()' and can only be done with 'module()'")
     }
 
 }
