@@ -1,10 +1,15 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.5
+* [New] [#75](https://github.com/gradlex-org/extra-java-module-info/issues/75) - Add 'failOnAutomaticModules' option (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
+* [New] [#75](https://github.com/gradlex-org/extra-java-module-info/issues/75) - Support patching of real modules (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
+* [New] [#75](https://github.com/gradlex-org/extra-java-module-info/issues/75) - Add 'moduleDescriptorRecommendations' help task (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
+
 ## Version 1.4.2
-* [Fixed] [#45](https://github.com/gradlex-org/extra-java-module-info/issues/45) Preserve sub-folders of 'META-INF/services' in merged Jars
+* [Fixed] [#45](https://github.com/gradlex-org/extra-java-module-info/issues/45) - Preserve sub-folders of 'META-INF/services' in merged Jars
 
 ## Version 1.4.1
-* [Fixed] [#50](https://github.com/gradlex-org/extra-java-module-info/issues/50) Remove merged Jars from classpath even if they are (automatic) modules
+* [Fixed] [#50](https://github.com/gradlex-org/extra-java-module-info/issues/50) - Remove merged Jars from classpath even if they are (automatic) modules
 
 ## Version 1.4
 * [New] Minimal Gradle version is now 6.8 for integration with recently added features like the Dependency Version Catalog
@@ -13,7 +18,7 @@
 * [New] [#30](https://github.com/gradlex-org/extra-java-module-info/issues/30) - Add 'opens(...)' to module DSL (Thanks [Wexalian](https://github.com/Wexalian) for suggesting!)
 * [Fixed] [#47](https://github.com/gradlex-org/extra-java-module-info/issues/47) - requireAllDefinedDependencies() gives error when dependency only appears on runtime path (Thanks [Sola](https://github.com/unlimitedsola) for reporting!)
 * [Fixed] [#45](https://github.com/gradlex-org/extra-java-module-info/issues/45) - Sub-folders in 'META-INF/services' are not ignored (Thanks [Jonas Beyer](https://github.com/j-beyer) for reporting!)
-* [Fixed] [#44](https://github.com/gradlex-org/extra-java-module-info/issues/44) - Name resolution for jars with '-' character failing if Jars are taken from local .m2 repository (Thanks [Aidan Do](https://github.com/REslim30) for reporting!)
+* [Fixed] [#44](https://github.com/gradlex-org/extra-java-module-info/issues/44) - Name resolution for jars with '-' character fails if Jars are in local .m2 repository (Thanks [Aidan Do](https://github.com/REslim30) for reporting!)
 
 ## Version 1.3
 * [New] [#42](https://github.com/gradlex-org/extra-java-module-info/issues/42) - Added support for 'uses' directives (Thanks [Stefan Reek](https://github.com/StefanReek) for contributing!)
