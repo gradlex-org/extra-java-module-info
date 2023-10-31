@@ -165,6 +165,39 @@ extraJavaModuleInfo {
 }
 ```
 
+## I have many automatic modules in my project. How can I convert them into proper modules and control what they export or require?
+
+The plugin provides a set of `<sourceSet>moduleDescriptorRecommendations` tasks that generate the real module declarations utilizing [jdeps](https://docs.oracle.com/en/java/javase/11/tools/jdeps.html) and dependency metadata.
+
+This task generates module info spec for the JARs that do not contain the proper `module-info.class` descriptors.
+
+NOTE: This functionality requires Gradle to be run with Java 11+ and failing on missing module information should be disabled via `failOnMissingModuleInfo.set(false)`.
+
+## How can I ensure there are no automatic modules in my dependency graph?
+
+If your goal is to fully modularize your application, you should enable the following configuration setting, which is disabled by default.
+
+```
+extraJavaModuleInfo {
+    failOnAutomaticModules.set(true)
+}
+```
+
+With this setting enabled, the build will fail unless you define a module override for every automatic module that appears in your dependency tree, as shown below.
+
+```
+dependencies {
+    implementation("org.yaml:snakeyaml:1.33")
+}             
+extraJavaModuleInfo {
+    failOnAutomaticModules.set(true)
+    module("org.yaml:snakeyaml", "org.yaml.snakeyaml") {
+        closeModule()
+        exports("org.yaml.snakeyaml")
+    }
+}
+```
+
 ## What do I do in a 'split package' situation?
 
 The Java Module System does not allow the same package to be used in more than one _module_.
@@ -185,6 +218,23 @@ This plugin offers the option to merge multiple Jars into one in such situations
 ```
 
 Note: The merged Jar will include the *first* appearance of duplicated files (like the `MANIFEST.MF`).
+
+## How can I fix a library with a broken `module-info.class`?
+
+To fix a library with a broken `module-info.class`, you can override the modular descriptor in the same way it is done with non-modular JARs. However, you need to specify `patchRealModule()` in order to avoid unintentional overrides.
+
+```
+extraJavaModuleInfo {                
+    module("org.apache.tomcat.embed:tomcat-embed-core", "org.apache.tomcat.embed.core") {
+        patchRealModule()
+        requires("java.desktop")
+        requires("java.instrument")
+        ...
+    }
+}    
+```
+
+This opt-in behavior is designed to prevent over-patching real modules, especially during version upgrades. For example, when a newer version of a library already contains the proper `module-info.class`, the extra module info overrides should be removed.
 
 # Disclaimer
 

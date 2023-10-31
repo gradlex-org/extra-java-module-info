@@ -40,6 +40,7 @@ public class ModuleInfo extends ModuleSpec {
 
     boolean exportAllPackages;
     boolean requireAllDefinedDependencies;
+    boolean patchRealModule;
 
     ModuleInfo(String identifier, String moduleName, String moduleVersion, ObjectFactory objectFactory) {
         super(identifier, moduleName);
@@ -131,4 +132,12 @@ public class ModuleInfo extends ModuleSpec {
     public void requireAllDefinedDependencies() {
         this.requireAllDefinedDependencies = true;
     }
+
+    /**
+     * Explicitly allow patching real (JARs with module-info.class) modules
+     */
+    public void patchRealModule() {
+        this.patchRealModule = true;
+    }
+
 }

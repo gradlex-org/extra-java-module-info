@@ -85,6 +85,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         @Input
         Property<Boolean> getFailOnMissingModuleInfo();
         @Input
+        Property<Boolean> getFailOnAutomaticModules();
+        @Input
         ListProperty<String> getMergeJarIds();
         @InputFiles
         ListProperty<RegularFile> getMergeJars();
@@ -99,7 +101,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
     @Override
     public void transform(TransformOutputs outputs) {
-        Map<String, ModuleSpec> moduleSpecs = getParameters().getModuleSpecs().get();
+        Parameter parameters = getParameters();
+        Map<String, ModuleSpec> moduleSpecs = parameters.getModuleSpecs().get();
         File originalJar = getInputArtifact().get().getAsFile();
 
         ModuleSpec moduleSpec = findModuleSpec(originalJar);
@@ -107,17 +110,29 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         if (willBeMerged(originalJar, moduleSpecs.values())) {  // No output if this Jar will be merged
             return;
         }
-
+        boolean realModule = isModule(originalJar);
         if (moduleSpec instanceof ModuleInfo) {
+            if (realModule && !((ModuleInfo) moduleSpec).patchRealModule) {
+                throw new RuntimeException("Patching of real modules must be explicitly enabled with 'patchRealModule()'");
+            }
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
+            if (realModule) {
+                throw new RuntimeException("Patching of real modules must be explicitly enabled with 'patchRealModule()' and can only be done with 'module()'");
+            }
+            if (parameters.getFailOnAutomaticModules().get()) {
+                throw new RuntimeException("Use of 'automaticModule()' is prohibited. Use 'module()' instead: " + originalJar.getName());
+            }
             addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), (AutomaticModuleName) moduleSpec);
-        } else if (isModule(originalJar)) {
+        } else if (realModule) {
             outputs.file(originalJar);
         } else if (isAutoModule(originalJar)) {
+            if (parameters.getFailOnAutomaticModules().get()) {
+                throw new RuntimeException("Found an automatic module: " + originalJar.getName());
+            }
             outputs.file(originalJar);
         } else {
-            if (getParameters().getFailOnMissingModuleInfo().get()) {
+            if (parameters.getFailOnMissingModuleInfo().get()) {
                 throw new RuntimeException("Not a module and no mapping defined: " + originalJar.getName());
             } else {
                 outputs.file(originalJar);
@@ -254,7 +269,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 providers.get(key).addAll(extractImplementations(content));
             }
 
-            if (!JAR_SIGNATURE_PATH.matcher(entryName).matches() && !"META-INF/MANIFEST.MF".equals(jarEntry.getName())) {
+            if (!JAR_SIGNATURE_PATH.matcher(entryName).matches() && !"META-INF/MANIFEST.MF".equals(entryName) && !isModuleInfoClass(entryName)) {
                 if (!willMergeJars || !isFileInServicesFolder) { // service provider files will be merged later
                     jarEntry.setCompressedSize(-1);
                     try {
@@ -431,5 +446,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                     "\n - If it is not a module, patch it using 'module()' or 'automaticModule()'");
         }
         return moduleSpec.getModuleName();
+    }
+
+    private static boolean isModuleInfoClass(String jarEntryName) {
+        return "module-info.class".equals(jarEntryName) || MODULE_INFO_CLASS_MRJAR_PATH.matcher(jarEntryName).matches();
     }
 }

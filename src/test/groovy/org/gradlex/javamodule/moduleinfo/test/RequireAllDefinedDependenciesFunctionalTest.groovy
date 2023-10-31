@@ -107,16 +107,13 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 knownModule("org.jetbrains.kotlin:kotlin-stdlib", "kotlin.stdlib")
+                knownModule("org.jetbrains.kotlin:kotlin-reflect", "kotlin.reflect")
                 knownModule("net.java.dev.jna:jna", "com.sun.jna")
                 module("org.jetbrains.kotlin:kotlin-stdlib-common", "kotlin.stdlib.common") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
                 module("org.jetbrains:annotations", "org.jetbrains.annotations") {
-                    exportAllPackages()
-                    requireAllDefinedDependencies()
-                }
-                module("org.jetbrains.kotlin:kotlin-reflect", "kotlin.reflect") {
                     exportAllPackages()
                     requireAllDefinedDependencies()
                 }
