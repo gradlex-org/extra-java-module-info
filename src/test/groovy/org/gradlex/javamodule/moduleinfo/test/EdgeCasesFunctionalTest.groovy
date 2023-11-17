@@ -177,4 +177,21 @@ class EdgeCasesFunctionalTest extends Specification {
         expect:
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
+
+    def "deriveAutomaticModuleNamesFromFileNames produces a build time error for invalid module names"() {
+        given:
+        buildFile << """          
+            dependencies {
+                implementation("org.nd4j:nd4j-native-api:0.9.1")
+            }
+            
+            extraJavaModuleInfo {
+                deriveAutomaticModuleNamesFromFileNames.set(true)
+            }
+        """
+
+        expect:
+        def result = failRun()
+        result.output.contains "nd4j.native.api: Invalid module name: 'native' is not a Java identifier"
+    }
 }

@@ -48,12 +48,12 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.TreeSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
+import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.automaticModulNameFromFileName;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.versionFromFilePath;
 
@@ -84,18 +85,28 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     public interface Parameter extends TransformParameters {
         @Input
         MapProperty<String, ModuleSpec> getModuleSpecs();
+
         @Input
         Property<Boolean> getFailOnMissingModuleInfo();
+
         @Input
         Property<Boolean> getFailOnAutomaticModules();
+
+        @Input
+        Property<Boolean> getDeriveAutomaticModuleNamesFromFileNames();
+
         @Input
         ListProperty<String> getMergeJarIds();
+
         @InputFiles
         ListProperty<RegularFile> getMergeJars();
+
         @Input
         MapProperty<String, Set<String>> getCompileClasspathDependencies();
+
         @Input
         MapProperty<String, Set<String>> getRuntimeClasspathDependencies();
+
         @Input
         MapProperty<String, Set<String>> getAnnotationProcessorClasspathDependencies();
     }
@@ -135,12 +146,13 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 throw new RuntimeException("Found an automatic module: " + originalJar.getName());
             }
             outputs.file(originalJar);
+        } else if (parameters.getDeriveAutomaticModuleNamesFromFileNames().get()) {
+            String automaticName = automaticModulNameFromFileName(originalJar);
+            addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), new AutomaticModuleName(originalJar.getName(), automaticName));
+        } else if (parameters.getFailOnMissingModuleInfo().get()) {
+            throw new RuntimeException("Not a module and no mapping defined: " + originalJar.getName());
         } else {
-            if (parameters.getFailOnMissingModuleInfo().get()) {
-                throw new RuntimeException("Not a module and no mapping defined: " + originalJar.getName());
-            } else {
-                outputs.file(originalJar);
-            }
+            outputs.file(originalJar);
         }
     }
 
@@ -175,7 +187,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             // - https://github.com/jjohannes/extra-java-module-info/issues/78
             return true;
         }
-        try (JarInputStream inputStream =  new JarInputStream(Files.newInputStream(jar.toPath()))) {
+        try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(jar.toPath()))) {
             boolean isMultiReleaseJar = containsMultiReleaseJarEntry(inputStream);
             ZipEntry next = inputStream.getNextEntry();
             while (next != null) {
@@ -351,7 +363,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             allDependencies.addAll(compileDependencies);
             allDependencies.addAll(runtimeDependencies);
             allDependencies.addAll(annotationProcessorDependencies);
-            for (String ga: allDependencies) {
+            for (String ga : allDependencies) {
                 String moduleName = gaToModuleName(ga);
                 if (compileDependencies.contains(ga) && !runtimeDependencies.contains(ga)) {
                     moduleVisitor.visitRequire(moduleName, Opcodes.ACC_STATIC_PHASE, null);
@@ -381,7 +393,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             List<String> implementations = entry.getValue();
             if (!moduleInfo.ignoreServiceProviders.contains(name)) {
                 moduleVisitor.visitProvide(name.replace('.', '/'),
-                        implementations.stream().map(impl -> impl.replace('.','/')).toArray(String[]::new));
+                        implementations.stream().map(impl -> impl.replace('.', '/')).toArray(String[]::new));
             }
         }
         moduleVisitor.visitEnd();
@@ -461,4 +473,5 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     private static boolean isModuleInfoClass(String jarEntryName) {
         return "module-info.class".equals(jarEntryName) || MODULE_INFO_CLASS_MRJAR_PATH.matcher(jarEntryName).matches();
     }
+
 }

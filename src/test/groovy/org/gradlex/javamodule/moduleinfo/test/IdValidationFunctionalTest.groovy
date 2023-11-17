@@ -56,7 +56,7 @@ class IdValidationFunctionalTest extends Specification {
 
         expect:
         def out = fail()
-        out.output.contains("'apache.commons:logging' is not a valid Java Module name")
+        out.output.contains("apache.commons:logging: Invalid module name: 'commons:logging' is not a Java identifier")
     }
 
 }
