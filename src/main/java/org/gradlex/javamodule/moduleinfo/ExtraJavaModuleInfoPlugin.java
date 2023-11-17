@@ -64,6 +64,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         ExtraJavaModuleInfoPluginExtension extension = project.getExtensions().create("extraJavaModuleInfo", ExtraJavaModuleInfoPluginExtension.class);
         extension.getFailOnMissingModuleInfo().convention(true);
         extension.getFailOnAutomaticModules().convention(false);
+        extension.getDeriveAutomaticModuleNamesFromFileNames().convention(false);
 
         // setup the transform and the tasks for all projects in the build
         project.getPlugins().withType(JavaPlugin.class).configureEach(javaPlugin -> {
@@ -173,6 +174,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                 p.getModuleSpecs().set(extension.getModuleSpecs());
                 p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());
                 p.getFailOnAutomaticModules().set(extension.getFailOnAutomaticModules());
+                p.getDeriveAutomaticModuleNamesFromFileNames().set(extension.getDeriveAutomaticModuleNamesFromFileNames());
 
                 // See: https://github.com/adammurdoch/dependency-graph-as-task-inputs/blob/main/plugins/src/main/java/TestPlugin.java
                 Provider<Set<ResolvedArtifactResult>> artifacts = project.provider(() ->

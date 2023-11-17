@@ -693,4 +693,113 @@ org.apache.qpid.server.management.plugin.ConfiguredObjectRegistrationImpl''')
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
 
+    def "can add module information to legacy library"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import com.google.gson.Gson;
+            import org.apache.commons.beanutils.BeanUtils;
+            import org.apache.commons.cli.CommandLine;
+            import org.apache.commons.cli.CommandLineParser;
+            import org.apache.commons.cli.DefaultParser;
+            import org.apache.commons.cli.Options;
+            import org.apache.commons.lang3.StringUtils;
+            import org.gradle.sample.app.data.Message;
+            
+            public class Main {
+            
+                public static void main(String[] args) throws Exception {
+                    Options options = new Options();
+                    options.addOption("json", true, "data to parse");
+                    options.addOption("debug", false, "prints module infos");
+                    CommandLineParser parser = new DefaultParser();
+                    CommandLine cmd = parser.parse(options, args);
+            
+                    if (cmd.hasOption("debug")) {
+                        printModuleDebug(Main.class);
+                        printModuleDebug(Gson.class);
+                        printModuleDebug(StringUtils.class);
+                        printModuleDebug(CommandLine.class);
+                        printModuleDebug(BeanUtils.class);
+                    }
+            
+                    String json = cmd.getOptionValue("json");
+                    Message message = new Gson().fromJson(json == null ? "{}" : json, Message.class);
+            
+                    Object copy = BeanUtils.cloneBean(message);
+                    System.out.println();
+                    System.out.println("Original: " + copy.toString());
+                    System.out.println("Copy:     " + copy.toString());
+            
+                }
+            
+                private static void printModuleDebug(Class<?> clazz) {
+                    System.out.println(clazz.getModule().getName() + " - " + clazz.getModule().getDescriptor().version().get());
+                }
+            
+            }
+        """
+        file("src/main/java/org/gradle/sample/app/data/Message.java") << """
+            package org.gradle.sample.app.data;
+            
+            import java.util.List;
+            import java.util.ArrayList;
+            
+            public class Message {
+                private String message;
+                private List<String> receivers = new ArrayList<>();
+            
+                public String getMessage() {
+                    return message;
+                }
+            
+                public void setMessage(String message) {
+                    this.message = message;
+                }
+            
+                public List<String> getReceivers() {
+                    return receivers;
+                }
+            
+                public void setReceivers(List<String> receivers) {
+                    this.receivers = receivers;
+                }
+            
+                @Override
+                public String toString() {
+                    return "Message{message='" + message + '\\'' +
+                        ", receivers=" + receivers + '}';
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                exports org.gradle.sample.app;
+                opens org.gradle.sample.app.data; // allow Gson to access via reflection
+            
+                requires com.google.gson;
+                requires org.apache.commons.lang3;
+                requires commons.cli;
+                requires commons.beanutils;
+            }
+        """
+        buildFile << """          
+            dependencies {
+                implementation("com.google.code.gson:gson:2.8.6")           // real module
+                implementation("net.bytebuddy:byte-buddy:1.10.9")           // real module with multi-release jar
+                implementation("org.apache.commons:commons-lang3:3.10")     // automatic module
+                implementation("commons-beanutils:commons-beanutils:1.9.4") // plain library (also brings in other libraries transitively)
+                implementation("commons-cli:commons-cli:1.4")               // plain library        
+            }
+            
+            extraJavaModuleInfo {
+                deriveAutomaticModuleNamesFromFileNames.set(true)
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
 }

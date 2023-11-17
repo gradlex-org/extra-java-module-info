@@ -236,6 +236,21 @@ extraJavaModuleInfo {
 
 This opt-in behavior is designed to prevent over-patching real modules, especially during version upgrades. For example, when a newer version of a library already contains the proper `module-info.class`, the extra module info overrides should be removed.
 
+## Can't things just work™ without all that configuration?
+
+If you use legacy libraries and want to use the Java Module System with all its features, you should patch all Jars to include a `module-info`.
+However, if you get started and just want things to be put on the Module Path, you can set the following option:
+
+```
+extraJavaModuleInfo {
+    deriveAutomaticModuleNamesFromFileNames.set(true)
+}
+```
+
+Now, also Jars that do not have a `module-info.class` and no `Automatic-Module-Name` entry will automatically be processed to get an `Automatic-Module-Name` based on the Jar file name.
+This feature is helpful if you start to migrate an existing project to the Module Path.
+The pivotal feature of this plugin though, is to add a complete `module-info.class` to all Jars using the `module(...)` patch option for each legacy Jar individually.
+
 # Disclaimer
 
 Gradle and the Gradle logo are trademarks of Gradle, Inc.

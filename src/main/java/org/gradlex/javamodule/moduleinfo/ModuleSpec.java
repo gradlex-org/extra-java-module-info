@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.gradlex.javamodule.moduleinfo.IdValidator.validateIdentifier;
-import static org.gradlex.javamodule.moduleinfo.IdValidator.validateModuleName;
+import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.validateModuleName;
 
 /**
  * Details that real Modules and Automatic-Module-Names share.
