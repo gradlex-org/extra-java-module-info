@@ -364,14 +364,16 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             allDependencies.addAll(runtimeDependencies);
             allDependencies.addAll(annotationProcessorDependencies);
             for (String ga : allDependencies) {
-                String moduleName = gaToModuleName(ga);
-                if (compileDependencies.contains(ga) && !runtimeDependencies.contains(ga)) {
-                    moduleVisitor.visitRequire(moduleName, Opcodes.ACC_STATIC_PHASE, null);
-                } else {
+                String depModuleName = gaToModuleName(ga);
+                if (compileDependencies.contains(ga) && runtimeDependencies.contains(ga)) {
+                    moduleVisitor.visitRequire(depModuleName, Opcodes.ACC_TRANSITIVE, null);
+                } else if (runtimeDependencies.contains(ga) || annotationProcessorDependencies.contains(ga)) {
                     // We can currently not identify for sure if a 'requires' is NOT transitive.
                     // For that, we would need the 'compile classpath' of the module we are looking at right now.
                     // The 'compileDependencies' set is based only on the 'compile classpath' of the final consumer.
-                    moduleVisitor.visitRequire(moduleName, Opcodes.ACC_TRANSITIVE, null);
+                    moduleVisitor.visitRequire(depModuleName, 0, null);
+                } else if (compileDependencies.contains(ga)) {
+                    moduleVisitor.visitRequire(depModuleName, Opcodes.ACC_STATIC_PHASE, null);
                 }
             }
         }
