@@ -36,6 +36,8 @@ public abstract class ModuleSpec implements Serializable {
     private final String moduleName;
     private final List<String> mergedJars = new ArrayList<>();
 
+    boolean overrideModuleName;
+
     protected ModuleSpec(String identifier, String moduleName) {
         validateIdentifier(identifier);
         validateModuleName(moduleName);
@@ -76,5 +78,12 @@ public abstract class ModuleSpec implements Serializable {
      */
     public List<String> getMergedJars() {
         return mergedJars;
+    }
+
+    /**
+     * If the Module already has an Automatic-Module-Name, allow changing that name
+     */
+    public void overrideModuleName() {
+        this.overrideModuleName = true;
     }
 }

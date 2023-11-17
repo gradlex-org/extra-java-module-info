@@ -64,9 +64,9 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
-import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.automaticModulNameFromFileName;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.versionFromFilePath;
+import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.automaticModulNameFromFileName;
 
 /**
  * An artifact transform that applies additional information to Jars without module information.
@@ -130,10 +130,20 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             if (realModule && !((ModuleInfo) moduleSpec).patchRealModule) {
                 throw new RuntimeException("Patching of real modules must be explicitly enabled with 'patchRealModule()'");
             }
+            String definedName = moduleSpec.getModuleName();
+            String expectedName = autoModuleName(originalJar);
+            if (expectedName != null && !definedName.equals(expectedName) && !moduleSpec.overrideModuleName) {
+                throw new RuntimeException("The name '" + definedName + "' is different than the Automatic-Module-Name '" + expectedName + "'; explicitly allow override via 'overrideName()'");
+            }
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
             if (realModule) {
                 throw new RuntimeException("Patching of real modules must be explicitly enabled with 'patchRealModule()' and can only be done with 'module()'");
+            }
+            String definedName = moduleSpec.getModuleName();
+            String expectedName = autoModuleName(originalJar);
+            if (expectedName != null && (moduleSpec.getMergedJars().isEmpty() || !definedName.equals(expectedName)) && !moduleSpec.overrideModuleName) {
+                throw new RuntimeException("'" + definedName + "' already has the Automatic-Module-Name '" + expectedName + "'; explicitly allow override via 'overrideName()'");
             }
             if (parameters.getFailOnAutomaticModules().get()) {
                 throw new RuntimeException("Use of 'automaticModule()' is prohibited. Use 'module()' instead: " + originalJar.getName());
@@ -141,7 +151,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             addAutomaticModuleName(originalJar, getModuleJar(outputs, originalJar), (AutomaticModuleName) moduleSpec);
         } else if (realModule) {
             outputs.file(originalJar);
-        } else if (isAutoModule(originalJar)) {
+        } else if (autoModuleName(originalJar) != null) {
             if (parameters.getFailOnAutomaticModules().get()) {
                 throw new RuntimeException("Found an automatic module: " + originalJar.getName());
             }
@@ -210,10 +220,11 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         return manifest != null && Boolean.parseBoolean(manifest.getMainAttributes().getValue("Multi-Release"));
     }
 
-    private boolean isAutoModule(File jar) {
+    @Nullable
+    private String autoModuleName(File jar) {
         try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(jar.toPath()))) {
             Manifest manifest = inputStream.getManifest();
-            return manifest != null && manifest.getMainAttributes().getValue("Automatic-Module-Name") != null;
+            return manifest != null ? manifest.getMainAttributes().getValue("Automatic-Module-Name") : null;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

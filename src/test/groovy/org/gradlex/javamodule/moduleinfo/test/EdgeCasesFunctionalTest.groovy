@@ -158,7 +158,7 @@ class EdgeCasesFunctionalTest extends Specification {
             module org.gradle.sample.app {
                 exports org.gradle.sample.app;
                 
-                requires org.kohsuke.github;
+                requires org.kohsuke.github.api;
             }
         """
         buildFile << """          
@@ -167,7 +167,7 @@ class EdgeCasesFunctionalTest extends Specification {
             }
             
             extraJavaModuleInfo {
-                module("org.kohsuke:github-api", "org.kohsuke.github") {
+                module("org.kohsuke:github-api", "org.kohsuke.github.api") {
                     exportAllPackages()
                     requires("org.apache.commons.lang3")
                 }
@@ -193,5 +193,78 @@ class EdgeCasesFunctionalTest extends Specification {
         expect:
         def result = failRun()
         result.output.contains "nd4j.native.api: Invalid module name: 'native' is not a Java identifier"
+    }
+
+    def "fail if module name does not correspond to Automatic-Module-Name - module"() {
+        given:
+        buildFile << """          
+            dependencies {
+                implementation("org.apache.commons:commons-lang3:3.10")
+            }
+            
+            extraJavaModuleInfo {
+                module("org.apache.commons:commons-lang3", "org.apache.commons.lang") {
+                    exportAllPackages()
+                }
+            }
+        """
+
+        expect:
+        def result = failRun()
+        result.output.contains "The name 'org.apache.commons.lang' is different than the Automatic-Module-Name 'org.apache.commons.lang3'; explicitly allow override via 'overrideName()'"
+    }
+
+    def "fail if module name does not correspond to Automatic-Module-Name - automaticModule"() {
+        given:
+        buildFile << """          
+            dependencies {
+                implementation("org.apache.commons:commons-lang3:3.10")
+            }
+            
+            extraJavaModuleInfo {
+                automaticModule("org.apache.commons:commons-lang3", "org.apache.commons.lang")
+            }
+        """
+
+        expect:
+        def result = failRun()
+        result.output.contains "'org.apache.commons.lang' already has the Automatic-Module-Name 'org.apache.commons.lang3'; explicitly allow override via 'overrideName()'"
+    }
+
+    def "do not fail if overrideModuleName is set - module"() {
+        given:
+        buildFile << """          
+            dependencies {
+                implementation("org.apache.commons:commons-lang3:3.10")
+            }
+            
+            extraJavaModuleInfo {
+                module("org.apache.commons:commons-lang3", "org.apache.commons.lang") {
+                    overrideModuleName()
+                    exportAllPackages()
+                }
+            }
+        """
+
+        expect:
+        build()
+    }
+
+    def "do not fail if overrideModuleName is set - automaticModule"() {
+        given:
+        buildFile << """          
+            dependencies {
+                implementation("org.apache.commons:commons-lang3:3.10")
+            }
+            
+            extraJavaModuleInfo {
+                automaticModule("org.apache.commons:commons-lang3", "org.apache.commons.lang") {
+                    overrideModuleName()
+                }
+            }
+        """
+
+        expect:
+        build()
     }
 }
