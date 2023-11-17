@@ -295,4 +295,47 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
         fail().output.contains("[requires directives from metadata] " +
                 "The module name of the following component is not known: org.apache.httpcomponents:httpcore")
     }
+
+    def "requireAllDefinedDependencies work for annotation processor path"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+
+            public class Main {
+                public static void main(String[] args) { }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                exports org.gradle.sample.app;
+            }
+        """
+        buildFile << """          
+            dependencies {
+                annotationProcessor("com.google.auto.service:auto-service:1.1.1")
+            }
+            
+            dependencies.components {
+                withModule("com.google.guava:guava") {
+                    allVariants { withDependencies { removeAll { it.name != "failureaccess" } } }
+                }
+            }
+            
+            extraJavaModuleInfo {
+                automaticModule("com.google.auto.service:auto-service", "com.google.auto.service.processor")
+                automaticModule("com.google.auto:auto-common", "com.google.auto.common")
+                module("com.google.guava:guava", "com.google.common") {
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                    requires("java.logging")
+                }
+                module("com.google.guava:failureaccess", "com.google.guava.failureaccess") {
+                    exportAllPackages()
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
 }
