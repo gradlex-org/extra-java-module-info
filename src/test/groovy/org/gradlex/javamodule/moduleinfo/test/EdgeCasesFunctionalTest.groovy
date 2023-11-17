@@ -1,5 +1,6 @@
 package org.gradlex.javamodule.moduleinfo.test
 
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradlex.javamodule.moduleinfo.test.fixture.GradleBuild
 import org.gradlex.javamodule.moduleinfo.test.fixture.LegacyLibraries
 import spock.lang.Specification
@@ -138,5 +139,42 @@ class EdgeCasesFunctionalTest extends Specification {
 
         then:
         result.output.contains('[jsr305-3.0.2-module.jar]')
+    }
+
+    def "can automatically export all packages of a multi-release legacy Jar"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import org.kohsuke.github.GHApp;
+            
+            public class Main {
+                public static void main(String[] args) {
+                    GHApp app = new GHApp();
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                exports org.gradle.sample.app;
+                
+                requires org.kohsuke.github;
+            }
+        """
+        buildFile << """          
+            dependencies {
+                implementation("org.kohsuke:github-api:1.317")
+            }
+            
+            extraJavaModuleInfo {
+                module("org.kohsuke:github-api", "org.kohsuke.github") {
+                    exportAllPackages()
+                    requires("org.apache.commons.lang3")
+                }
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
     }
 }

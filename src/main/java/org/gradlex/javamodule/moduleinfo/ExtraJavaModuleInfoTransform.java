@@ -58,6 +58,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -76,6 +77,7 @@ import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.vers
 public abstract class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
+    private static final Pattern MRJAR_VERSIONS_PATH = Pattern.compile("META-INF/versions/\\d+/(.*)/.*");
     private static final Pattern JAR_SIGNATURE_PATH = Pattern.compile("^META-INF/[^/]+\\.(SF|RSA|DSA|sf|rsa|dsa)$");
     private static final String SERVICES_PREFIX = "META-INF/services/";
 
@@ -280,7 +282,13 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                     if (entryName.endsWith(".class")) {
                         int i = entryName.lastIndexOf("/");
                         if (i > 0) {
-                            packages.add(entryName.substring(0, i));
+                            Matcher mrJarMatcher = MRJAR_VERSIONS_PATH.matcher(entryName);
+                            if (mrJarMatcher.matches()) {
+                                // Strip the 'META-INF/versions/11' part
+                                packages.add(mrJarMatcher.group(1));
+                            } else {
+                                packages.add(entryName.substring(0, i));
+                            }
                         }
                     }
                 }
