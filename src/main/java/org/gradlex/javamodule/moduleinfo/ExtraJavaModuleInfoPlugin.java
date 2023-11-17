@@ -41,7 +41,6 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 import org.gradlex.javamodule.moduleinfo.tasks.ModuleDescriptorRecommendation;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -77,7 +76,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
             String name = sourceSet.getTaskName("", "moduleDescriptorRecommendations");
             project.getTasks().register(name, ModuleDescriptorRecommendation.class, task -> {
-                Transformer<@Nullable List<File>, Configuration> artifactsTransformer = configuration -> {
+                Transformer<List<File>, Configuration> artifactsTransformer = configuration -> {
                     //noinspection CodeBlock2Expr
                     return configuration.getIncoming()
                             .getArtifacts()
@@ -88,7 +87,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                             .collect(Collectors.toList());
                 };
 
-                Transformer<@Nullable List<ResolvedComponentResult>, Configuration> componentsTransformer = configuration -> {
+                Transformer<List<ResolvedComponentResult>, Configuration> componentsTransformer = configuration -> {
                     Set<ComponentIdentifier> artifacts = configuration.getIncoming()
                             .getArtifacts()
                             .getArtifacts()
