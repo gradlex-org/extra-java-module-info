@@ -1,5 +1,12 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.6
+* [New] [#74](https://github.com/gradlex-org/extra-java-module-info/issues/74) - Add 'deriveAutomaticModuleNamesFromFileNames' option (Thanks [Mike Wacker](https://github.com/mikewacker) for suggesting!)
+* [New] [#85](https://github.com/gradlex-org/extra-java-module-info/issues/85) - Add check that existing 'Automatic-Module-Names' are not changed accidentally
+* [Fixed] [#77](https://github.com/gradlex-org/extra-java-module-info/issues/77) - 'exportAllPackages' breaks module for multi-release Jars (Thanks [Christopher Schnick](https://github.com/crschnick) for reporting!)
+* [Fixed] [#78](https://github.com/gradlex-org/extra-java-module-info/issues/78) - Empty Jars created when Intellij refreshes project (Thanks [Kostas Pagratis](https://github.com/kpagratis) for reporting!)
+* [Fixed] [#81](https://github.com/gradlex-org/extra-java-module-info/issues/81) - 'requireAllDefinedDependencies' does not work reliably for 'annotationProcessor'
+
 ## Version 1.5
 * [New] [#75](https://github.com/gradlex-org/extra-java-module-info/issues/75) - Add 'failOnAutomaticModules' option (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
 * [New] [#75](https://github.com/gradlex-org/extra-java-module-info/issues/75) - Support patching of real modules (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
