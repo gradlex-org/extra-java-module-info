@@ -114,8 +114,16 @@ you can deactivate it for the runtime classpath as the module information is irr
 
 **Kotlin DSL**
 ```
+// Disable for a single Classpath (Configuration)
 configurations {
     runtimeClasspath { // testRuntimeClasspath, testCompileClasspath, ... 
+        attributes { attribute(Attribute.of("javaModule", Boolean::class.javaObjectType), false) }
+    }
+}
+
+// Disable for all 'annotationProcessor' paths
+sourceSets.all {
+    configurations.getByName(annotationProcessorConfigurationName) {
         attributes { attribute(Attribute.of("javaModule", Boolean::class.javaObjectType), false) }
     }
 }
@@ -123,8 +131,16 @@ configurations {
 
 **Groovy DSL**
 ```
+// Disable for a single Classpath (Configuration)
 configurations {
     runtimeClasspath { // testRuntimeClasspath, testCompileClasspath, ... 
+        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
+    }
+}
+
+// Disable for all 'annotationProcessor' paths
+sourceSets.all {
+    configurations.getByName(annotationProcessorConfigurationName) {
         attributes { attribute(Attribute.of("javaModule", Boolean), false) }
     }
 }
