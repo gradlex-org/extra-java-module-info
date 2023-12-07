@@ -35,6 +35,7 @@ import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nullable;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,8 +47,10 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +58,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -81,6 +85,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     private static final Pattern MRJAR_VERSIONS_PATH = Pattern.compile("META-INF/versions/\\d+/(.*)/.*");
     private static final Pattern JAR_SIGNATURE_PATH = Pattern.compile("^META-INF/[^/]+\\.(SF|RSA|DSA|sf|rsa|dsa)$");
     private static final String SERVICES_PREFIX = "META-INF/services/";
+
+    // See: org.gradle.api.internal.file.archive.ZipCopyAction.CONSTANT_TIME_FOR_ZIP_ENTRIES
+    private static final long CONSTANT_TIME_FOR_ZIP_ENTRIES = new GregorianCalendar(1980, Calendar.FEBRUARY, 1, 0, 0, 0).getTimeInMillis();
 
     public interface Parameter extends TransformParameters {
         @Input
@@ -260,7 +267,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 Set<String> packages = new TreeSet<>();
                 copyAndExtractProviders(inputStream, outputStream, !moduleInfo.getMergedJars().isEmpty(), providers, packages);
                 mergeJars(moduleInfo, outputStream, providers, packages);
-                outputStream.putNextEntry(new JarEntry("module-info.class"));
+                outputStream.putNextEntry(newReproducibleEntry("module-info.class"));
                 outputStream.write(addModuleInfo(moduleInfo, providers, versionFromFilePath(originalJar.toPath()),
                         moduleInfo.exportAllPackages ? packages : Collections.emptySet()));
                 outputStream.closeEntry();
@@ -271,7 +278,14 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     }
 
     private JarOutputStream newJarOutputStream(OutputStream out, @Nullable Manifest manifest) throws IOException {
-        return manifest == null ? new JarOutputStream(out) : new JarOutputStream(out, manifest);
+        JarOutputStream jar = new JarOutputStream(out);
+        if (manifest != null) {
+            ZipEntry e = newReproducibleEntry(JarFile.MANIFEST_NAME);
+            jar.putNextEntry(e);
+            manifest.write(new BufferedOutputStream(jar));
+            jar.closeEntry();
+        }
+        return jar;
     }
 
     private void copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream, boolean willMergeJars, Map<String, List<String>> providers, Set<String> packages) throws IOException {
@@ -450,14 +464,19 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
     private void mergeServiceProviderFiles(JarOutputStream outputStream, Map<String, List<String>> providers) throws IOException {
         for (Map.Entry<String, List<String>> provider : providers.entrySet()) {
-            JarEntry jarEntry = new JarEntry(SERVICES_PREFIX + provider.getKey());
-            outputStream.putNextEntry(jarEntry);
+            outputStream.putNextEntry(newReproducibleEntry(SERVICES_PREFIX + provider.getKey()));
             for (String implementation : provider.getValue()) {
                 outputStream.write(implementation.getBytes());
                 outputStream.write("\n".getBytes());
             }
             outputStream.closeEntry();
         }
+    }
+
+    private JarEntry newReproducibleEntry(String name) {
+        JarEntry jarEntry = new JarEntry(name);
+        jarEntry.setTime(CONSTANT_TIME_FOR_ZIP_ENTRIES);
+        return jarEntry;
     }
 
     private byte[] readAllBytes(InputStream inputStream) throws IOException {
