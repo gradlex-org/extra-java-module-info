@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.6.1
+* [Fixed] [#89](https://github.com/gradlex-org/extra-java-module-info/issues/89) - Make Jar patching reproducible
+
 ## Version 1.6
 * [New] [#74](https://github.com/gradlex-org/extra-java-module-info/issues/74) - Add 'deriveAutomaticModuleNamesFromFileNames' option (Thanks [Mike Wacker](https://github.com/mikewacker) for suggesting!)
 * [New] [#85](https://github.com/gradlex-org/extra-java-module-info/issues/85) - Add check that existing 'Automatic-Module-Names' are not changed accidentally
