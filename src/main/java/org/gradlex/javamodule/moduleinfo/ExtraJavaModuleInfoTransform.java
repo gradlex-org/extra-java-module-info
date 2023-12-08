@@ -249,7 +249,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
             }
             manifest.getMainAttributes().putValue("Automatic-Module-Name", automaticModule.getModuleName());
-            try (JarOutputStream outputStream = new JarOutputStream(Files.newOutputStream(moduleJar.toPath()), manifest)) {
+            try (JarOutputStream outputStream = newJarOutputStream(Files.newOutputStream(moduleJar.toPath()), manifest)) {
                 Map<String, List<String>> providers = new LinkedHashMap<>();
                 Set<String> packages = new TreeSet<>();
                 copyAndExtractProviders(inputStream, outputStream, !automaticModule.getMergedJars().isEmpty(), providers, packages);
