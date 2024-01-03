@@ -494,13 +494,31 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
     private String gaToModuleName(String ga) {
         ModuleSpec moduleSpec = getParameters().getModuleSpecs().get().get(ga);
-        if (moduleSpec == null) {
-            throw new RuntimeException("[requires directives from metadata] " +
-                    "The module name of the following component is not known: " + ga +
-                    "\n - If it is already a module, make the module name known using 'knownModule(\"" + ga + "\", \"<module name>\")'" +
-                    "\n - If it is not a module, patch it using 'module()' or 'automaticModule()'");
+        if (moduleSpec != null) {
+            return moduleSpec.getModuleName();
         }
-        return moduleSpec.getModuleName();
+        String moduleNameFromSharedMapping = moduleNameFromSharedMapping(ga);
+        if (moduleNameFromSharedMapping != null) {
+            return moduleNameFromSharedMapping;
+        }
+
+        throw new RuntimeException("[requires directives from metadata] " +
+                "The module name of the following component is not known: " + ga +
+                "\n - If it is already a module, make the module name known using 'knownModule(\"" + ga + "\", \"<module name>\")'" +
+                "\n - If it is not a module, patch it using 'module()' or 'automaticModule()'");
+    }
+
+    @Nullable
+    private String moduleNameFromSharedMapping(String ga) {
+        try {
+            Class<?> sharedMappings = Class.forName("org.gradlex.javamodule.dependencies.SharedMappings");
+            @SuppressWarnings("unchecked")
+            Map<String, String> mappings = (Map<String, String>) sharedMappings.getDeclaredField("mappings").get(null);
+            Optional<String> found = mappings.entrySet().stream().filter(
+                    e -> e.getValue().equals(ga)).map(Map.Entry::getKey).findFirst();
+            return found.orElse(null);
+        } catch (ReflectiveOperationException ignored) { }
+        return null;
     }
 
     private static boolean isModuleInfoClass(String jarEntryName) {

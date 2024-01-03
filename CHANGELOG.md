@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.6.2
+* [New] - Use shared mappings from 'java-module-dependencies' for 'known modules' (if available)
+
 ## Version 1.6.1
 * [Fixed] [#89](https://github.com/gradlex-org/extra-java-module-info/issues/89) - Make Jar patching reproducible
 
