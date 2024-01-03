@@ -199,6 +199,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         if (!jar.isFile()) {
             // If the jar does not exist, we assume that the file, which is produced later is a local artifact and a module.
             // For local files this behavior is ok, because this transform is targeting published artifacts.
+            // Still, this can cause an error: https://github.com/gradle/gradle/issues/27372
             // See also:
             // - https://github.com/jjohannes/extra-java-module-info/issues/15
             // - https://github.com/jjohannes/extra-java-module-info/issues/78
