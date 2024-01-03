@@ -160,7 +160,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             outputs.file(originalJar);
         } else if (autoModuleName(originalJar) != null) {
             if (parameters.getFailOnAutomaticModules().get()) {
-                throw new RuntimeException("Found an automatic module: " + originalJar.getName());
+                throw new RuntimeException("Found an automatic module: " + autoModuleName(originalJar) + " (" + originalJar.getName() + ")");
             }
             outputs.file(originalJar);
         } else if (parameters.getDeriveAutomaticModuleNamesFromFileNames().get()) {

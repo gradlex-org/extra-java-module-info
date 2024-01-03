@@ -67,7 +67,7 @@ class AllowAutomaticModulesFunctionalTest extends Specification {
 
         expect:
         def out = failRun()
-        out.output.contains("Found an automatic module: snakeyaml-1.33.jar")
+        out.output.contains("Found an automatic module: org.yaml.snakeyaml (snakeyaml-1.33.jar)")
     }
 
     def "automatic modules are allowed when failOnAutomaticModules set to true and there is a proper module override"() {
