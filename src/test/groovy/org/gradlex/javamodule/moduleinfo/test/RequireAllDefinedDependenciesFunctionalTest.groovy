@@ -338,4 +338,34 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
         expect:
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
+
+    def "can handle components with platform dependencies"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            public class Main { public static void main(String[] args)  { } }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app { requires com.fasterxml.jackson.databind; }
+        """
+        buildFile << """
+            dependencies {
+                implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+            }
+            
+            extraJavaModuleInfo {
+                module("com.fasterxml.jackson.core:jackson-databind", "com.fasterxml.jackson.databind") {
+                    patchRealModule()
+                    exportAllPackages()
+                    requireAllDefinedDependencies()
+                }
+                // 'com.fasterxml.jackson:jackson-bom' is ignored
+                knownModule("com.fasterxml.jackson.core:jackson-core", "com.fasterxml.jackson.core")
+                knownModule("com.fasterxml.jackson.core:jackson-annotations", "com.fasterxml.jackson.annotation")
+            }
+        """
+
+        expect:
+        run().task(':run').outcome == TaskOutcome.SUCCESS
+    }
 }

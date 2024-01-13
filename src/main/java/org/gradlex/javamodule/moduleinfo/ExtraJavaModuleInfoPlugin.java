@@ -43,9 +43,19 @@ import org.gradle.util.GradleVersion;
 import org.gradlex.javamodule.moduleinfo.tasks.ModuleDescriptorRecommendation;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.gradle.api.attributes.Category.CATEGORY_ATTRIBUTE;
+import static org.gradle.api.attributes.Category.LIBRARY;
+import static org.gradle.api.attributes.Usage.JAVA_RUNTIME;
+import static org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE;
+import static org.gradle.api.plugins.JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME;
 
 /**
  * Entry point of the plugin.
@@ -53,6 +63,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("unused")
 @NonNullApi
 public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
+    private static final Attribute<String> CATEGORY_ATTRIBUTE_UNTYPED = Attribute.of(CATEGORY_ATTRIBUTE.getName(), String.class);
 
     @Override
     public void apply(Project project) {
@@ -125,8 +136,8 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             c.setVisible(false);
             c.setCanBeConsumed(false);
             c.setCanBeResolved(true);
-            c.getAttributes().attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_RUNTIME));
-            c.getAttributes().attribute(Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
+            c.getAttributes().attribute(USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, JAVA_RUNTIME));
+            c.getAttributes().attribute(CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, LIBRARY));
 
             // Automatically add dependencies for Jars where we know the coordinates
             c.withDependencies(d -> extension.getModuleSpecs().get().values().stream().flatMap(m ->
@@ -136,7 +147,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             // Automatically get versions from the runtime classpath
             if (GradleVersion.current().compareTo(GradleVersion.version("6.8")) >= 0) {
                 //noinspection UnstableApiUsage
-                c.shouldResolveConsistentlyWith(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+                c.shouldResolveConsistentlyWith(project.getConfigurations().getByName(RUNTIME_CLASSPATH_CONFIGURATION_NAME));
             }
         });
 
@@ -208,12 +219,21 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
     private Map<String, Set<String>> toStringMap(Stream<ResolvedComponentResult> result) {
         return result.collect(Collectors.toMap(
                 c -> ga(c.getId()),
-                c -> c.getDependencies().stream().map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet()),
+                c -> c.getDependencies().stream().filter(ExtraJavaModuleInfoPlugin::filterComponentDependencies).map(ExtraJavaModuleInfoPlugin::ga).collect(Collectors.toSet()),
                 (dependencies1, dependencies2) -> dependencies1));
     }
 
     private static boolean needsDependencies(ModuleSpec moduleSpec) {
         return moduleSpec instanceof ModuleInfo && ((ModuleInfo) moduleSpec).requireAllDefinedDependencies;
+    }
+
+    private static boolean filterComponentDependencies(DependencyResult d) {
+        if (d instanceof ResolvedDependencyResult) {
+            Category category = ((ResolvedDependencyResult) d).getResolvedVariant().getAttributes().getAttribute(CATEGORY_ATTRIBUTE);
+            String categoryUntyped = ((ResolvedDependencyResult) d).getResolvedVariant().getAttributes().getAttribute(CATEGORY_ATTRIBUTE_UNTYPED);
+            return LIBRARY.equals(categoryUntyped) || (category != null && LIBRARY.equals(category.getName()));
+        }
+        return false;
     }
 
     private static String ga(DependencyResult d) {
