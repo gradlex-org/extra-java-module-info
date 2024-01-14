@@ -18,8 +18,7 @@ package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.model.ObjectFactory;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Data class to hold the information that should be added as module-info.class to an existing Jar file.
@@ -30,8 +29,8 @@ public class ModuleInfo extends ModuleSpec {
     private final String moduleVersion;
 
     boolean openModule = true;
-    final Set<String> exports = new LinkedHashSet<>();
-    final Set<String> opens = new LinkedHashSet<>();
+    final Map<String, Set<String>> exports = new LinkedHashMap<>();
+    final Map<String, Set<String>> opens = new LinkedHashMap<>();
     final Set<String> requires = new LinkedHashSet<>();
     final Set<String> requiresTransitive = new LinkedHashSet<>();
     final Set<String> requiresStatic = new LinkedHashSet<>();
@@ -58,17 +57,19 @@ public class ModuleInfo extends ModuleSpec {
      * Calling this method at least once automatically makes this a "closed" module: 'module' instead of 'open module'.
      *
      * @param opens corresponds to the directive in a 'module-info.java' file
+     * @param to modules this package should be opened to.
      */
-    public void opens(String opens) {
+    public void opens(String opens, String... to) {
         closeModule();
-        addOrThrow(this.opens, opens);
+        addOrThrow(this.opens, opens, to);
     }
 
     /**
      * @param exports corresponds to the directive in a 'module-info.java' file
+     * @param to modules this package should be exported to.
      */
-    public void exports(String exports) {
-        addOrThrow(this.exports, exports);
+    public void exports(String exports, String... to) {
+        addOrThrow(this.exports, exports, to);
     }
 
     /**
@@ -113,12 +114,6 @@ public class ModuleInfo extends ModuleSpec {
         return moduleVersion;
     }
 
-    private static void addOrThrow(Set<String> target, String element) {
-        if (!target.add(element)) {
-            throw new IllegalArgumentException("The element '" + element + "' is already specified");
-        }
-    }
-
     /**
      * Automatically export all packages of the Jar. Can be used instead of individual 'exports()' statements.
      */
@@ -138,6 +133,18 @@ public class ModuleInfo extends ModuleSpec {
      */
     public void patchRealModule() {
         this.patchRealModule = true;
+    }
+
+    private static void addOrThrow(Set<String> target, String element) {
+        if (!target.add(element)) {
+            throw new IllegalArgumentException("The element '" + element + "' is already specified");
+        }
+    }
+
+    private static void addOrThrow(Map<String, Set<String>> target, String key, String... elements) {
+        if (target.put(key, new LinkedHashSet<>(Arrays.asList(elements))) != null) {
+            throw new IllegalArgumentException("The element '" + key + "' is already specified");
+        }
     }
 
 }

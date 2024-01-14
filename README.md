@@ -70,6 +70,8 @@ extraJavaModuleInfo {
     // failOnMissingModuleInfo.set(false)
     module("commons-beanutils:commons-beanutils", "org.apache.commons.beanutils") {
         exports("org.apache.commons.beanutils")
+        // or granuarly allowing access to a package by specific modules
+        // exports("org.apache.commons.beanutils", "org.mycompany.server", "org.mycompany.client")
         // exportAllPackages()
         
         requiresTransitive("org.apache.commons.logging")
@@ -78,6 +80,8 @@ extraJavaModuleInfo {
         
         // closeModule()
         // opens("org.apache.commons.beanutils")
+        // or granuarly allowing runtime-only access to a package by specific modules
+        // opens("org.apache.commons.beanutils", "org.mycompany.server", "org.mycompany.client")
         
         // requiresTransitive(...)
         // requiresStatic(...)

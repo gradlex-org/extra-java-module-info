@@ -91,4 +91,63 @@ class OpensFunctionalTest extends Specification {
         def out = failRun()
         out.output.contains('module apache.commons.collections does not "opens org.apache.commons.collections.bag" to module org.gradle.sample.app')
     }
+
+    def "a package can be opened to a specific module"() {
+        given:
+
+        buildFile << """     
+            dependencies {
+                implementation("commons-collections:commons-collections:3.2.2")
+            }             
+            extraJavaModuleInfo {
+                module(${libs.commonsCollections}, "apache.commons.collections") {
+                    opens("org.apache.commons.collections.buffer", "org.gradle.sample.app")
+                    opens("org.apache.commons.collections.bag", "org.gradle.sample.app")
+                }
+            }
+        """
+
+        expect:
+        run()
+    }
+
+    def "a package can be opened to a specific module and only to this module"() {
+        given:
+
+        buildFile << """     
+            dependencies {
+                implementation("commons-collections:commons-collections:3.2.2")
+            }             
+            extraJavaModuleInfo {
+                module(${libs.commonsCollections}, "apache.commons.collections") {
+                    opens("org.apache.commons.collections.buffer", "org.gradle.sample.lib")
+                    opens("org.apache.commons.collections.bag", "org.gradle.sample.lib")
+                }
+            }
+        """
+
+        expect:
+        def out = failRun()
+        out.output.contains('module apache.commons.collections does not "exports org.apache.commons.collections.buffer" to module org.gradle.sample.app')
+    }
+
+    def "a package can be opened to multiple modules"() {
+        given:
+
+        buildFile << """     
+            dependencies {
+                implementation("commons-collections:commons-collections:3.2.2")
+            }             
+            extraJavaModuleInfo {
+                module(${libs.commonsCollections}, "apache.commons.collections") {
+                    opens("org.apache.commons.collections.buffer", "org.gradle.sample.lib", "org.gradle.sample.app")
+                    opens("org.apache.commons.collections.bag", "org.gradle.sample.lib", "org.gradle.sample.app")
+                }
+            }
+        """
+
+        expect:
+        run()
+    }
+
 }
