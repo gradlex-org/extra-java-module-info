@@ -355,12 +355,16 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         for (String packageName : autoExportedPackages) {
             moduleVisitor.visitExport(packageName, 0);
         }
-        for (String packageName : moduleInfo.exports) {
-            moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
+        for (Map.Entry<String, Set<String>> entry : moduleInfo.exports.entrySet()) {
+            String packageName = entry.getKey();
+            Set<String> modules = entry.getValue();
+            moduleVisitor.visitExport(packageName.replace('.', '/'), 0, modules.toArray(new String[0]));
         }
 
-        for (String packageName : moduleInfo.opens) {
-            moduleVisitor.visitOpen(packageName.replace('.', '/'), 0);
+        for (Map.Entry<String, Set<String>> entry : moduleInfo.opens.entrySet()) {
+            String packageName = entry.getKey();
+            Set<String> modules = entry.getValue();
+            moduleVisitor.visitOpen(packageName.replace('.', '/'), 0, modules.toArray(new String[0]));
         }
 
         moduleVisitor.visitRequire("java.base", 0, null);
