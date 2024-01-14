@@ -1,5 +1,5 @@
 name: Build Plugin
-on: [ push, pull_request ]
+on: [ push ]
 jobs:
   gradle-build:
     runs-on: ubuntu-latest

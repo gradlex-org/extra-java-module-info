@@ -1,5 +1,9 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.7
+* [New] [#95](https://github.com/gradlex-org/extra-java-module-info/issues/95) - granular exports and opens declarations (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
+* [Fixed] [#94](https://github.com/gradlex-org/extra-java-module-info/issues/94) - requireAllDefinedDependencies: skip platform dependencies
+ 
 ## Version 1.6.2
 * [New] - Use shared mappings from 'java-module-dependencies' for 'known modules' (if available)
 

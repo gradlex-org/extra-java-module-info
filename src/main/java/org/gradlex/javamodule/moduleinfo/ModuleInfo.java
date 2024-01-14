@@ -18,7 +18,11 @@ package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.model.ObjectFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Data class to hold the information that should be added as module-info.class to an existing Jar file.
