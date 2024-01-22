@@ -49,7 +49,7 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      * @param moduleName the Module Name of the Module to construct
      */
     public void module(String identifier, String moduleName) {
-        module(identifier, moduleName, null, null);
+        module(identifier, moduleName, (String) null);
     }
 
     /**
@@ -70,7 +70,12 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      * @param moduleVersion version to write into the module-info.class
      */
     public void module(String identifier, String moduleName, String moduleVersion) {
-        module(identifier, moduleName, moduleVersion, null);
+        module(identifier, moduleName, moduleVersion, m -> {
+            m.exportAllPackages();
+            if (identifier.contains(":")) { // only if the identifier is a coordinates (not a Jar)
+                m.requireAllDefinedDependencies();
+            }
+        });
     }
 
     /**
