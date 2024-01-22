@@ -110,6 +110,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
         @Input
         MapProperty<String, PublishedMetadata> getRequiresFromMetadata();
+
+        @Input
+        MapProperty<String, String> getAdditionalKnownModules();
     }
 
     @InputArtifact
@@ -493,6 +496,12 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
     @Nullable
     private String moduleNameFromSharedMapping(String ga) {
+        Optional<String> foundInCustom = getParameters().getAdditionalKnownModules().get().entrySet().stream().filter(
+                e -> e.getValue().equals(ga)).map(Map.Entry::getKey).findFirst();
+        if (foundInCustom.isPresent()) {
+            return foundInCustom.get();
+        }
+
         try {
             Class<?> sharedMappings = Class.forName("org.gradlex.javamodule.dependencies.SharedMappings");
             @SuppressWarnings("unchecked")

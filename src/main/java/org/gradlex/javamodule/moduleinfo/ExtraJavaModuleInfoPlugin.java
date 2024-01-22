@@ -33,6 +33,7 @@ import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFile;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.plugins.HelpTasksPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.Provider;
@@ -40,11 +41,16 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 import org.gradlex.javamodule.moduleinfo.tasks.ModuleDescriptorRecommendation;
 
+import java.io.CharArrayReader;
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -198,9 +204,37 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k1)).entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey, c -> new PublishedMetadata(c.getKey(), c.getValue(), project)))
                 ));
+
+                p.getAdditionalKnownModules().set(extractFromModuleDependenciesPlugin(project));
             });
             t.getFrom().attribute(artifactType, fileExtension).attribute(javaModule, false);
             t.getTo().attribute(artifactType, fileExtension).attribute(javaModule, true);
+        });
+    }
+
+    private Provider<Map<String, String>> extractFromModuleDependenciesPlugin(Project project) {
+        return project.provider(() -> {
+            Object javaModuleDependencies = project.getExtensions().findByName("javaModuleDependencies");
+            if (javaModuleDependencies == null) {
+                return Collections.emptyMap();
+            }
+            try {
+                Method getModulesProperties = javaModuleDependencies.getClass().getMethod("getModulesProperties");
+                RegularFileProperty file = (RegularFileProperty) getModulesProperties.invoke(javaModuleDependencies);
+                return project.getProviders().fileContents(file).getAsText().map(c -> {
+                    Properties p = new Properties();
+                    try {
+                        p.load(new CharArrayReader(c.toCharArray()));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    @SuppressWarnings({"rawtypes", "unchecked"})
+                    Map<String, String> result = (Map) p;
+                    return result;
+                }).getOrElse(Collections.emptyMap());
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 
