@@ -109,13 +109,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         ListProperty<RegularFile> getMergeJars();
 
         @Input
-        MapProperty<String, Set<String>> getCompileClasspathDependencies();
-
-        @Input
-        MapProperty<String, Set<String>> getRuntimeClasspathDependencies();
-
-        @Input
-        MapProperty<String, Set<String>> getAnnotationProcessorClasspathDependencies();
+        MapProperty<String, PublishedMetadata> getRequiresFromMetadata();
     }
 
     @InputArtifact
@@ -370,41 +364,26 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         moduleVisitor.visitRequire("java.base", 0, null);
 
         if (moduleInfo.requireAllDefinedDependencies) {
-            Set<String> compileDependencies = getParameters().getCompileClasspathDependencies().get().get(moduleInfo.getIdentifier());
-            Set<String> runtimeDependencies = getParameters().getRuntimeClasspathDependencies().get().get(moduleInfo.getIdentifier());
-            Set<String> annotationProcessorDependencies = getParameters().getAnnotationProcessorClasspathDependencies().get().get(moduleInfo.getIdentifier());
+            String fullIdentifier = moduleInfo.getIdentifier() + ":" + version;
+            PublishedMetadata requires = getParameters().getRequiresFromMetadata().get().get(fullIdentifier);
 
-            if (compileDependencies == null && runtimeDependencies == null && annotationProcessorDependencies == null) {
+            if (requires == null) {
                 throw new RuntimeException("[requires directives from metadata] " +
                         "Cannot find dependencies for '" + moduleInfo.getModuleName() + "'. " +
                         "Are '" + moduleInfo.getIdentifier() + "' the correct component coordinates?");
             }
 
-            if (compileDependencies == null) {
-                compileDependencies = Collections.emptySet();
-            }
-            if (runtimeDependencies == null) {
-                runtimeDependencies = Collections.emptySet();
-            }
-            if (annotationProcessorDependencies == null) {
-                annotationProcessorDependencies = Collections.emptySet();
-            }
-            Set<String> allDependencies = new TreeSet<>();
-            allDependencies.addAll(compileDependencies);
-            allDependencies.addAll(runtimeDependencies);
-            allDependencies.addAll(annotationProcessorDependencies);
-            for (String ga : allDependencies) {
+            for (String ga : requires.getRequires()) {
                 String depModuleName = gaToModuleName(ga);
-                if (compileDependencies.contains(ga) && runtimeDependencies.contains(ga)) {
-                    moduleVisitor.visitRequire(depModuleName, Opcodes.ACC_TRANSITIVE, null);
-                } else if (runtimeDependencies.contains(ga) || annotationProcessorDependencies.contains(ga)) {
-                    // We can currently not identify for sure if a 'requires' is NOT transitive.
-                    // For that, we would need the 'compile classpath' of the module we are looking at right now.
-                    // The 'compileDependencies' set is based only on the 'compile classpath' of the final consumer.
-                    moduleVisitor.visitRequire(depModuleName, 0, null);
-                } else if (compileDependencies.contains(ga)) {
-                    moduleVisitor.visitRequire(depModuleName, Opcodes.ACC_STATIC_PHASE, null);
-                }
+                moduleVisitor.visitRequire(depModuleName, 0, null);
+            }
+            for (String ga : requires.getRequiresTransitive()) {
+                String depModuleName = gaToModuleName(ga);
+                moduleVisitor.visitRequire(depModuleName, Opcodes.ACC_TRANSITIVE, null);
+            }
+            for (String ga : requires.getRequiresStaticTransitive()) {
+                String depModuleName = gaToModuleName(ga);
+                moduleVisitor.visitRequire(depModuleName, Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_TRANSITIVE, null);
             }
         }
 
