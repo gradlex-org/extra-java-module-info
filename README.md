@@ -52,7 +52,7 @@ Add this to the build file of your convention plugin's build
 
 ```
 dependencies {
-    implementation("org.gradlex:extra-java-module-info:1.7")
+    implementation("org.gradlex:extra-java-module-info:1.8")
 }
 ```
 
