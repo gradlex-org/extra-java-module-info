@@ -211,7 +211,7 @@ class EdgeCasesFunctionalTest extends Specification {
 
         expect:
         def result = failRun()
-        result.output.contains "The name 'org.apache.commons.lang' is different than the Automatic-Module-Name 'org.apache.commons.lang3'; explicitly allow override via 'overrideName()'"
+        result.output.contains "The name 'org.apache.commons.lang' is different than the Automatic-Module-Name 'org.apache.commons.lang3'; explicitly allow override via 'overrideModuleName()'"
     }
 
     def "fail if module name does not correspond to Automatic-Module-Name - automaticModule"() {
@@ -228,7 +228,7 @@ class EdgeCasesFunctionalTest extends Specification {
 
         expect:
         def result = failRun()
-        result.output.contains "'org.apache.commons.lang' already has the Automatic-Module-Name 'org.apache.commons.lang3'; explicitly allow override via 'overrideName()'"
+        result.output.contains "'org.apache.commons.lang' already has the Automatic-Module-Name 'org.apache.commons.lang3'; explicitly allow override via 'overrideModuleName()'"
     }
 
     def "do not fail if overrideModuleName is set - module"() {

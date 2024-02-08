@@ -137,7 +137,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             String definedName = moduleSpec.getModuleName();
             String expectedName = autoModuleName(originalJar);
             if (expectedName != null && !definedName.equals(expectedName) && !moduleSpec.overrideModuleName) {
-                throw new RuntimeException("The name '" + definedName + "' is different than the Automatic-Module-Name '" + expectedName + "'; explicitly allow override via 'overrideName()'");
+                throw new RuntimeException("The name '" + definedName + "' is different than the Automatic-Module-Name '" + expectedName + "'; explicitly allow override via 'overrideModuleName()'");
             }
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
@@ -147,7 +147,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             String definedName = moduleSpec.getModuleName();
             String expectedName = autoModuleName(originalJar);
             if (expectedName != null && (moduleSpec.getMergedJars().isEmpty() || !definedName.equals(expectedName)) && !moduleSpec.overrideModuleName) {
-                throw new RuntimeException("'" + definedName + "' already has the Automatic-Module-Name '" + expectedName + "'; explicitly allow override via 'overrideName()'");
+                throw new RuntimeException("'" + definedName + "' already has the Automatic-Module-Name '" + expectedName + "'; explicitly allow override via 'overrideModuleName()'");
             }
             if (parameters.getFailOnAutomaticModules().get()) {
                 throw new RuntimeException("Use of 'automaticModule()' is prohibited. Use 'module()' instead: " + originalJar.getName());
