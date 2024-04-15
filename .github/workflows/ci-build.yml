@@ -12,5 +12,5 @@ jobs:
           distribution: temurin
           java-version: 11
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3.1.0
+        uses: gradle/actions/setup-gradle@v3.3.0
       - run: "./gradlew build"
