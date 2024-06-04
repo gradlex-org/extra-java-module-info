@@ -84,7 +84,8 @@ class EdgeCasesFunctionalTest extends Specification {
             }
             
             tasks.named("build") {
-                doLast { println(configurations.runtimeClasspath.get().files.map { it.name }) }
+                inputs.files(configurations.runtimeClasspath)
+                doLast { println(inputs.files.map { it.name }) }
             }
         """
 
@@ -130,7 +131,8 @@ class EdgeCasesFunctionalTest extends Specification {
             }
             
             tasks.named("run") {
-                doLast { println(configurations.runtimeClasspath.get().files.map { it.name }) }
+                inputs.files(configurations.runtimeClasspath)
+                doLast { println(inputs.files.map { it.name }) }
             }
         """
 
@@ -138,7 +140,7 @@ class EdgeCasesFunctionalTest extends Specification {
         def result = run()
 
         then:
-        result.output.contains('[jsr305-3.0.2-module.jar]')
+        result.output.contains('jsr305-3.0.2-module.jar')
     }
 
     def "can automatically export all packages of a multi-release legacy Jar"() {

@@ -556,7 +556,8 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             tasks.named("run") {
-                doLast { println(configurations.runtimeClasspath.get().files.map { it.name }) }
+                inputs.files(configurations.runtimeClasspath)
+                doLast { println(inputs.files.map { it.name }) }
             }
         """
 
@@ -612,11 +613,12 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             tasks.named("run") {
-                doLast { 
+                inputs.files(configurations.runtimeClasspath.get().filter { 
+                    it.name == "qpid-broker-core-8.0.6-module.jar"
+                }.elements.map { zipTree(it.single()) })
+                doLast {
                      println(
-                        zipTree(configurations.runtimeClasspath.get().files.find {
-                            it.name == "qpid-broker-core-8.0.6-module.jar"
-                        }).find {
+                        inputs.files.find {
                             it.path.endsWith("/META-INF/services/org.apache.qpid.server.plugin.ConfiguredObjectRegistration")
                         }!!.readText()
                     )

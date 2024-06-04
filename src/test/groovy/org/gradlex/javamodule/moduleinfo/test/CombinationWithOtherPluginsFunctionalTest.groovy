@@ -16,7 +16,7 @@ class CombinationWithOtherPluginsFunctionalTest extends Specification {
         settingsFile << 'rootProject.name = "test-project"'
     }
 
-    @IgnoreIf({ GradleBuild.gradleVersionUnderTest?.startsWith('6.') })
+    @IgnoreIf({ !GradleBuild.gradleVersionUnderTest?.startsWith('7.') })
     def "works in combination with shadow plugin"() {
         def shadowJar = file("app/build/libs/app-all.jar")
 

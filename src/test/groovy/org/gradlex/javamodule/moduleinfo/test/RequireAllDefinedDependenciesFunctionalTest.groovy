@@ -102,7 +102,8 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
             }
             
             tasks.register("resolveRuntimeClasspath") {
-                doLast { configurations.runtimeClasspath.get().resolve() }
+                inputs.files(configurations.runtimeClasspath)
+                doLast { println(inputs.files.map { it.name }) }
             }
             
             extraJavaModuleInfo {
