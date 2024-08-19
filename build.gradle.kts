@@ -48,6 +48,7 @@ listOf("6.8.3", "6.9.2", "7.0.2", "7.6.1").forEach { gradleVersionUnderTest ->
         useJUnitPlatform()
         maxParallelForks = 4
         systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
+        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
     }
     tasks.check {
         dependsOn(testGradle)
