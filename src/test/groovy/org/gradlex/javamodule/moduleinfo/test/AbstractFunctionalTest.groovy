@@ -613,9 +613,10 @@ abstract class AbstractFunctionalTest extends Specification {
             }
             
             tasks.named("run") {
+                val archives = objects.newInstance(ServiceInjection::class.java).archiveOperations
                 inputs.files(configurations.runtimeClasspath.get().filter { 
                     it.name == "qpid-broker-core-8.0.6-module.jar"
-                }.elements.map { zipTree(it.single()) })
+                }.elements.map { archives.zipTree(it.single()) })
                 doLast {
                      println(
                         inputs.files.find {
@@ -623,6 +624,10 @@ abstract class AbstractFunctionalTest extends Specification {
                         }!!.readText()
                     )
                 }
+            }
+            interface ServiceInjection {
+                @get:Inject
+                val archiveOperations: ArchiveOperations
             }
         """
 
