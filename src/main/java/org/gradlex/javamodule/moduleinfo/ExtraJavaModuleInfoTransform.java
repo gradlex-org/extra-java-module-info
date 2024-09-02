@@ -198,8 +198,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             // For local files this behavior is ok, because this transform is targeting published artifacts.
             // Still, this can cause an error: https://github.com/gradle/gradle/issues/27372
             // See also:
-            // - https://github.com/jjohannes/extra-java-module-info/issues/15
-            // - https://github.com/jjohannes/extra-java-module-info/issues/78
+            // - https://github.com/gradlex-org/extra-java-module-info/issues/15
+            // - https://github.com/gradlex-org/extra-java-module-info/issues/78
             return true;
         }
         try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(jar.toPath()))) {
