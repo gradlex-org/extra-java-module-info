@@ -199,6 +199,64 @@ extraJavaModuleInfo {
 }
 ```
 
+## How can I avoid that the same Jar is transformed multiple times when using requireAllDefinedDependencies?
+
+When using the `requireAllDefinedDependencies` option, all metadata of the dependencies on your classpath is input to the Jar transformation.
+In a multi-project however, each subproject typically has different classpaths and not all metadata is available everywhere.
+This leads to a situation, where Gradle's transformation system does not know if transforming the same Jar will lead to the same result.
+Then, the same Jar is transformed many times. This is not necessary a problem, as the results of the transforms are cached
+and do not run on every build invocation. However, the effect of this is still visible:
+for example when you import the project in IntelliJ IDEA.
+You see the same dependency many times in the _External Libraries_ list and IntelliJ is doing additional indexing work.
+
+To circumvent this, you need to construct a common classpath – as a _resolvable configuration_ – that the transform can use.
+This needs to be done in all subprojects. You use the `versionsProvidingConfiguration` to tell the plugin about the commons classpath.
+
+```
+extraJavaModuleInfo {
+    versionsProvidingConfiguration = "mainRuntimeClasspath"
+}
+```
+
+To create such a common classpath, some setup work is needed.
+And it depends on your overall project structure if and how to do that.
+Here is an example setup you may use:
+
+```
+val consistentResolutionAttribute = Attribute.of("consistent-resolution", String::class.java)
+
+// Define an Outgoing Variant (aka Consumable Configuration) that knows about all dependencies
+configurations.create("allDependencies") {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    sourceSets.all {
+        extendsFrom(
+            configurations[this.implementationConfigurationName],
+            configurations[this.compileOnlyConfigurationName],
+            configurations[this.runtimeOnlyConfigurationName],
+            configurations[this.annotationProcessorConfigurationName]
+        )
+    }
+    attributes { attribute(consistentResolutionAttribute, "global") }
+}
+
+// Define a "global claspath" (as Resolvable Configuration)
+val mainRuntimeClasspath = configurations.create("mainRuntimeClasspath") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes.attribute(consistentResolutionAttribute, "global")
+}
+
+// Add a dependency to the 'main' project(s) (:app ins this example) that transitively 
+// depend on all subprojects to create a depenedency graph wih "everything"
+dependencies { mainRuntimeClasspath(project(":app")) }
+
+// Use the global classpath for consisten resolution (optional)
+configurations.runtimeClasspath {
+    shouldResolveConsistentlyWith(mainRuntimeClasspath)
+}
+```
+
 ## I have many automatic modules in my project. How can I convert them into proper modules and control what they export or require?
 
 The plugin provides a set of `<sourceSet>moduleDescriptorRecommendations` tasks that generate the real module declarations utilizing [jdeps](https://docs.oracle.com/en/java/javase/11/tools/jdeps.html) and dependency metadata.

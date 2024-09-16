@@ -25,4 +25,8 @@ class IdValidator {
             throw new RuntimeException("'" + identifier + "' are not valid coordinates (group:name) / is not a valid file name (name-1.0.jar)");
         }
     }
+
+    static boolean isCoordinates(String identifier) {
+        return identifier.matches(COORDINATES_PATTERN);
+    }
 }

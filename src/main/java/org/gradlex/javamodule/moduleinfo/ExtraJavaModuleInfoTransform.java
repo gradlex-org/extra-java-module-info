@@ -380,13 +380,18 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         moduleVisitor.visitRequire("java.base", 0, null);
 
         if (moduleInfo.requireAllDefinedDependencies) {
-            String fullIdentifier = moduleInfo.getIdentifier() + ":" + version;
-            PublishedMetadata requires = getParameters().getRequiresFromMetadata().get().get(fullIdentifier);
+            String identifier = moduleInfo.getIdentifier();
+            PublishedMetadata requires = getParameters().getRequiresFromMetadata().get().get(identifier);
 
             if (requires == null) {
                 throw new RuntimeException("[requires directives from metadata] " +
                         "Cannot find dependencies for '" + moduleInfo.getModuleName() + "'. " +
                         "Are '" + moduleInfo.getIdentifier() + "' the correct component coordinates?");
+            }
+            if (requires.getErrorMessage() != null) {
+                throw new RuntimeException("[requires directives from metadata] " +
+                        "Cannot read metadata for '" + moduleInfo.getModuleName() + "': " +
+                        requires.getErrorMessage());
             }
 
             for (String ga : requires.getRequires()) {
