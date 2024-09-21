@@ -67,7 +67,6 @@ class EdgeCasesFunctionalTest extends Specification {
     def "does fully merge zip files on the classpath"() {
         given:
         buildFile << """             
-            ${gradleVersionUnderTest == "6.4.1"? 'configurations.javaModulesMergeJars.get().extendsFrom(configurations.implementation.get())' : '' }
             dependencies {
                 implementation("org.apache.qpid:qpid-broker-core:9.0.0")
                 implementation("org.apache.qpid:qpid-broker-plugins-management-http:9.0.0")

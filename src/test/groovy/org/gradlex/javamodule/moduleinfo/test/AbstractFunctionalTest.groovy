@@ -535,10 +535,6 @@ abstract class AbstractFunctionalTest extends Specification {
                 
                 ${libs.jarNameOnly? 'javaModulesMergeJars("org.apache.zookeeper:zookeeper")' : '' }
                 ${libs.jarNameOnly? 'javaModulesMergeJars("org.slf4j:slf4j-ext")' : '' }
-
-                // Before Gradle 6.8, there is no consistent resolution and versions need to be defined 
-                ${gradleVersionUnderTest == "6.4.1"? 'javaModulesMergeJars("org.apache.zookeeper:zookeeper:3.8.0")' : '' }
-                ${gradleVersionUnderTest == "6.4.1"? 'javaModulesMergeJars("org.slf4j:slf4j-ext:1.7.32")' : '' }
             }
             
             extraJavaModuleInfo {
