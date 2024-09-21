@@ -175,9 +175,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     private ModuleSpec findModuleSpec(File originalJar) {
         Map<String, ModuleSpec> moduleSpecs = getParameters().getModuleSpecs().get();
 
-        Optional<String> gaCoordinates = moduleSpecs.keySet().stream().filter(ga -> gaCoordinatesFromFilePathMatch(originalJar.toPath(), ga)).findFirst();
-        if (gaCoordinates.isPresent()) {
-            String ga = gaCoordinates.get();
+        Optional<ModuleSpec> moduleSpec = moduleSpecs.values().stream().filter(spec -> gaCoordinatesFromFilePathMatch(originalJar.toPath(), spec.getIdentifier())).findFirst();
+        if (moduleSpec.isPresent()) {
+            String ga = moduleSpec.get().getIdentifier();
             if (moduleSpecs.containsKey(ga)) {
                 return moduleSpecs.get(ga);
             } else {

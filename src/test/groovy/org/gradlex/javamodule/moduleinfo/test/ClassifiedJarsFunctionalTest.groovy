@@ -43,9 +43,19 @@ class ClassifiedJarsFunctionalTest extends Specification {
                 implementation("io.netty:netty-transport-native-epoll:0:linux-x86_64")
                 implementation("io.netty:netty-transport-native-epoll:0:linux-aarch_64")              
             }
-            extraJavaModuleInfo {               
+            extraJavaModuleInfo {
+                failOnAutomaticModules.set(true)
                 module("io.netty:netty-transport-native-epoll|linux-x86_64", "io.netty.transport.epoll.linux.x86_64")
                 module("io.netty:netty-transport-native-epoll|linux-aarch_64", "io.netty.transport.epoll.linux.aarch_64")
+
+                module("io.netty:netty-transport-native-unix-common", "io.netty.transport.unix.common")
+                module("io.netty:netty-buffer", "io.netty.buffer")
+                module("io.netty:netty-codec", "io.netty.codec")
+                module("io.netty:netty-common", "io.netty.common")
+                module("io.netty:netty-handler", "io.netty.handler")
+                module("io.netty:netty-resolver", "io.netty.resolver")
+                module("io.netty:netty-transport", "io.netty.transport")
+                module("io.netty:netty-transport-classes-epoll", "io.netty.transport.classes.epoll")
             }
         """
 
