@@ -16,6 +16,69 @@ class CombinationWithOtherPluginsFunctionalTest extends Specification {
         settingsFile << 'rootProject.name = "test-project"'
     }
 
+    def "mergeJar uses versions configured through jvm-dependency-conflict-resolution plugin"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            public class Main { 
+                public static void main(String[] args) {
+                    Class<?> loggerFromApi = org.slf4j.Logger.class;
+                    Class<?> ndcFromExt = org.slf4j.NDC.class;
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                requires org.slf4j;
+            }
+        """
+        settingsFile << """
+            include("versions")
+        """
+        file('versions/build.gradle.kts') << """
+            plugins { id("java-platform") }
+            dependencies.constraints {
+                api("org.slf4j:slf4j-api:1.7.32")
+                api("org.slf4j:slf4j-ext:1.7.32")
+            }
+        """
+        buildFile << """
+            plugins {
+                id("application")
+                id("org.gradlex.extra-java-module-info")
+                id("org.gradlex.jvm-dependency-conflict-resolution") version "2.1.2"
+            }
+            application.mainClass.set("org.gradle.sample.app.Main")
+            dependencies {
+                implementation("org.slf4j:slf4j-api")
+            }
+            jvmDependencyConflicts {            
+                consistentResolution {
+                    providesVersions(":")
+                    platform(":versions")
+                }
+            }
+            extraJavaModuleInfo {
+                automaticModule("org.slf4j:slf4j-api", "org.slf4j") {
+                    mergeJar("org.slf4j:slf4j-ext")
+                }
+            }
+            tasks.named("run") {
+                inputs.files(configurations.runtimeClasspath)
+                doLast { println(inputs.files.map { it.name }) }
+            }
+        """
+
+        when:
+        def result = run()
+
+        then:
+        result.task(":run").outcome == TaskOutcome.SUCCESS
+        result.output.contains('slf4j-api-1.7.32-module.jar')
+        !result.output.contains('slf4j-api-1.7.32.jar')
+        !result.output.contains('slf4j-ext-1.7.32.jar')
+    }
+
     @IgnoreIf({ !GradleBuild.gradleVersionUnderTest?.startsWith('7.') })
     def "works in combination with shadow plugin"() {
         def shadowJar = file("app/build/libs/app-all.jar")

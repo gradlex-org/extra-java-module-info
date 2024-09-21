@@ -153,6 +153,13 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             }
         });
 
+        // If 'internal' is added by 'org.gradlex.jvm-dependency-conflict-resolution', extend from it to get access to versions
+        project.getConfigurations().all(otherConfiguration -> {
+            if ("internal".equals(otherConfiguration.getName())) {
+                javaModulesMergeJars.extendsFrom(otherConfiguration);
+            }
+        });
+
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
         Attribute<Boolean> javaModule = Attribute.of("javaModule", Boolean.class);
 
