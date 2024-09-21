@@ -71,7 +71,9 @@ extraJavaModuleInfo {
     module("commons-beanutils:commons-beanutils", "org.apache.commons.beanutils") {
         exports("org.apache.commons.beanutils")
         // or granuarly allowing access to a package by specific modules
-        // exports("org.apache.commons.beanutils", "org.mycompany.server", "org.mycompany.client")
+        // exports("org.apache.commons.beanutils",
+        //         "org.mycompany.server", "org.mycompany.client")
+        // or simply export all packages
         // exportAllPackages()
         
         requiresTransitive("org.apache.commons.logging")
@@ -81,7 +83,8 @@ extraJavaModuleInfo {
         // closeModule()
         // opens("org.apache.commons.beanutils")
         // or granuarly allowing runtime-only access to a package by specific modules
-        // opens("org.apache.commons.beanutils", "org.mycompany.server", "org.mycompany.client")
+        // opens("org.apache.commons.beanutils",
+        //       "org.mycompany.server", "org.mycompany.client")
         
         // requiresTransitive(...)
         // requiresStatic(...)
@@ -93,6 +96,12 @@ extraJavaModuleInfo {
     }
     module("commons-collections:commons-collections", "org.apache.commons.collections")
     automaticModule("commons-logging:commons-logging", "org.apache.commons.logging")
+    
+    // when the Jar has a classifier - 'linux-x86_64' in this example:
+    module("io.netty:netty-transport-native-epoll|linux-x86_64",
+           "io.netty.transport.epoll.linux.x86_64") 
+    // when you somehow cannot address a Jar via coordinates, you may use the Jar name:
+    module("commons-logging-1.2.jar", "org.apache.commons.loggin")
 }
 ```
 

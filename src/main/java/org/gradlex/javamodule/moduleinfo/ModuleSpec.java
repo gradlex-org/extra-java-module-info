@@ -33,6 +33,7 @@ import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.validateModuleNam
 public abstract class ModuleSpec implements Serializable {
 
     private final String identifier;
+    private final String classifier; // optional
     private final String moduleName;
     private final List<String> mergedJars = new ArrayList<>();
 
@@ -41,7 +42,13 @@ public abstract class ModuleSpec implements Serializable {
     protected ModuleSpec(String identifier, String moduleName) {
         validateIdentifier(identifier);
         validateModuleName(moduleName);
-        this.identifier = identifier;
+        if (identifier.contains("|")) {
+            this.identifier = identifier.split("\\|")[0];
+            this.classifier = identifier.split("\\|")[1];
+        } else {
+            this.identifier = identifier;
+            this.classifier = null;
+        }
         this.moduleName = moduleName;
     }
 
@@ -50,6 +57,13 @@ public abstract class ModuleSpec implements Serializable {
      */
     public String getIdentifier() {
         return identifier;
+    }
+
+    /**
+     * @return classifier, as an addition to group:name coordinates, if defined
+     */
+    public String getClassifier() {
+        return classifier;
     }
 
     /**
