@@ -65,7 +65,7 @@ final class FilePathToModuleCoordinates {
             return false;
         }
         String version = getVersionFromGradleCachePath(path);
-        return path.getFileName().toString().startsWith(name + "-" + version);
+        return matchesPath(path, name, version);
     }
 
     static boolean isInM2Cache(Path path) {
@@ -74,7 +74,7 @@ final class FilePathToModuleCoordinates {
             return false;
         }
         String version = getVersionFromM2CachePath(path);
-        return path.getFileName().toString().startsWith(name + "-" + version);
+        return matchesPath(path, name, version);
     }
 
     @Nullable
@@ -85,12 +85,12 @@ final class FilePathToModuleCoordinates {
 
         String nameFromGradleCachePath = path.getName(path.getNameCount() - 4).toString();
         String versionFromGradleCachePath = getVersionFromGradleCachePath(path);
-        if (path.getFileName().toString().startsWith(nameFromGradleCachePath + "-" + versionFromGradleCachePath)) {
+        if (matchesPath(path, nameFromGradleCachePath, versionFromGradleCachePath)) {
             return nameFromGradleCachePath;
         }
         String nameFromM2CachePath = path.getName(path.getNameCount() - 3).toString();
         String versionFromM2CachePath = getVersionFromM2CachePath(path);
-        if (path.getFileName().toString().startsWith(nameFromM2CachePath + "-" + versionFromM2CachePath)) {
+        if (matchesPath(path, nameFromM2CachePath, versionFromM2CachePath)) {
             return nameFromM2CachePath;
         }
 
@@ -103,5 +103,10 @@ final class FilePathToModuleCoordinates {
 
     private static String getVersionFromM2CachePath(Path path) {
         return path.getName(path.getNameCount() - 2).toString();
+    }
+
+    private static boolean matchesPath(Path path, String name, String version) {
+        String jarFileName = path.getFileName().toString();
+        return jarFileName.startsWith(name + "-") && !jarFileName.startsWith(version);
     }
 }
