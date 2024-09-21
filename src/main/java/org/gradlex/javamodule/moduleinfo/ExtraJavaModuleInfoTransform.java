@@ -65,6 +65,7 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
@@ -176,7 +177,19 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
         Optional<String> gaCoordinates = moduleSpecs.keySet().stream().filter(ga -> gaCoordinatesFromFilePathMatch(originalJar.toPath(), ga)).findFirst();
         if (gaCoordinates.isPresent()) {
-            return moduleSpecs.get(gaCoordinates.get());
+            String ga = gaCoordinates.get();
+            if (moduleSpecs.containsKey(ga)) {
+                return moduleSpecs.get(ga);
+            } else {
+                // maybe with classifier
+                Stream<String> idsWithClassifier = moduleSpecs.keySet().stream().filter(id -> id.startsWith(ga + "|"));
+                for (String idWithClassifier : idsWithClassifier.collect(Collectors.toList())) {
+                    if (nameHasClassifier(originalJar, moduleSpecs.get(idWithClassifier))) {
+                        return moduleSpecs.get(idWithClassifier);
+                    }
+                }
+            }
+            return null;
         }
 
         String originalJarName = originalJar.getName();
@@ -511,6 +524,10 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             return found.orElse(null);
         } catch (ReflectiveOperationException ignored) { }
         return null;
+    }
+
+    private boolean nameHasClassifier(File jar, ModuleSpec spec) {
+        return jar.getName().endsWith("-" + spec.getClassifier() + ".jar");
     }
 
     private static boolean isModuleInfoClass(String jarEntryName) {
