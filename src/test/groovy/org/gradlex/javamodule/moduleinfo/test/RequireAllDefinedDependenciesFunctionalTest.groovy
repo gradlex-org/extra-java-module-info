@@ -369,4 +369,91 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
         expect:
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
+
+    def "do not run transform multiple times if a consistent version providing configuration is used"() {
+        given:
+        def sharedBuildScript = """
+            extraJavaModuleInfo {
+                versionsProvidingConfiguration.set("mainRuntimeClasspath")
+                module(${libs.commonsHttpClient}, "org.apache.httpcomponents.httpclient")
+                module(${libs.commonsLogging}, "org.apache.commons.logging")
+                knownModule("commons-codec:commons-codec", "org.apache.commons.codec")
+                knownModule("org.apache.httpcomponents:httpcore", "org.apache.httpcomponents.httpcore")
+            }
+            
+            val consistentResolutionAttribute = Attribute.of("consistent-resolution", String::class.java)
+            configurations.create("allDependencies") {
+                isCanBeConsumed = true
+                isCanBeResolved = false
+                sourceSets.all {
+                    extendsFrom(
+                        configurations[this.implementationConfigurationName],
+                        configurations[this.compileOnlyConfigurationName],
+                        configurations[this.runtimeOnlyConfigurationName],
+                        configurations[this.annotationProcessorConfigurationName]
+                    )
+                }
+                attributes {
+                    attribute(consistentResolutionAttribute, "global")
+                }
+            }
+            val mainRuntimeClasspath = configurations.create("mainRuntimeClasspath") {
+                attributes.attribute(consistentResolutionAttribute, "global")
+            }
+            configurations.runtimeClasspath {
+                shouldResolveConsistentlyWith(mainRuntimeClasspath)
+            }
+            dependencies {
+                mainRuntimeClasspath(project(":"))
+            }
+
+            tasks.register("printAllUsedJars") {
+                inputs.files(configurations.runtimeClasspath)
+                doLast { inputs.files.filter { it.path.contains("/transformed/") }.forEach { println(it.toPath().subpath(it.toPath().nameCount - 3, it.toPath().nameCount)) } }
+            }
+        """
+
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            public class Main { }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app { requires org.apache.commons.logging; }
+        """
+        buildFile << """
+            $sharedBuildScript
+            dependencies {
+                implementation("org.apache.httpcomponents:httpclient:4.5.14")
+            }
+        """
+
+        settingsFile << """
+            include(":sub")
+        """
+        file("sub/src/main/java/org/gradle/sample/sub/Sub.java") << """
+            package org.gradle.sample.sub;
+            public class Sub { }
+        """
+        file("sub/src/main/java/module-info.java") << """
+            module org.gradle.sample.sub { requires org.apache.httpcomponents.httpclient; }
+        """
+        file("sub/build.gradle.kts") << """
+            plugins {
+                id("java-library")
+                id("org.gradlex.extra-java-module-info")
+            }
+            $sharedBuildScript
+            repositories.mavenCentral()
+            dependencies {
+                implementation("commons-logging:commons-logging:1.2")
+            }
+        """
+
+        when:
+        def result = task('printAllUsedJars', '-q')
+        def jars = result.output.trim().split("\n") as Set
+
+        then:
+        jars.size() == 2
+    }
 }

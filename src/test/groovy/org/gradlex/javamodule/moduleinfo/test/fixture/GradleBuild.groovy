@@ -46,8 +46,8 @@ class GradleBuild {
         runner('build').buildAndFail()
     }
 
-    BuildResult task(String taskName) {
-        runner(taskName).build()
+    BuildResult task(String... taskNames) {
+        runner(taskNames).build()
     }
 
     GradleRunner runner(String... args) {

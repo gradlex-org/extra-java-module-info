@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.gradle.api.attributes.Category.CATEGORY_ATTRIBUTE;
 import static org.gradle.api.attributes.Category.LIBRARY;
@@ -202,16 +201,9 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
                 p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
                 p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
 
-                p.getRequiresFromMetadata().set(project.provider(() -> sourceSets.stream().flatMap(s -> Stream.of(
-                                        s.getRuntimeClasspathConfigurationName(),
-                                        s.getCompileClasspathConfigurationName(),
-                                        s.getAnnotationProcessorConfigurationName()
-                                ))
-                                .flatMap(resolvable -> existingComponentsOfInterest(configurations.getByName(resolvable), extension))
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k1)).entrySet().stream()
-                                .collect(Collectors.toMap(Map.Entry::getKey, c -> new PublishedMetadata(c.getKey(), c.getValue(), project)))
-                ));
-
+                Provider<Set<String>> componentsOfInterest = componentsOfInterest(extension);
+                p.getRequiresFromMetadata().set(componentsOfInterest.map(gaSet -> gaSet.stream()
+                        .collect(Collectors.toMap(ga -> ga, ga -> new PublishedMetadata(ga, project, extension)))));
                 p.getAdditionalKnownModules().set(extractFromModuleDependenciesPlugin(project));
             });
             t.getFrom().attribute(artifactType, fileExtension).attribute(javaModule, false);
@@ -245,26 +237,17 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         });
     }
 
-    private Stream<Map.Entry<String, Configuration>> existingComponentsOfInterest(Configuration resolvable, ExtraJavaModuleInfoPluginExtension extension) {
-        Set<String> componentsOfInterest = componentsOfInterest(extension);
-        if (componentsOfInterest.isEmpty()) {
-            return Stream.empty();
-        }
-
-        return resolvable.getIncoming().getResolutionResult().getAllComponents().stream()
-                .filter(c -> componentsOfInterest.contains(ga(c.getId())))
-                .collect(Collectors.toMap(c -> c.getId().toString(), c -> resolvable)).entrySet().stream();
-    }
-
-    private static Set<String> componentsOfInterest(ExtraJavaModuleInfoPluginExtension extension) {
-        return extension.getModuleSpecs().get().values().stream()
+    private static Provider<Set<String>> componentsOfInterest(ExtraJavaModuleInfoPluginExtension extension) {
+        return extension.getModuleSpecs().map(specs -> specs.values().stream()
                 .filter(ExtraJavaModuleInfoPlugin::needsDependencies)
                 .map(ModuleSpec::getIdentifier)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     private static boolean needsDependencies(ModuleSpec moduleSpec) {
-        return moduleSpec instanceof ModuleInfo && ((ModuleInfo) moduleSpec).requireAllDefinedDependencies;
+        return moduleSpec instanceof ModuleInfo
+                && ((ModuleInfo) moduleSpec).requireAllDefinedDependencies
+                && IdValidator.isCoordinates(moduleSpec.getIdentifier());
     }
 
     static String ga(ComponentIdentifier id) {

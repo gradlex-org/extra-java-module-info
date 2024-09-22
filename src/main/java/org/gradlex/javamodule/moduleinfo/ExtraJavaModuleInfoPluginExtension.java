@@ -41,6 +41,7 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
     public abstract Property<Boolean> getFailOnMissingModuleInfo();
     public abstract Property<Boolean> getFailOnAutomaticModules();
     public abstract Property<Boolean> getDeriveAutomaticModuleNamesFromFileNames();
+    public abstract Property<String> getVersionsProvidingConfiguration();
 
     /**
      * Add full module information for a given Jar file.
