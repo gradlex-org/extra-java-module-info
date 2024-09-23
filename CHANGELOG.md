@@ -4,7 +4,7 @@
 * [New] [#137](https://github.com/gradlex-org/extra-java-module-info/pull/137) - Configuration option for 'versionsProvidingConfiguration'
 * [New] [#130](https://github.com/gradlex-org/extra-java-module-info/pull/130) - Support classifier in coordinates notation
 * [New] [#138](https://github.com/gradlex-org/extra-java-module-info/pull/138) - 'javaModulesMergeJars' extends 'internal' if available
-* [Fixed] [#129](https://github.com/gradlex-org/extra-java-module-info/pull/129) - Find Jar for coordinates when version in Jar nam differs
+* [Fixed] [#129](https://github.com/gradlex-org/extra-java-module-info/pull/129) - Find Jar for coordinates when version in Jar name differs
 * [Fixed] [#100](https://github.com/gradlex-org/extra-java-module-info/pull/100) - Fix error message about automatic module name mismatch
 
 ## Version 1.8
