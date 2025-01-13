@@ -127,9 +127,13 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
         ModuleSpec moduleSpec = findModuleSpec(originalJar);
 
+        if (moduleSpec instanceof Remove) { // No output if the Jar is removed
+            return;
+        }
         if (willBeMerged(originalJar, moduleSpecs.values())) {  // No output if this Jar will be merged
             return;
         }
+
         boolean realModule = isModule(originalJar);
         if (moduleSpec instanceof ModuleInfo) {
             if (realModule && !((ModuleInfo) moduleSpec).patchRealModule) {

@@ -188,6 +188,17 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
     }
 
     /**
+     * Remove a Jar that is not a module and is not required at all.
+     * For example when it only contains metadata irrelevant for Java itself.
+     *
+     * @param identifier group:name coordinates _or_ Jar file name
+     * @param representedModuleName the Module Name of the Module that this Jar represents, needed for 'requireAllDefinedDependencies'
+     */
+    public void remove(String identifier, String representedModuleName) {
+        getModuleSpecs().put(identifier, new Remove(identifier, representedModuleName));
+    }
+
+    /**
      * Let the plugin know about an existing module on the module path.
      * This may be needed when 'requiresDirectivesFromMetadata(true)' is used.
      *
