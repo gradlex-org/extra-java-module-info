@@ -44,6 +44,7 @@ public class ModuleInfo extends ModuleSpec {
     boolean exportAllPackages;
     boolean requireAllDefinedDependencies;
     boolean patchRealModule;
+    boolean preserveExisting;
 
     ModuleInfo(String identifier, String moduleName, String moduleVersion, ObjectFactory objectFactory) {
         super(identifier, moduleName);
@@ -133,10 +134,18 @@ public class ModuleInfo extends ModuleSpec {
     }
 
     /**
-     * Explicitly allow patching real (JARs with module-info.class) modules
+     * Allow patching real (JARs with module-info.class) modules by overriding the existing module-info.class.
      */
     public void patchRealModule() {
         this.patchRealModule = true;
+    }
+
+    /**
+     * Allow patching real (JARs with module-info.class) by extending the existing module-info.class.
+     */
+    public void preserveExisting() {
+        this.patchRealModule = true;
+        this.preserveExisting = true;
     }
 
     private static void addOrThrow(Set<String> target, String element) {
