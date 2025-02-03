@@ -296,7 +296,6 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                         moduleInfo.exportAllPackages ? packages : Collections.emptySet(),
                         existingModuleInfo));
                 outputStream.closeEntry();
-                System.out.println("AAA: " + moduleJar);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
