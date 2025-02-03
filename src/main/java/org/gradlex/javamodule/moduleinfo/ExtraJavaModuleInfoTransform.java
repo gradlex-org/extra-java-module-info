@@ -276,7 +276,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             try (JarOutputStream outputStream = newJarOutputStream(Files.newOutputStream(moduleJar.toPath()), manifest)) {
                 Map<String, List<String>> providers = new LinkedHashMap<>();
                 Set<String> packages = new TreeSet<>();
-                copyAndExtractProviders(inputStream, outputStream, !automaticModule.getMergedJars().isEmpty(), providers, packages);
+                copyAndExtractProviders(inputStream, outputStream, automaticModule.getRemovedPackages(), !automaticModule.getMergedJars().isEmpty(), providers, packages);
                 mergeJars(automaticModule, outputStream, providers, packages);
             }
         } catch (IOException e) {
@@ -289,7 +289,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             try (JarOutputStream outputStream = newJarOutputStream(Files.newOutputStream(moduleJar.toPath()), inputStream.getManifest())) {
                 Map<String, List<String>> providers = new LinkedHashMap<>();
                 Set<String> packages = new TreeSet<>();
-                byte[] existingModuleInfo = copyAndExtractProviders(inputStream, outputStream, !moduleInfo.getMergedJars().isEmpty(), providers, packages);
+                byte[] existingModuleInfo = copyAndExtractProviders(inputStream, outputStream, moduleInfo.getRemovedPackages(), !moduleInfo.getMergedJars().isEmpty(), providers, packages);
                 mergeJars(moduleInfo, outputStream, providers, packages);
                 outputStream.putNextEntry(newReproducibleEntry("module-info.class"));
                 outputStream.write(addModuleInfo(moduleInfo, providers, versionFromFilePath(originalJar.toPath()),
@@ -314,7 +314,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     }
 
     @Nullable
-    private byte[] copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream, boolean willMergeJars, Map<String, List<String>> providers, Set<String> packages) throws IOException {
+    private byte[] copyAndExtractProviders(JarInputStream inputStream, JarOutputStream outputStream, List<String> removedPackages, boolean willMergeJars, Map<String, List<String>> providers, Set<String> packages) throws IOException {
         JarEntry jarEntry = inputStream.getNextJarEntry();
         byte[] existingModuleInfo = null;
         while (jarEntry != null) {
@@ -334,25 +334,26 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 existingModuleInfo = content;
             } else if (!JAR_SIGNATURE_PATH.matcher(entryName).matches() && !"META-INF/MANIFEST.MF".equals(entryName)) {
                 if (!willMergeJars || !isFileInServicesFolder) { // service provider files will be merged later
-                    jarEntry.setCompressedSize(-1);
-                    try {
-                        outputStream.putNextEntry(jarEntry);
-                        outputStream.write(content);
-                        outputStream.closeEntry();
-                    } catch (ZipException e) {
-                        if (!e.getMessage().startsWith("duplicate entry:")) {
-                            throw new RuntimeException(e);
+                    Matcher mrJarMatcher = MRJAR_VERSIONS_PATH.matcher(entryName);
+                    int i = entryName.lastIndexOf("/");
+                    String packagePath = i > 0 ? mrJarMatcher.matches()
+                            ? mrJarMatcher.group(1)
+                            : entryName.substring(0, i)
+                            : "";
+
+                    if (!removedPackages.contains(packagePath.replace('/', '.'))) {
+                        if (entryName.endsWith(".class") && !packagePath.isEmpty()) {
+                            packages.add(packagePath);
                         }
-                    }
-                    if (entryName.endsWith(".class")) {
-                        int i = entryName.lastIndexOf("/");
-                        if (i > 0) {
-                            Matcher mrJarMatcher = MRJAR_VERSIONS_PATH.matcher(entryName);
-                            if (mrJarMatcher.matches()) {
-                                // Strip the 'META-INF/versions/11' part
-                                packages.add(mrJarMatcher.group(1));
-                            } else {
-                                packages.add(entryName.substring(0, i));
+
+                        try {
+                            jarEntry.setCompressedSize(-1);
+                            outputStream.putNextEntry(jarEntry);
+                            outputStream.write(content);
+                            outputStream.closeEntry();
+                        } catch (ZipException e) {
+                            if (!e.getMessage().startsWith("duplicate entry:")) {
+                                throw new RuntimeException(e);
                             }
                         }
                     }
@@ -497,7 +498,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
             if (mergeJarFile != null) {
                 try (JarInputStream toMergeInputStream = new JarInputStream(Files.newInputStream(mergeJarFile.getAsFile().toPath()))) {
-                    copyAndExtractProviders(toMergeInputStream, outputStream, true, providers, packages);
+                    copyAndExtractProviders(toMergeInputStream, outputStream, moduleSpec.getRemovedPackages(), true, providers, packages);
                 }
             } else {
                 throw new RuntimeException("Jar not found: " + identifier);

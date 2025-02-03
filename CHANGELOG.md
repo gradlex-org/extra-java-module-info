@@ -2,6 +2,7 @@
 
 ## Version 1.10
 * [New] [#160](https://github.com/gradlex-org/extra-java-module-info/pull/160) - Add 'preserveExisting' option to patch real modules
+* [New] [#140](https://github.com/gradlex-org/extra-java-module-info/pull/140) - Add 'removePackage' option to deal with duplicated packages
 
 ## Version 1.9
 * [New] [#137](https://github.com/gradlex-org/extra-java-module-info/pull/137) - Configuration option for 'versionsProvidingConfiguration'

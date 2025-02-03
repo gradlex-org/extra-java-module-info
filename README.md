@@ -311,6 +311,19 @@ This plugin offers the option to merge multiple Jars into one in such situations
 
 Note: The merged Jar will include the *first* appearance of duplicated files (like the `MANIFEST.MF`).
 
+In some cases, it may also be sufficient to remove appearances of the problematic package completely from some of the Jars.
+This can be the case if classes are in fact duplicated, or if classes are not used.
+For this, you can utilise the `removePackage` functionality:
+
+```
+extraJavaModuleInfo {
+    module("xerces:xercesImpl", "xerces") {
+        removePackage("org.w3c.dom.html")
+        // ...
+    }
+}
+```
+
 ## How can I fix a library with a broken `module-info.class`?
 
 To fix a library with a broken `module-info.class`, you can override the modular descriptor in the same way it is done with non-modular JARs.
