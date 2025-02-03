@@ -35,6 +35,7 @@ public abstract class ModuleSpec implements Serializable {
     private final String identifier;
     private final String classifier; // optional
     private final String moduleName;
+    private final List<String> removedPackages = new ArrayList<>();
     private final List<String> mergedJars = new ArrayList<>();
 
     boolean overrideModuleName;
@@ -71,6 +72,20 @@ public abstract class ModuleSpec implements Serializable {
      */
     public String getModuleName() {
         return moduleName;
+    }
+
+    /**
+     * @param packageName a package to remove from the Jar because it is a duplicate
+     */
+    public void removePackage(String packageName) {
+        removedPackages.add(packageName);
+    }
+
+    /**
+     * @return packages that are removed by the transform
+     */
+    public List<String> getRemovedPackages() {
+        return removedPackages;
     }
 
     /**
