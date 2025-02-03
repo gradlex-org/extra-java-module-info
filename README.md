@@ -313,12 +313,15 @@ Note: The merged Jar will include the *first* appearance of duplicated files (li
 
 ## How can I fix a library with a broken `module-info.class`?
 
-To fix a library with a broken `module-info.class`, you can override the modular descriptor in the same way it is done with non-modular JARs. However, you need to specify `patchRealModule()` in order to avoid unintentional overrides.
+To fix a library with a broken `module-info.class`, you can override the modular descriptor in the same way it is done with non-modular JARs.
+However, you need to specify `patchRealModule()` to overwrite the existing `module-info.class`.
+You can also use `preserveExisting()`, if the exiting `module-info.class` is working in general, but misses entries.
 
 ```
 extraJavaModuleInfo {                
     module("org.apache.tomcat.embed:tomcat-embed-core", "org.apache.tomcat.embed.core") {
-        patchRealModule()
+        patchRealModule()   // overwrite existing module-info.class
+        preserveExisting()  // extend existing module-info.class 
         requires("java.desktop")
         requires("java.instrument")
         ...

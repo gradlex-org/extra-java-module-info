@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.10
+* [New] [#160](https://github.com/gradlex-org/extra-java-module-info/pull/160) - Add 'preserveExisting' option to patch real modules
+
 ## Version 1.9
 * [New] [#137](https://github.com/gradlex-org/extra-java-module-info/pull/137) - Configuration option for 'versionsProvidingConfiguration'
 * [New] [#130](https://github.com/gradlex-org/extra-java-module-info/pull/130) - Support classifier in coordinates notation
