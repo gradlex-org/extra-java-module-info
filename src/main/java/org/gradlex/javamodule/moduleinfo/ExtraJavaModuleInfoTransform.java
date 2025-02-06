@@ -396,7 +396,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                     return new ModuleVisitor(Opcodes.ASM9, moduleVisitor) {
                         @Override
                         public void visitEnd() {
-                            addModuleInfoEntires(moduleInfo, providers, autoExportedPackages, this);
+                            addModuleInfoEntires(moduleInfo, Collections.emptyMap(), autoExportedPackages, this);
                             super.visitEnd();
                         }
                     };

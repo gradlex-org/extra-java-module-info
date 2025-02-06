@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.10.1
+* [Fix] [#164](https://github.com/gradlex-org/extra-java-module-info/pull/164) - fix: 'preserveExisting' does not duplicate 'provides' entries
+
 ## Version 1.10
 * [New] [#160](https://github.com/gradlex-org/extra-java-module-info/pull/160) - Add 'preserveExisting' option to patch real modules
 * [New] [#140](https://github.com/gradlex-org/extra-java-module-info/pull/140) - Add 'removePackage' option to deal with duplicated packages
