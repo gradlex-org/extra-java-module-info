@@ -133,6 +133,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             return;
         }
 
+        checkInputExists(originalJar);
+
         // We return the original Jar without further analysis, if there is
         // (1) no spec (2) no auto-module check (3) no missing module-info check (4) no auto-name derivation
         if (moduleSpec == null
@@ -184,6 +186,19 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         }
     }
 
+    private void checkInputExists(File jar) {
+        if (!jar.isFile()) {
+            // If the jar does not exist, it is most likely a locally-built Jar that does not yet exist because the
+            // transform was triggered at configuration time. See:
+            // - https://github.com/gradle/gradle/issues/26155
+            // - https://github.com/gradlex-org/extra-java-module-info/issues/15
+            // - https://github.com/gradlex-org/extra-java-module-info/issues/78
+            throw new RuntimeException("File does not exist: " + jar
+                    + "\n  This is likely because a tool or another plugin performs early dependency resolution."
+                    + "\n  You can prevent this error by setting 'skipLocalJars = true'.");
+        }
+    }
+
     @Nullable
     private ModuleSpec findModuleSpec(File originalJar) {
         Map<String, ModuleSpec> moduleSpecs = getParameters().getModuleSpecs().get();
@@ -219,15 +234,6 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     }
 
     private boolean isModule(File jar) {
-        if (!jar.isFile()) {
-            // If the jar does not exist, we assume that the file, which is produced later is a local artifact and a module.
-            // For local files this behavior is ok, because this transform is targeting published artifacts.
-            // Still, this can cause an error: https://github.com/gradle/gradle/issues/27372
-            // See also:
-            // - https://github.com/gradlex-org/extra-java-module-info/issues/15
-            // - https://github.com/gradlex-org/extra-java-module-info/issues/78
-            return true;
-        }
         try (JarInputStream inputStream = new JarInputStream(Files.newInputStream(jar.toPath()))) {
             boolean isMultiReleaseJar = containsMultiReleaseJarEntry(inputStream);
             ZipEntry next = inputStream.getNextEntry();
