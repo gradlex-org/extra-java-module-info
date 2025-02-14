@@ -76,6 +76,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         ExtraJavaModuleInfoPluginExtension extension = project.getExtensions().create("extraJavaModuleInfo", ExtraJavaModuleInfoPluginExtension.class);
         extension.getFailOnMissingModuleInfo().convention(true);
         extension.getFailOnAutomaticModules().convention(false);
+        extension.getSkipLocalJars().convention(false);
         extension.getDeriveAutomaticModuleNamesFromFileNames().convention(false);
 
         // setup the transform and the tasks for all projects in the build
@@ -166,11 +167,32 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             Configuration runtimeClasspath = project.getConfigurations().getByName(sourceSet.getRuntimeClasspathConfigurationName());
             Configuration compileClasspath = project.getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName());
             Configuration annotationProcessor = project.getConfigurations().getByName(sourceSet.getAnnotationProcessorConfigurationName());
+            Configuration runtimeElements = project.getConfigurations().findByName(sourceSet.getRuntimeElementsConfigurationName());
+            Configuration apiElements = project.getConfigurations().findByName(sourceSet.getApiElementsConfigurationName());
 
             // compile, runtime and annotation processor classpaths express that they only accept modules by requesting the javaModule=true attribute
             runtimeClasspath.getAttributes().attribute(javaModule, true);
             compileClasspath.getAttributes().attribute(javaModule, true);
             annotationProcessor.getAttributes().attribute(javaModule, true);
+
+            // outgoing variants may express that they already provide a modular Jar and can hence skip the transform altogether
+            if (GradleVersion.current().compareTo(GradleVersion.version("7.4")) >= 0) {
+                if (runtimeElements != null) {
+                    runtimeElements.getOutgoing().getAttributes().attributeProvider(javaModule, extension.getSkipLocalJars());
+                }
+                if (apiElements != null) {
+                    apiElements.getOutgoing().getAttributes().attributeProvider(javaModule, extension.getSkipLocalJars());
+                }
+            } else {
+                project.afterEvaluate(p -> {
+                    if (runtimeElements != null) {
+                        runtimeElements.getOutgoing().getAttributes().attribute(javaModule, extension.getSkipLocalJars().get());
+                    }
+                    if (apiElements != null) {
+                        apiElements.getOutgoing().getAttributes().attribute(javaModule, extension.getSkipLocalJars().get());
+                    }
+                });
+            }
         });
 
         // Jars may be transformed (or merged into) Module Jars

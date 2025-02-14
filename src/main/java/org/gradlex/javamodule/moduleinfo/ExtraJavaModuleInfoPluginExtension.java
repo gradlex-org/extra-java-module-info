@@ -40,6 +40,7 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
     public abstract MapProperty<String, ModuleSpec> getModuleSpecs();
     public abstract Property<Boolean> getFailOnMissingModuleInfo();
     public abstract Property<Boolean> getFailOnAutomaticModules();
+    public abstract Property<Boolean> getSkipLocalJars();
     public abstract Property<Boolean> getDeriveAutomaticModuleNamesFromFileNames();
     public abstract Property<String> getVersionsProvidingConfiguration();
 

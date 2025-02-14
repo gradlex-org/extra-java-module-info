@@ -1,5 +1,9 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.11
+* [New] [#161](https://github.com/gradlex-org/extra-java-module-info/pull/161) - Add 'skipLocalJars' option
+* [New] [#106](https://github.com/gradlex-org/extra-java-module-info/pull/106) - Actionable error message when plugin is used at configuration time
+
 ## Version 1.10.1
 * [Fix] [#164](https://github.com/gradlex-org/extra-java-module-info/pull/164) - fix: 'preserveExisting' does not duplicate 'provides' entries
 

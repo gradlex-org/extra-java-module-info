@@ -67,7 +67,9 @@ plugins {
 
 // add module information for all direct and transitive dependencies that are not modules
 extraJavaModuleInfo {
-    // failOnMissingModuleInfo.set(false)
+    // failOnMissingModuleInfo = false
+    // failOnAutomaticModules = true
+    // skipLocalJars = true
     module("commons-beanutils:commons-beanutils", "org.apache.commons.beanutils") {
         exports("org.apache.commons.beanutils")
         // or granuarly allowing access to a package by specific modules
@@ -163,6 +165,13 @@ sourceSets.all {
     }
 }
 ```
+
+## How do I deactivate the plugin functionality for my own Jars?
+
+A major use case of the plugin is to transform Jars from 3rd party repositories that you do not control.
+By default, however, the plugin looks at all Jars on the module paths – including the Jars Gradle builds from you own modules.
+This is working well in most cases. The jars are analyzed and the plugin detects that they are infact modules and does not modify them.
+You can still optimize the plugin execution to completely skip analysis of locally-built Jars by setting `skipLocalJars = true`.
 
 ## How do I add `provides ... with ...` declarations to the `module-info.class` descriptor?
 
@@ -263,7 +272,7 @@ The plugin provides a set of `<sourceSet>moduleDescriptorRecommendations` tasks 
 
 This task generates module info spec for the JARs that do not contain the proper `module-info.class` descriptors.
 
-NOTE: This functionality requires Gradle to be run with Java 11+ and failing on missing module information should be disabled via `failOnMissingModuleInfo.set(false)`.
+NOTE: This functionality requires Gradle to be run with Java 11+ and failing on missing module information should be disabled via `failOnMissingModuleInfo = false`.
 
 ## How can I ensure there are no automatic modules in my dependency graph?
 
@@ -271,7 +280,7 @@ If your goal is to fully modularize your application, you should enable the foll
 
 ```
 extraJavaModuleInfo {
-    failOnAutomaticModules.set(true)
+    failOnAutomaticModules = true
 }
 ```
 
@@ -282,7 +291,7 @@ dependencies {
     implementation("org.yaml:snakeyaml:1.33")
 }             
 extraJavaModuleInfo {
-    failOnAutomaticModules.set(true)
+    failOnAutomaticModules = true
     module("org.yaml:snakeyaml", "org.yaml.snakeyaml") {
         closeModule()
         exports("org.yaml.snakeyaml")
@@ -351,7 +360,7 @@ However, if you get started and just want things to be put on the Module Path, y
 
 ```
 extraJavaModuleInfo {
-    deriveAutomaticModuleNamesFromFileNames.set(true)
+    deriveAutomaticModuleNamesFromFileNames = true
 }
 ```
 

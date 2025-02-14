@@ -50,6 +50,10 @@ class GradleBuild {
         runner(taskNames).build()
     }
 
+    BuildResult failTask(String... taskNames) {
+        runner(taskNames).buildAndFail()
+    }
+
     GradleRunner runner(String... args) {
         if (buildFile.exists()) {
             buildFile << '\nrepositories.mavenCentral()'
