@@ -1,6 +1,7 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
 ## Version 1.11
+* [New] [#134](https://github.com/gradlex-org/extra-java-module-info/pull/134) - Add 'disable(...)' and 'enable(...)' options to control when the plugin is active
 * [New] [#161](https://github.com/gradlex-org/extra-java-module-info/pull/161) - Add 'skipLocalJars' option
 * [New] [#106](https://github.com/gradlex-org/extra-java-module-info/pull/106) - Actionable error message when plugin is used at configuration time
 

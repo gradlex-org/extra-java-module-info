@@ -126,51 +126,29 @@ Sample uses Gradle's Kotlin DSL (`build.gradle.kts` file). The Groovy DSL syntax
 
 # FAQ
 
-## How do I deactivate the plugin functionality for a certain classpath?
+## How do I (de)activate the plugin functionality for a certain classpath?
 
-This can be useful for the test classpath if it should be used for unit testing on the classpath (rather than the module path).
-If you use the [shadow plugin](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow) and [encounter this issue](https://github.com/gradlex-org/extra-java-module-info/issues/7),
-you can deactivate it for the runtime classpath as the module information is irrelevant for a fat Jar in any case.
+The plugin activates Jar transformation functionality individually for each
+[resolvable configuration](https://docs.gradle.org/current/userguide/declaring_configurations.html#sec:configuration-flags-roles)
+(.e.g `compileClasspath`, `runtimeClasspath`, `testRuntimeClasspath`).
+When any of these configurations are used, for example by the `compileJava` task, the transformed Jars will be used
+instead of the original ones. By default, the plugin activates for all configurations that are linked to a _source set_,
+which are: `<sourcSet>CompileClasspath`, `<sourcSet>RuntimeClasspath` and `<sourceSet>AnnotationProcessor`.
 
-**Kotlin DSL**
-```
-// Disable for a single Classpath (Configuration)
-configurations {
-    runtimeClasspath { // testRuntimeClasspath, testCompileClasspath, ... 
-        attributes { attribute(Attribute.of("javaModule", Boolean::class.javaObjectType), false) }
-    }
-}
+You can customize this as follows:
 
-// Disable for all 'annotationProcessor' paths
-sourceSets.all {
-    configurations.getByName(annotationProcessorConfigurationName) {
-        attributes { attribute(Attribute.of("javaModule", Boolean::class.javaObjectType), false) }
-    }
-}
-```
-
-**Groovy DSL**
-```
-// Disable for a single Classpath (Configuration)
-configurations {
-    runtimeClasspath { // testRuntimeClasspath, testCompileClasspath, ... 
-        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
-    }
-}
-
-// Disable for all 'annotationProcessor' paths
-sourceSets.all {
-    configurations.getByName(annotationProcessorConfigurationName) {
-        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
-    }
-}
-```
+- Completely deactivate the plugin for a source set:<br/>
+  `extraJavaModuleInfo { deactivate(sourceSets.test) }`
+- Deactivate the plugin for a selected configuration:<br/>
+  `extraJavaModuleInfo { deactivate(configurations.annotationProcessor) }`
+- Activate the plugin for a custom configuration that is not linked to a source set:<br/>
+  `extraJavaModuleInfo { activate(configurations["myCustomPath"]) }`
 
 ## How do I deactivate the plugin functionality for my own Jars?
 
 A major use case of the plugin is to transform Jars from 3rd party repositories that you do not control.
 By default, however, the plugin looks at all Jars on the module paths – including the Jars Gradle builds from you own modules.
-This is working well in most cases. The jars are analyzed and the plugin detects that they are infact modules and does not modify them.
+This is working well in most cases. The jars are analyzed and the plugin detects that they are in fact modules and does not modify them.
 You can still optimize the plugin execution to completely skip analysis of locally-built Jars by setting `skipLocalJars = true`.
 
 ## How do I add `provides ... with ...` declarations to the `module-info.class` descriptor?

@@ -21,7 +21,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
@@ -59,6 +58,7 @@ import static org.gradle.api.attributes.Category.LIBRARY;
 import static org.gradle.api.attributes.Usage.JAVA_RUNTIME;
 import static org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE;
 import static org.gradle.api.plugins.JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME;
+import static org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPluginExtension.JAVA_MODULE_ATTRIBUTE;
 
 /**
  * Entry point of the plugin.
@@ -161,50 +161,41 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         });
 
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
-        Attribute<Boolean> javaModule = Attribute.of("javaModule", Boolean.class);
 
         project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
-            Configuration runtimeClasspath = project.getConfigurations().getByName(sourceSet.getRuntimeClasspathConfigurationName());
-            Configuration compileClasspath = project.getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName());
-            Configuration annotationProcessor = project.getConfigurations().getByName(sourceSet.getAnnotationProcessorConfigurationName());
-            Configuration runtimeElements = project.getConfigurations().findByName(sourceSet.getRuntimeElementsConfigurationName());
-            Configuration apiElements = project.getConfigurations().findByName(sourceSet.getApiElementsConfigurationName());
-
-            // compile, runtime and annotation processor classpaths express that they only accept modules by requesting the javaModule=true attribute
-            runtimeClasspath.getAttributes().attribute(javaModule, true);
-            compileClasspath.getAttributes().attribute(javaModule, true);
-            annotationProcessor.getAttributes().attribute(javaModule, true);
+            // by default, activate plugin for all source sets
+            extension.activate(sourceSet);
 
             // outgoing variants may express that they already provide a modular Jar and can hence skip the transform altogether
+            Configuration runtimeElements = project.getConfigurations().findByName(sourceSet.getRuntimeElementsConfigurationName());
+            Configuration apiElements = project.getConfigurations().findByName(sourceSet.getApiElementsConfigurationName());
             if (GradleVersion.current().compareTo(GradleVersion.version("7.4")) >= 0) {
                 if (runtimeElements != null) {
-                    runtimeElements.getOutgoing().getAttributes().attributeProvider(javaModule, extension.getSkipLocalJars());
+                    runtimeElements.getOutgoing().getAttributes().attributeProvider(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars());
                 }
                 if (apiElements != null) {
-                    apiElements.getOutgoing().getAttributes().attributeProvider(javaModule, extension.getSkipLocalJars());
+                    apiElements.getOutgoing().getAttributes().attributeProvider(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars());
                 }
             } else {
                 project.afterEvaluate(p -> {
                     if (runtimeElements != null) {
-                        runtimeElements.getOutgoing().getAttributes().attribute(javaModule, extension.getSkipLocalJars().get());
+                        runtimeElements.getOutgoing().getAttributes().attribute(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars().get());
                     }
                     if (apiElements != null) {
-                        apiElements.getOutgoing().getAttributes().attribute(javaModule, extension.getSkipLocalJars().get());
+                        apiElements.getOutgoing().getAttributes().attribute(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars().get());
                     }
                 });
             }
         });
 
         // Jars may be transformed (or merged into) Module Jars
-        registerTransform("jar", project, extension, javaModulesMergeJars, artifactType, javaModule);
+        registerTransform("jar", project, extension, javaModulesMergeJars, artifactType, JAVA_MODULE_ATTRIBUTE);
         // Classpath entries may also be zip files that may be merged into Module Jars (from the docs: "Class paths to the .jar, .zip or .class files)"
-        registerTransform("zip", project, extension, javaModulesMergeJars, artifactType, javaModule);
+        registerTransform("zip", project, extension, javaModulesMergeJars, artifactType, JAVA_MODULE_ATTRIBUTE);
     }
 
     private void registerTransform(String fileExtension, Project project, ExtraJavaModuleInfoPluginExtension extension, Configuration javaModulesMergeJars, Attribute<String> artifactType, Attribute<Boolean> javaModule) {
         DependencyHandler dependencies = project.getDependencies();
-        ConfigurationContainer configurations = project.getConfigurations();
-        SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
 
         // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them without modification
         dependencies.getArtifactTypes().maybeCreate(fileExtension).getAttributes().attribute(javaModule, false);
