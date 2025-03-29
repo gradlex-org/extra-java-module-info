@@ -12,7 +12,7 @@ java {
 }
 
 dependencies {
-    implementation("org.ow2.asm:asm:9.7.1")
+    implementation("org.ow2.asm:asm:9.8")
 
     testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
