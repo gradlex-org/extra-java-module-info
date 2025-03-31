@@ -429,6 +429,10 @@ abstract class AbstractFunctionalTest extends Specification {
                     if (!index.get("spring.context").modifiers().isEmpty()) {
                         throw new AssertionError("spring.boot must not have any modifiers");
                     }
+                    if (!index.get("org.jspecify").modifiers().contains(Requires.Modifier.STATIC)
+                            && !index.get("org.jspecify").modifiers().contains(Requires.Modifier.TRANSITIVE)) {
+                        throw new AssertionError("org.jspecify must be declared as static and transitive");
+                    }
                 }
             
             }
@@ -441,6 +445,7 @@ abstract class AbstractFunctionalTest extends Specification {
         buildFile << """
             dependencies {
                 implementation("org.springframework.boot:spring-boot-autoconfigure:2.4.2") 
+                implementation("org.jspecify:jspecify:1.0.0")
             }
             
             extraJavaModuleInfo {               
@@ -448,6 +453,7 @@ abstract class AbstractFunctionalTest extends Specification {
                     requires("spring.context")
                     requiresTransitive("spring.boot")
                     requiresStatic("com.google.gson")
+                    requiresStaticTransitive("org.jspecify")
                 }
             }
         """

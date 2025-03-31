@@ -467,6 +467,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         for (String requireName : moduleInfo.requiresStatic) {
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE, null);
         }
+        for (String requireName : moduleInfo.requiresStaticTransitive) {
+            moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_TRANSITIVE, null);
+        }
         for (String usesName : moduleInfo.uses) {
             moduleVisitor.visitUse(usesName.replace('.', '/'));
         }
