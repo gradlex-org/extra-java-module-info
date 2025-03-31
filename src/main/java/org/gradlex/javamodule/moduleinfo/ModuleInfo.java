@@ -38,6 +38,7 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> requires = new LinkedHashSet<>();
     final Set<String> requiresTransitive = new LinkedHashSet<>();
     final Set<String> requiresStatic = new LinkedHashSet<>();
+    final Set<String> requiresStaticTransitive = new LinkedHashSet<>();
     final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
     final Set<String> uses = new LinkedHashSet<>();
 
@@ -96,6 +97,13 @@ public class ModuleInfo extends ModuleSpec {
      */
     public void requiresStatic(String requiresStatic) {
         addOrThrow(this.requiresStatic, requiresStatic);
+    }
+
+    /**
+     * @param requiresStaticTransitive corresponds to the directive in a 'module-info.java' file
+     */
+    public void requiresStaticTransitive(String requiresStaticTransitive) {
+        addOrThrow(this.requiresStaticTransitive, requiresStaticTransitive);
     }
 
     /**

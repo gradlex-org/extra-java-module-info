@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.12
+* [New] [#174](https://github.com/gradlex-org/extra-java-module-info/pull/174) - Add 'requiresStaticTransitive(...)' to module patch DSL
+
 ## Version 1.11
 * [New] [#134](https://github.com/gradlex-org/extra-java-module-info/pull/134) - Add 'disable(...)' and 'enable(...)' options to control when the plugin is active
 * [New] [#161](https://github.com/gradlex-org/extra-java-module-info/pull/161) - Add 'skipLocalJars' option
