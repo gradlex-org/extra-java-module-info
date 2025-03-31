@@ -54,6 +54,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -475,10 +476,20 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         }
         for (Map.Entry<String, List<String>> entry : providers.entrySet()) {
             String name = entry.getKey();
-            List<String> implementations = entry.getValue();
-            if (!moduleInfo.ignoreServiceProviders.contains(name)) {
-                moduleVisitor.visitProvide(name.replace('.', '/'),
-                        implementations.stream().map(impl -> impl.replace('.', '/')).toArray(String[]::new));
+            Set<String> skipSet = moduleInfo.ignoreServiceProviders.get(name);
+            Set<String> implementations = new LinkedHashSet<>(entry.getValue());
+            if (skipSet != null) {
+                if (skipSet.isEmpty()) {
+                    implementations.clear(); // Skip altogether
+                } else {
+                    implementations.removeAll(skipSet); // Skip some
+                }
+            }
+            if (!implementations.isEmpty()) {
+                moduleVisitor.visitProvide(
+                        name.replace('.', '/'),
+                        implementations.stream().map(impl -> impl.replace('.', '/')).toArray(String[]::new)
+                );
             }
         }
     }
