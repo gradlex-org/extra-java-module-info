@@ -39,7 +39,7 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> requiresTransitive = new LinkedHashSet<>();
     final Set<String> requiresStatic = new LinkedHashSet<>();
     final Set<String> requiresStaticTransitive = new LinkedHashSet<>();
-    final Set<String> ignoreServiceProviders = new LinkedHashSet<>();
+    final Map<String, Set<String>> ignoreServiceProviders = new LinkedHashMap<>();
     final Set<String> uses = new LinkedHashSet<>();
 
     boolean exportAllPackages;
@@ -114,10 +114,11 @@ public class ModuleInfo extends ModuleSpec {
     }
 
     /**
-     * @param ignoreServiceProvider do not transfer service provider to the 'module-info.class'
+     * @param provider do not transfer service provider to the 'module-info.class'
+     * @param implementations the array of specific implementations to skip
      */
-    public void ignoreServiceProvider(String ignoreServiceProvider) {
-        addOrThrow(this.ignoreServiceProviders, ignoreServiceProvider);
+    public void ignoreServiceProvider(String provider, String... implementations) {
+        addOrThrow(this.ignoreServiceProviders, provider, implementations);
     }
 
     /**

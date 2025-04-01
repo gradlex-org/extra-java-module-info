@@ -170,6 +170,20 @@ extraJavaModuleInfo {
 }
 ```
 
+You can also be more granular and ignore specific implementations while leaving the remaining active.
+
+```
+extraJavaModuleInfo {
+    module("org.liquibase:liquibase-core", "liquibase.core") {
+        ...
+        ignoreServiceProvider(
+            "liquibase.change.Change", // the provider
+            "liquibase.change.core.LoadDataChange", "liquibase.change.core.LoadUpdateDataChange" // Ignored implementations
+        )
+    }
+}
+```
+
 ## Should I use real modules or automatic modules?
 
 Only if you use _real_ modules (Jars with `module-info.class`) everywhere you can use all features of the Java Module System
