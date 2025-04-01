@@ -2,6 +2,8 @@
 
 ## Version 1.12
 * [New] [#174](https://github.com/gradlex-org/extra-java-module-info/pull/174) - Add 'requiresStaticTransitive(...)' to module patch DSL
+* [New] [#172](https://github.com/gradlex-org/extra-java-module-info/pull/172) - Allow ignoring specific service provider implementations (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
+* [Fixed] [#171](https://github.com/gradlex-org/extra-java-module-info/pull/171) - In some cases, the plugin creates and empty providers set (Thanks [Larry North](https://github.com/LarryNorth) for reporting!)
 
 ## Version 1.11
 * [New] [#134](https://github.com/gradlex-org/extra-java-module-info/pull/134) - Add 'disable(...)' and 'enable(...)' options to control when the plugin is active
@@ -9,7 +11,7 @@
 * [New] [#106](https://github.com/gradlex-org/extra-java-module-info/pull/106) - Actionable error message when plugin is used at configuration time
 
 ## Version 1.10.1
-* [Fix] [#164](https://github.com/gradlex-org/extra-java-module-info/pull/164) - fix: 'preserveExisting' does not duplicate 'provides' entries
+* [Fixed] [#164](https://github.com/gradlex-org/extra-java-module-info/pull/164) - 'preserveExisting' does not duplicate 'provides' entries
 
 ## Version 1.10
 * [New] [#160](https://github.com/gradlex-org/extra-java-module-info/pull/160) - Add 'preserveExisting' option to patch real modules
