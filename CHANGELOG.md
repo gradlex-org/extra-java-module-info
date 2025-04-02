@@ -3,7 +3,7 @@
 ## Version 1.12
 * [New] [#174](https://github.com/gradlex-org/extra-java-module-info/pull/174) - Add 'requiresStaticTransitive(...)' to module patch DSL
 * [New] [#172](https://github.com/gradlex-org/extra-java-module-info/pull/172) - Allow ignoring specific service provider implementations (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)
-* [Fixed] [#171](https://github.com/gradlex-org/extra-java-module-info/pull/171) - In some cases, the plugin creates and empty providers set (Thanks [Larry North](https://github.com/LarryNorth) for reporting!)
+* [Fixed] [#171](https://github.com/gradlex-org/extra-java-module-info/pull/171) - In some cases, the plugin creates an empty providers set (Thanks [Larry North](https://github.com/LarryNorth) for reporting!)
 
 ## Version 1.11
 * [New] [#134](https://github.com/gradlex-org/extra-java-module-info/pull/134) - Add 'disable(...)' and 'enable(...)' options to control when the plugin is active
