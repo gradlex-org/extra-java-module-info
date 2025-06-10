@@ -50,7 +50,7 @@ It is recommended to use a [convention plugin](https://docs.gradle.org/current/s
 Add this to the build file of your convention plugin's build
 (e.g. `gradle/plugins/build.gradle(.kts)` or `buildSrc/build.gradle(.kts)`).
 
-```
+```kotlin
 dependencies {
     implementation("org.gradlex:extra-java-module-info:1.12")
 }
@@ -59,7 +59,7 @@ dependencies {
 ## Defining extra module information
 In your convention plugin, apply the plugin and define the additional module info:
 
-```
+```kotlin
 plugins {
     ...
     id("org.gradlex.extra-java-module-info")
@@ -112,7 +112,7 @@ extraJavaModuleInfo {
 Now dependencies defined in your build files are all treated as modules if enough extra information was provided.
 For example:
 
-```
+```kotlin
 dependencies {
     implementation("com.google.code.gson:gson:2.8.6")           // real module
     implementation("net.bytebuddy:byte-buddy:1.10.9")           // real module with multi-release jar
@@ -157,7 +157,7 @@ The plugin will automatically retrofit all the available `META-INF/services/*` d
 
 The plugin also allows you to ignore some unwanted services from being automatically converted into `provides .. with ...` declarations. 
 
-```
+```kotlin
 extraJavaModuleInfo {               
     module("groovy-all-2.4.15.jar", "groovy.all", "2.4.15") {
        requiresTransitive("java.scripting")
@@ -172,7 +172,7 @@ extraJavaModuleInfo {
 
 You can also be more granular and ignore specific implementations while leaving the remaining active.
 
-```
+```kotlin
 extraJavaModuleInfo {
     module("org.liquibase:liquibase-core", "liquibase.core") {
         ...
@@ -191,7 +191,7 @@ Only if you use _real_ modules (Jars with `module-info.class`) everywhere you ca
 Still, using automatic modules is more convenient if you need to work with a lot of legacy libraries, because you do not need to define `exports` and `requires` directives.
 Alternatively though, this plugin offers a way to define a _real_ module, without defining all of those directives explicitly:
 
-```
+```kotlin
 extraJavaModuleInfo {
     module("org.apache.httpcomponents:httpclient", "org.apache.httpcomponents.httpclient") {
         exportAllPackages() // Adds an `exports` for each package found in the Jar
@@ -213,7 +213,7 @@ You see the same dependency many times in the _External Libraries_ list and Inte
 To circumvent this, you need to construct a common classpath – as a _resolvable configuration_ – that the transform can use.
 This needs to be done in all subprojects. You use the `versionsProvidingConfiguration` to tell the plugin about the commons classpath.
 
-```
+```kotlin
 extraJavaModuleInfo {
     versionsProvidingConfiguration = "mainRuntimeClasspath"
 }
@@ -223,7 +223,7 @@ To create such a common classpath, some setup work is needed.
 And it depends on your overall project structure if and how to do that.
 Here is an example setup you may use:
 
-```
+```kotlin
 val consistentResolutionAttribute = Attribute.of("consistent-resolution", String::class.java)
 
 // Define an Outgoing Variant (aka Consumable Configuration) that knows about all dependencies
@@ -270,7 +270,7 @@ NOTE: This functionality requires Gradle to be run with Java 11+ and failing on 
 
 If your goal is to fully modularize your application, you should enable the following configuration setting, which is disabled by default.
 
-```
+```kotlin
 extraJavaModuleInfo {
     failOnAutomaticModules = true
 }
@@ -278,7 +278,7 @@ extraJavaModuleInfo {
 
 With this setting enabled, the build will fail unless you define a module override for every automatic module that appears in your dependency tree, as shown below.
 
-```
+```kotlin
 dependencies {
     implementation("org.yaml:snakeyaml:1.33")
 }             
@@ -297,8 +297,8 @@ The Java Module System does not allow the same package to be used in more than o
 This is an issue with legacy libraries, where it was common practice to use the same package in multiple Jars.
 This plugin offers the option to merge multiple Jars into one in such situations:
 
-```
- extraJavaModuleInfo {
+```kotlin
+extraJavaModuleInfo {
     module("org.apache.zookeeper:zookeeper", "org.apache.zookeeper") {
         mergeJar("org.apache.zookeeper:zookeeper-jute")
         
@@ -316,7 +316,7 @@ In some cases, it may also be sufficient to remove appearances of the problemati
 This can be the case if classes are in fact duplicated, or if classes are not used.
 For this, you can utilise the `removePackage` functionality:
 
-```
+```kotlin
 extraJavaModuleInfo {
     module("xerces:xercesImpl", "xerces") {
         removePackage("org.w3c.dom.html")
@@ -331,7 +331,7 @@ To fix a library with a broken `module-info.class`, you can override the modular
 However, you need to specify `patchRealModule()` to overwrite the existing `module-info.class`.
 You can also use `preserveExisting()`, if the exiting `module-info.class` is working in general, but misses entries.
 
-```
+```kotlin
 extraJavaModuleInfo {                
     module("org.apache.tomcat.embed:tomcat-embed-core", "org.apache.tomcat.embed.core") {
         patchRealModule()   // overwrite existing module-info.class
@@ -350,7 +350,7 @@ This opt-in behavior is designed to prevent over-patching real modules, especial
 If you use legacy libraries and want to use the Java Module System with all its features, you should patch all Jars to include a `module-info`.
 However, if you get started and just want things to be put on the Module Path, you can set the following option:
 
-```
+```kotlin
 extraJavaModuleInfo {
     deriveAutomaticModuleNamesFromFileNames = true
 }
