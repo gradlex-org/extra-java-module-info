@@ -23,7 +23,7 @@ class RealModuleJarPreservePatchingFunctionalTest extends Specification {
         '''
     }
 
-    @IgnoreIf({ GradleBuild.gradleVersionUnderTest?.matches("[67]\\..*") }) // requires Gradle to support Java 17
+    @IgnoreIf({ GradleBuild.gradleVersionUnderTest?.startsWith("6") }) // requires Gradle to support Java 17
     def "a real module cannot be extended via preserveExisting"() {
         given:
         buildFile << ''' 

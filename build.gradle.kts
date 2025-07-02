@@ -7,6 +7,7 @@ group = "org.gradlex"
 version = "1.12"
 
 java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
@@ -14,7 +15,7 @@ java {
 dependencies {
     implementation("org.ow2.asm:asm:9.8")
 
-    testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
+    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -39,7 +40,7 @@ tasks.test {
     maxParallelForks = 4
 }
 
-listOf("6.8.3", "6.9.2", "7.0.2", "7.6.1").forEach { gradleVersionUnderTest ->
+listOf("6.8.3", "6.9.4", "7.6.5", "8.14.2").forEach { gradleVersionUnderTest ->
     val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
         group = "verification"
         description = "Runs tests against Gradle $gradleVersionUnderTest"
@@ -48,7 +49,9 @@ listOf("6.8.3", "6.9.2", "7.0.2", "7.6.1").forEach { gradleVersionUnderTest ->
         useJUnitPlatform()
         maxParallelForks = 4
         systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
-        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
+        if (gradleVersionUnderTest.startsWith("6")) {
+            javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
+        }
     }
     tasks.check {
         dependsOn(testGradle)

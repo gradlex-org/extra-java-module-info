@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
+          # Java 11 for Gradle 6.x support
           java-version: |
             11
             17
