@@ -16,7 +16,6 @@
 
 package org.gradlex.javamodule.moduleinfo;
 
-import org.gradle.api.NonNullApi;
 import org.gradle.api.artifacts.CacheableRule;
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
@@ -82,7 +81,6 @@ import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.automaticModulNam
  * was defined for it. This way we make sure that all Jars are turned into modules.
  */
 @CacheableRule
-@NonNullApi
 public abstract class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");

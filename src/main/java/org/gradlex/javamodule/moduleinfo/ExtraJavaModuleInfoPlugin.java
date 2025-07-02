@@ -16,7 +16,6 @@
 
 package org.gradlex.javamodule.moduleinfo;
 
-import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Transformer;
@@ -63,7 +62,6 @@ import static org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPluginExtensi
 /**
  * Entry point of the plugin.
  */
-@NonNullApi
 public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
     @Override
