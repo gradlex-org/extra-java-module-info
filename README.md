@@ -69,6 +69,7 @@ plugins {
 extraJavaModuleInfo {
     // failOnMissingModuleInfo = false
     // failOnAutomaticModules = true
+    // failOnModifiedDerivedModuleNames = true
     // skipLocalJars = true
     module("commons-beanutils:commons-beanutils", "org.apache.commons.beanutils") {
         exports("org.apache.commons.beanutils")
