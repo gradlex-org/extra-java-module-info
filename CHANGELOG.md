@@ -1,6 +1,6 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
-# Version 1.13
+## Version 1.13
 * [New] [#189](https://github.com/gradlex-org/extra-java-module-info/issues/189) - Add 'failOnModifiedDerivedModuleNames' option (Thanks to [JabRef](https://github.com/JabRef/jabref) for providing a use case)
 
 ## Version 1.12
