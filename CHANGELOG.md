@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.13
+* [New] [#189](https://github.com/gradlex-org/extra-java-module-info/issues/189) - Add 'failOnModifiedDerivedModuleNames' option (Thanks to [JabRef](https://github.com/JabRef/jabref) for providing a use case)
+
 ## Version 1.12
 * [New] [#174](https://github.com/gradlex-org/extra-java-module-info/pull/174) - Add 'requiresStaticTransitive(...)' to module patch DSL
 * [New] [#172](https://github.com/gradlex-org/extra-java-module-info/pull/172) - Allow ignoring specific service provider implementations (Thanks [Ihor Herasymenko](https://github.com/iherasymenko) for contributing!)

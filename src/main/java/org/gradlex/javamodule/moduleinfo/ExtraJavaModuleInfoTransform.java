@@ -102,6 +102,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         Property<Boolean> getFailOnAutomaticModules();
 
         @Input
+        Property<Boolean> getFailOnModifiedDerivedModuleNames();
+
+        @Input
         Property<Boolean> getDeriveAutomaticModuleNamesFromFileNames();
 
         @Input
@@ -153,6 +156,12 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             String expectedName = autoModuleName(originalJar);
             if (expectedName != null && !definedName.equals(expectedName) && !moduleSpec.overrideModuleName) {
                 throw new RuntimeException("The name '" + definedName + "' is different than the Automatic-Module-Name '" + expectedName + "'; explicitly allow override via 'overrideModuleName()'");
+            }
+            if (parameters.getFailOnModifiedDerivedModuleNames().get() && !realModule && expectedName == null && !moduleSpec.overrideModuleName) {
+                String expectedAutomaticNameFromFileName = automaticModulNameFromFileName(originalJar);
+                if (!definedName.equals(expectedAutomaticNameFromFileName)) {
+                    throw new RuntimeException("The name '" + definedName + "' is different than the name derived from the Jar file name '" + expectedAutomaticNameFromFileName + "'; turn off 'failOnModifiedDerivedModuleNames' or explicitly allow override via 'overrideModuleName()'");
+                }
             }
             addModuleDescriptor(originalJar, getModuleJar(outputs, originalJar), (ModuleInfo) moduleSpec);
         } else if (moduleSpec instanceof AutomaticModuleName) {
