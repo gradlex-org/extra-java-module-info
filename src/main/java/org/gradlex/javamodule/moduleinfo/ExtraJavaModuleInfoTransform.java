@@ -16,7 +16,7 @@
 
 package org.gradlex.javamodule.moduleinfo;
 
-import org.gradle.api.artifacts.CacheableRule;
+import org.gradle.api.artifacts.transform.CacheableTransform;
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;
 import org.gradle.api.artifacts.transform.TransformOutputs;
@@ -27,6 +27,7 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.objectweb.asm.ClassReader;
@@ -80,7 +81,7 @@ import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.automaticModulNam
  * The transformation fails the build if a Jar does not contain information and no extra information
  * was defined for it. This way we make sure that all Jars are turned into modules.
  */
-@CacheableRule
+@CacheableTransform
 public abstract class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
 
     private static final Pattern MODULE_INFO_CLASS_MRJAR_PATH = Pattern.compile("META-INF/versions/\\d+/module-info.class");
@@ -111,6 +112,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         ListProperty<String> getMergeJarIds();
 
         @InputFiles
+        @Classpath
         ListProperty<RegularFile> getMergeJars();
 
         @Input
@@ -121,6 +123,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
     }
 
     @InputArtifact
+    @Classpath
     protected abstract Provider<FileSystemLocation> getInputArtifact();
 
     @Override
