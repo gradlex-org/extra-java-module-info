@@ -78,7 +78,7 @@ public class PublishedMetadata implements Serializable {
     private List<String> componentVariant(Provider<String> versionsProvidingConfiguration, Project project, String usage) {
         Configuration versionsSource;
         if (versionsProvidingConfiguration.isPresent()) {
-            versionsSource = project.getConfigurations().getByName(versionsProvidingConfiguration.get());
+            versionsSource = project.getConfigurations().named(versionsProvidingConfiguration.get()).get();
         } else {
             // version provider is not configured, create on adhoc based on ALL classpaths of the project
             versionsSource = maybeCreateDefaultVersionSourcConfiguration(project.getConfigurations(), project.getObjects(),
@@ -118,10 +118,10 @@ public class PublishedMetadata implements Serializable {
 
             if (sourceSets != null) {
                 for (SourceSet sourceSet : sourceSets) {
-                    Configuration implementation = configurations.getByName(sourceSet.getImplementationConfigurationName());
-                    Configuration compileOnly = configurations.getByName(sourceSet.getCompileOnlyConfigurationName());
-                    Configuration runtimeOnly = configurations.getByName(sourceSet.getRuntimeOnlyConfigurationName());
-                    Configuration annotationProcessor = configurations.getByName(sourceSet.getAnnotationProcessorConfigurationName());
+                    Configuration implementation = configurations.named(sourceSet.getImplementationConfigurationName()).get();
+                    Configuration compileOnly = configurations.named(sourceSet.getCompileOnlyConfigurationName()).get();
+                    Configuration runtimeOnly = configurations.named(sourceSet.getRuntimeOnlyConfigurationName()).get();
+                    Configuration annotationProcessor = configurations.named(sourceSet.getAnnotationProcessorConfigurationName()).get();
                     c.extendsFrom(implementation, compileOnly, runtimeOnly, annotationProcessor);
                 }
             }

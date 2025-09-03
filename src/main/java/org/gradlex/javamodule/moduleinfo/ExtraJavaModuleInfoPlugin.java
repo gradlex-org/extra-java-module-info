@@ -86,7 +86,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
     }
 
     private void configureModuleDescriptorTasks(Project project) {
-        project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
+        project.getExtensions().getByType(SourceSetContainer.class).configureEach(sourceSet -> {
             String name = sourceSet.getTaskName("", "moduleDescriptorRecommendations");
             project.getTasks().register(name, ModuleDescriptorRecommendation.class, task -> {
                 Transformer<List<File>, Configuration> artifactsTransformer = configuration -> {
@@ -148,12 +148,12 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             // Automatically get versions from the runtime classpath
             if (GradleVersion.current().compareTo(GradleVersion.version("6.8")) >= 0) {
                 //noinspection UnstableApiUsage
-                c.shouldResolveConsistentlyWith(project.getConfigurations().getByName(RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+                c.shouldResolveConsistentlyWith(project.getConfigurations().named(RUNTIME_CLASSPATH_CONFIGURATION_NAME).get());
             }
         });
 
         // If 'internal' is added by 'org.gradlex.jvm-dependency-conflict-resolution', extend from it to get access to versions
-        project.getConfigurations().all(otherConfiguration -> {
+        project.getConfigurations().configureEach(otherConfiguration -> {
             if ("internal".equals(otherConfiguration.getName())) {
                 javaModulesMergeJars.extendsFrom(otherConfiguration);
             }
@@ -161,7 +161,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
         Attribute<String> artifactType = Attribute.of("artifactType", String.class);
 
-        project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
+        project.getExtensions().getByType(SourceSetContainer.class).configureEach(sourceSet -> {
             // by default, activate plugin for all source sets
             extension.activate(sourceSet);
 
