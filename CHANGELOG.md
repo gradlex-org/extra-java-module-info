@@ -1,5 +1,8 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.13.1
+* [Fixed] [#197](https://github.com/gradlex-org/extra-java-module-info/issues/197) - Slightly adjust Gradle API usage for better 9.0.0 compatibility
+
 ## Version 1.13
 * [New] [#189](https://github.com/gradlex-org/extra-java-module-info/issues/189) - Add 'failOnModifiedDerivedModuleNames' option (Thanks to [JabRef](https://github.com/JabRef/jabref) for providing a use case)
 
