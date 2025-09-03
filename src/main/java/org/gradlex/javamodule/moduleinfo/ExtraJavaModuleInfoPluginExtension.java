@@ -81,7 +81,7 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      * @param moduleName the Module Name of the Module to construct
      * @param moduleVersion version to write into the module-info.class
      */
-    public void module(String identifier, String moduleName, String moduleVersion) {
+    public void module(String identifier, String moduleName, @Nullable String moduleVersion) {
         module(identifier, moduleName, moduleVersion, m -> {
             m.exportAllPackages();
             if (identifier.contains(":")) { // only if the identifier is a coordinates (not a Jar)
@@ -97,7 +97,7 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      * @param moduleName the Module Name of the Module to construct
      * @param moduleVersion version to write into the module-info.class
      */
-    public void module(Provider<MinimalExternalModuleDependency> alias, String moduleName, String moduleVersion) {
+    public void module(Provider<MinimalExternalModuleDependency> alias, String moduleName, @Nullable String moduleVersion) {
         module(alias.get().getModule().toString(), moduleName, moduleVersion);
     }
 
@@ -230,9 +230,12 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      * @param sourceSet the Source Set to activate (e.g. sourceSets.test)
      */
     public void activate(SourceSet sourceSet) {
-        Configuration runtimeClasspath = getConfigurations().getByName(sourceSet.getRuntimeClasspathConfigurationName());
-        Configuration compileClasspath = getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName());
-        Configuration annotationProcessor = getConfigurations().getByName(sourceSet.getAnnotationProcessorConfigurationName());
+        NamedDomainObjectProvider<Configuration> runtimeClasspath =
+                getConfigurations().named(sourceSet.getRuntimeClasspathConfigurationName());
+        NamedDomainObjectProvider<Configuration> compileClasspath =
+                getConfigurations().named(sourceSet.getCompileClasspathConfigurationName());
+        NamedDomainObjectProvider<Configuration> annotationProcessor =
+                getConfigurations().named(sourceSet.getAnnotationProcessorConfigurationName());
 
         activate(runtimeClasspath);
         activate(compileClasspath);
@@ -275,9 +278,12 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
      * @param sourceSet the Source Set to deactivate (e.g. sourceSets.test)
      */
     public void deactivate(SourceSet sourceSet) {
-        Configuration runtimeClasspath = getConfigurations().getByName(sourceSet.getRuntimeClasspathConfigurationName());
-        Configuration compileClasspath = getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName());
-        Configuration annotationProcessor = getConfigurations().getByName(sourceSet.getAnnotationProcessorConfigurationName());
+        NamedDomainObjectProvider<Configuration> runtimeClasspath =
+                getConfigurations().named(sourceSet.getRuntimeClasspathConfigurationName());
+        NamedDomainObjectProvider<Configuration> compileClasspath =
+                getConfigurations().named(sourceSet.getCompileClasspathConfigurationName());
+        NamedDomainObjectProvider<Configuration> annotationProcessor =
+                getConfigurations().named(sourceSet.getAnnotationProcessorConfigurationName());
 
         deactivate(runtimeClasspath);
         deactivate(compileClasspath);
