@@ -33,6 +33,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public class PublishedMetadata implements Serializable {
     private final List<String> requires = new ArrayList<>();
     private final List<String> requiresTransitive = new ArrayList<>();
     private final List<String> requiresStaticTransitive = new ArrayList<>();
+    @Nullable
     private String errorMessage = null;
 
     PublishedMetadata(String gav, Project project, ExtraJavaModuleInfoPluginExtension extension) {
@@ -95,7 +97,7 @@ public class PublishedMetadata implements Serializable {
         return firstAndOnlyComponentDependencies(singleComponentVariantResolver);
     }
 
-    private Configuration maybeCreateDefaultVersionSourcConfiguration(ConfigurationContainer configurations, ObjectFactory objects, SourceSetContainer sourceSets) {
+    private Configuration maybeCreateDefaultVersionSourcConfiguration(ConfigurationContainer configurations, ObjectFactory objects, @Nullable SourceSetContainer sourceSets) {
         String name = DEFAULT_VERSION_SOURCE_CONFIGURATION;
         Configuration existing = configurations.findByName(name);
         if (existing != null) {
@@ -174,6 +176,7 @@ public class PublishedMetadata implements Serializable {
         return requiresStaticTransitive;
     }
 
+    @Nullable
     public String getErrorMessage() {
         return errorMessage;
     }

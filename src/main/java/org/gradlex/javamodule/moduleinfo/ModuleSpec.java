@@ -18,6 +18,7 @@ package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.provider.Provider;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.validateModuleNam
 public abstract class ModuleSpec implements Serializable {
 
     private final String identifier;
+    @Nullable
     private final String classifier; // optional
     private final String moduleName;
     private final List<String> removedPackages = new ArrayList<>();
@@ -63,6 +65,7 @@ public abstract class ModuleSpec implements Serializable {
     /**
      * @return classifier, as an addition to group:name coordinates, if defined
      */
+    @Nullable
     public String getClassifier() {
         return classifier;
     }

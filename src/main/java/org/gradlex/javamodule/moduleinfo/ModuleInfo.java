@@ -17,6 +17,7 @@
 package org.gradlex.javamodule.moduleinfo;
 
 import org.gradle.api.model.ObjectFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -30,6 +31,7 @@ import java.util.Set;
 @SuppressWarnings("unused")
 public class ModuleInfo extends ModuleSpec {
 
+    @Nullable
     private final String moduleVersion;
 
     boolean openModule = true;
@@ -47,7 +49,7 @@ public class ModuleInfo extends ModuleSpec {
     boolean patchRealModule;
     boolean preserveExisting;
 
-    ModuleInfo(String identifier, String moduleName, String moduleVersion, ObjectFactory objectFactory) {
+    ModuleInfo(String identifier, String moduleName, @Nullable String moduleVersion, ObjectFactory objectFactory) {
         super(identifier, moduleName);
         this.moduleVersion = moduleVersion;
     }
@@ -124,6 +126,7 @@ public class ModuleInfo extends ModuleSpec {
     /**
      * @return configured version of the Module
      */
+    @Nullable
     public String getModuleVersion() {
         return moduleVersion;
     }
