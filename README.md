@@ -61,7 +61,7 @@ In your convention plugin, apply the plugin and define the additional module inf
 
 ```kotlin
 plugins {
-    ...
+    // ...
     id("org.gradlex.extra-java-module-info")
 }
 
@@ -176,7 +176,7 @@ You can also be more granular and ignore specific implementations while leaving 
 ```kotlin
 extraJavaModuleInfo {
     module("org.liquibase:liquibase-core", "liquibase.core") {
-        ...
+        // ...
         ignoreServiceProvider(
             "liquibase.change.Change", // the provider
             "liquibase.change.core.LoadDataChange", "liquibase.change.core.LoadUpdateDataChange" // Ignored implementations
@@ -339,7 +339,7 @@ extraJavaModuleInfo {
         preserveExisting()  // extend existing module-info.class 
         requires("java.desktop")
         requires("java.instrument")
-        ...
+        // ...
     }
 }    
 ```
