@@ -1,13 +1,6 @@
-plugins { id("groovy") } // tests not yet migrated to Java
-
 version = "1.13.1"
 
-dependencies {
-    implementation("org.ow2.asm:asm:9.9")
-
-    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
+dependencies { implementation("org.ow2.asm:asm:9.9") }
 
 pluginPublishConventions {
     id("${project.group}.${project.name}")
@@ -23,6 +16,12 @@ pluginPublishConventions {
     }
 }
 
-tasks.compileTestGroovy { targetCompatibility = "11" } // allow tests to run against 6.x
-
 testingConventions { testGradleVersions("6.8.3", "6.9.4", "7.6.5", "8.14.2") }
+
+// === the following custom configuration should be removed once tests are migrated to Java
+apply(plugin = "groovy")
+
+tasks.named<GroovyCompile>("compileTestGroovy") { targetCompatibility = "11" } // allow tests to run against 6.x
+
+dependencies { testImplementation("org.spockframework:spock-core:2.3-groovy-4.0") } //
+// ====================================================================================
