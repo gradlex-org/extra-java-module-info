@@ -36,22 +36,25 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.spi.ToolProvider;
 
 public abstract class ModuleDescriptorRecommendation extends DefaultTask {
 
@@ -72,7 +75,7 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
 
         final SortedSet<String> provides = new TreeSet<>();
 
-        String moduleName;
+        String moduleName = "";
 
         boolean automatic;
 
@@ -125,14 +128,22 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
 
         int run(PrintWriter out, PrintWriter err, String... args);
 
-        @SuppressWarnings("Since15")
         static Java8SafeToolProvider findFirst(String name) {
             try {
-                ToolProvider tool = ToolProvider.findFirst(name)
-                        .orElseThrow(() -> new RuntimeException("The JDK does not bundle " + name));
-                return tool::run;
-            } catch (NoClassDefFoundError e) {
-                throw new RuntimeException("This functionality requires Gradle to be powered by JDK 11+", e);
+                Class<?> toolProviderClass = Class.forName("java.util.spi.ToolProvider");
+                Method findFirst = toolProviderClass.getMethod("findFirst", String.class);
+                Method run = toolProviderClass.getMethod("run", PrintWriter.class, PrintWriter.class, String[].class);
+                Optional<?> toolReference = (Optional<?>) findFirst.invoke(null, name);
+                Object tool = toolReference.orElseThrow(() -> new RuntimeException("The JDK does not bundle " + name));
+                return (out, err, args) -> {
+                    try {
+                        return (int) run.invoke(tool, out, err, args);
+                    } catch (ReflectiveOperationException e) {
+                        throw new RuntimeException("This functionality requires Gradle to run with JDK 11+", e);
+                    }
+                };
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("This functionality requires Gradle to run with JDK 11+", e);
             }
         }
 
@@ -256,13 +267,13 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
         StringWriter err = new StringWriter();
         List<String> args = new ArrayList<>();
         if (!modulePath.isEmpty()) {
-            args.addAll(List.of( "--module-path", String.join(File.pathSeparator, modulePath)));
+            args.addAll(Arrays.asList("--module-path", String.join(File.pathSeparator, modulePath)));
         }
-        args.addAll(List.of("--generate-module-info", outputPath.toString()));
-        args.addAll(List.of("--multi-release", String.valueOf(getRelease().get())));
+        args.addAll(Arrays.asList("--generate-module-info", outputPath.toString()));
+        args.addAll(Arrays.asList("--multi-release", String.valueOf(getRelease().get())));
         args.add("--ignore-missing-deps");
         args.add(targetArtifact.jar.getAbsolutePath());
-        int retVal = jdeps.run(new PrintWriter(out, true), new PrintWriter(err, true), args.toArray(String[]::new));
+        int retVal = jdeps.run(new PrintWriter(out, true), new PrintWriter(err, true), args.toArray(new String[0]));
         if (retVal != 0) {
             throw new RuntimeException(String.format("jdeps returned error %d\n%s\n%s", retVal, out, err));
         }
@@ -271,7 +282,7 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
                 ? result[1] // Skipping "Warning: --ignore-missing-deps specified. Missing dependencies from xyz are ignored"
                 : result[0];
         String path = writingToMessage.replace("writing to ", "");
-        String moduleInfoJava = Files.readString(Path.of(path));
+        String moduleInfoJava = new String(Files.readAllBytes(Paths.get(path)));
         String[] parts = moduleInfoJava.split("\\R");
         for (String part : parts) {
             Matcher requiresMatcher = REQUIRES_PATTERN.matcher(part);
