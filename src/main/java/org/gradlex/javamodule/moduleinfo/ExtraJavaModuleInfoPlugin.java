@@ -64,10 +64,13 @@ import static org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPluginExtensi
  */
 public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
+    private static final GradleVersion MINIMUM_SUPPORTED_VERSION = GradleVersion.version("6.8");
+    private static final boolean MIN_GRADLE_9_0 = GradleVersion.current().compareTo(GradleVersion.version("9.0.0")) >= 0;
+
     @Override
     public void apply(Project project) {
-        if (GradleVersion.current().compareTo(GradleVersion.version("6.8")) < 0) {
-            throw new RuntimeException("This plugin requires Gradle 6.8+");
+        if (GradleVersion.current().compareTo(MINIMUM_SUPPORTED_VERSION) < 0) {
+            throw new RuntimeException("This plugin requires Gradle " + MINIMUM_SUPPORTED_VERSION + "+");
         }
 
         // register the plugin extension as 'extraJavaModuleInfo {}' configuration block
@@ -134,7 +137,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
     private void configureTransform(Project project, ExtraJavaModuleInfoPluginExtension extension) {
         Configuration javaModulesMergeJars = project.getConfigurations().create("javaModulesMergeJars", c -> {
-            c.setVisible(false);
+            setInvisible(c);
             c.setCanBeConsumed(false);
             c.setCanBeResolved(true);
             c.getAttributes().attribute(USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, JAVA_RUNTIME));
@@ -295,6 +298,13 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         public List<RegularFile> transform(Collection<ResolvedArtifactResult> artifacts) {
             Directory projectDirectory = projectLayout.getProjectDirectory();
             return artifacts.stream().map(a -> projectDirectory.file(a.getFile().getAbsolutePath())).collect(Collectors.toList());
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void setInvisible(Configuration c) {
+        if (!MIN_GRADLE_9_0) {
+            c.setVisible(false);
         }
     }
 }
