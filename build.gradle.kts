@@ -1,16 +1,6 @@
-plugins {
-    id("groovy")
-    id("org.gradlex.internal.plugin-publish-conventions") version "0.6"
-}
+plugins { id("groovy") } // tests not yet migrated to Java
 
-group = "org.gradlex"
 version = "1.13.1"
-
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
 
 dependencies {
     implementation("org.ow2.asm:asm:9.9")
@@ -33,27 +23,6 @@ pluginPublishConventions {
     }
 }
 
-tasks.test {
-    description = "Runs tests against the Gradle version the plugin is built with"
-    classpath = sourceSets.test.get().runtimeClasspath
-    useJUnitPlatform()
-    maxParallelForks = 4
-}
+tasks.compileTestGroovy { targetCompatibility = "11" } // allow tests to run against 6.x
 
-listOf("6.8.3", "6.9.4", "7.6.5", "8.14.2").forEach { gradleVersionUnderTest ->
-    val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
-        group = "verification"
-        description = "Runs tests against Gradle $gradleVersionUnderTest"
-        testClassesDirs = sourceSets.test.get().output.classesDirs
-        classpath = sourceSets.test.get().runtimeClasspath
-        useJUnitPlatform()
-        maxParallelForks = 4
-        systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
-        if (gradleVersionUnderTest.startsWith("6")) {
-            javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
-        }
-    }
-    tasks.check {
-        dependsOn(testGradle)
-    }
-}
+testingConventions { testGradleVersions("6.8.3", "6.9.4", "7.6.5", "8.14.2") }
