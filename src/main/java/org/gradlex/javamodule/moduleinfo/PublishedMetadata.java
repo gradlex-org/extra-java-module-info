@@ -75,6 +75,7 @@ public class PublishedMetadata implements Serializable {
         });
     }
 
+    @SuppressWarnings({"UnstableApiUsage", "unchecked"})
     private List<String> componentVariant(Provider<String> versionsProvidingConfiguration, Project project, String usage) {
         Configuration versionsSource;
         if (versionsProvidingConfiguration.isPresent()) {
@@ -90,7 +91,6 @@ public class PublishedMetadata implements Serializable {
         singleComponentVariantResolver.shouldResolveConsistentlyWith(versionsSource);
         versionsSource.getAttributes().keySet().forEach(a -> {
             @SuppressWarnings("rawtypes") Attribute untypedAttributeKey = a;
-            //noinspection unchecked
             singleComponentVariantResolver.getAttributes().attribute(untypedAttributeKey, requireNonNull(versionsSource.getAttributes().getAttribute(a)));
         });
         singleComponentVariantResolver.getAttributes().attribute(USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, usage));
