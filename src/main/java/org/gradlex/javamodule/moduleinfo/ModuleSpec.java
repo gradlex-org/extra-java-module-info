@@ -1,31 +1,15 @@
-/*
- * Copyright the GradleX team.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// SPDX-License-Identifier: Apache-2.0
 package org.gradlex.javamodule.moduleinfo;
 
-import org.gradle.api.artifacts.MinimalExternalModuleDependency;
-import org.gradle.api.provider.Provider;
-import org.jspecify.annotations.Nullable;
+import static org.gradlex.javamodule.moduleinfo.IdValidator.validateIdentifier;
+import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.validateModuleName;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.gradlex.javamodule.moduleinfo.IdValidator.validateIdentifier;
-import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.validateModuleName;
+import org.gradle.api.artifacts.MinimalExternalModuleDependency;
+import org.gradle.api.provider.Provider;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Details that real Modules and Automatic-Module-Names share.
@@ -34,8 +18,10 @@ import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.validateModuleNam
 public abstract class ModuleSpec implements Serializable {
 
     private final String identifier;
+
     @Nullable
     private final String classifier; // optional
+
     private final String moduleName;
     private final List<String> removedPackages = new ArrayList<>();
     private final List<String> mergedJars = new ArrayList<>();
