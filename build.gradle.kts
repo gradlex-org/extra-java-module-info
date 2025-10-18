@@ -1,30 +1,14 @@
-plugins {
-    id("groovy")
-    id("org.gradlex.internal.plugin-publish-conventions") version "0.6"
-}
-
-group = "org.gradlex"
 version = "1.13.1"
 
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
+dependencies { implementation("org.ow2.asm:asm:9.9") }
 
-dependencies {
-    implementation("org.ow2.asm:asm:9.9")
-
-    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-pluginPublishConventions {
-    id("${project.group}.${project.name}")
-    implementationClass("org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPlugin")
-    displayName("Extra Java Module Info Gradle Plugin")
-    description("Add module information to legacy Java libraries.")
-    tags("gradlex", "java", "modularity", "jigsaw", "jpms")
+publishingConventions {
+    pluginPortal("${project.group}.${project.name}") {
+        implementationClass("org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPlugin")
+        displayName("Extra Java Module Info Gradle Plugin")
+        description("Add module information to legacy Java libraries.")
+        tags("gradlex", "java", "modularity", "jigsaw", "jpms")
+    }
     gitHub("https://github.com/gradlex-org/extra-java-module-info")
     developer {
         id.set("jjohannes")
@@ -33,27 +17,12 @@ pluginPublishConventions {
     }
 }
 
-tasks.test {
-    description = "Runs tests against the Gradle version the plugin is built with"
-    classpath = sourceSets.test.get().runtimeClasspath
-    useJUnitPlatform()
-    maxParallelForks = 4
-}
+testingConventions { testGradleVersions("6.8.3", "6.9.4", "7.6.5", "8.14.2") }
 
-listOf("6.8.3", "6.9.4", "7.6.5", "8.14.2").forEach { gradleVersionUnderTest ->
-    val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
-        group = "verification"
-        description = "Runs tests against Gradle $gradleVersionUnderTest"
-        testClassesDirs = sourceSets.test.get().output.classesDirs
-        classpath = sourceSets.test.get().runtimeClasspath
-        useJUnitPlatform()
-        maxParallelForks = 4
-        systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
-        if (gradleVersionUnderTest.startsWith("6")) {
-            javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
-        }
-    }
-    tasks.check {
-        dependsOn(testGradle)
-    }
-}
+// === the following custom configuration should be removed once tests are migrated to Java
+apply(plugin = "groovy")
+
+tasks.named<GroovyCompile>("compileTestGroovy") { targetCompatibility = "11" } // allow tests to run against 6.x
+
+dependencies { testImplementation("org.spockframework:spock-core:2.3-groovy-4.0") } //
+// ====================================================================================
