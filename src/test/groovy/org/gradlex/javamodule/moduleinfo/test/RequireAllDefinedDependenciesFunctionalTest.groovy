@@ -374,7 +374,7 @@ class RequireAllDefinedDependenciesFunctionalTest extends Specification {
         given:
         def sharedBuildScript = """
             extraJavaModuleInfo {
-                versionsProvidingConfiguration = project.provider { project.configurations.named("mainRuntimeClasspath").get() }
+                versionsProvidingConfiguration.set(project.provider { project.configurations.named("mainRuntimeClasspath").get() })
                 module(${libs.commonsHttpClient}, "org.apache.httpcomponents.httpclient")
                 module(${libs.commonsLogging}, "org.apache.commons.logging")
                 knownModule("commons-codec:commons-codec", "org.apache.commons.codec")

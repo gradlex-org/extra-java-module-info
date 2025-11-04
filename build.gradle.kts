@@ -8,9 +8,7 @@ group = "org.gradlex"
 version = "1.13.1"
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain.languageVersion = JavaLanguageVersion.of(11)
 }
 
 dependencies {
@@ -36,15 +34,7 @@ pluginPublishConventions {
     }
 }
 
-tasks.withType<Test>().configureEach {
-    group = "verification"
-    classpath = sourceSets.test.get().runtimeClasspath
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    useJUnitPlatform()
-    maxParallelForks = 4
-}
-
-tasks.named("test") {
+tasks.named<Test>("test") {
     description = "Runs tests against the Gradle version the plugin is built with"
 }
 
@@ -52,11 +42,23 @@ listOf("6.8.3", "6.9.4", "7.6.5", "8.14.2").forEach { gradleVersionUnderTest ->
     val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
         description = "Runs tests against Gradle $gradleVersionUnderTest"
         systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
-        if (gradleVersionUnderTest.startsWith("6")) {
-            javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
-        }
     }
     tasks.check {
         dependsOn(testGradle)
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    group = "verification"
+    classpath = sourceSets.test.get().runtimeClasspath
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    useJUnitPlatform()
+    maxParallelForks = 4
+
+    val gradleMajorVersion = (systemProperties["gradleVersionUnderTest"] as String? ?: gradle.gradleVersion).split(".")[0].toInt()
+    if (gradleMajorVersion >= 7) {
+        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
+    } else {
+        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }
     }
 }
