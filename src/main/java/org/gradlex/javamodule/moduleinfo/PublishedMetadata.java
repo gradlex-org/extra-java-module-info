@@ -4,7 +4,9 @@ package org.gradlex.javamodule.moduleinfo;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.gradle.api.attributes.Category.CATEGORY_ATTRIBUTE;
+import static org.gradle.api.attributes.Category.ENFORCED_PLATFORM;
 import static org.gradle.api.attributes.Category.LIBRARY;
+import static org.gradle.api.attributes.Category.REGULAR_PLATFORM;
 import static org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE;
 
 import java.io.Serializable;
@@ -15,6 +17,8 @@ import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.artifacts.result.UnresolvedDependencyResult;
@@ -34,6 +38,8 @@ import org.jspecify.annotations.Nullable;
 public class PublishedMetadata implements Serializable {
     private static final Attribute<String> CATEGORY_ATTRIBUTE_UNTYPED =
             Attribute.of(CATEGORY_ATTRIBUTE.getName(), String.class);
+    private static final Attribute<Category> CATEGORY_ATTRIBUTE_TYPED =
+            Attribute.of(CATEGORY_ATTRIBUTE.getName(), Category.class);
     private static final String DEFAULT_VERSION_SOURCE_CONFIGURATION = "definedDependenciesVersions";
 
     private final String gav;
@@ -47,10 +53,16 @@ public class PublishedMetadata implements Serializable {
     PublishedMetadata(String gav, Project project, ExtraJavaModuleInfoPluginExtension extension) {
         this.gav = gav;
 
-        List<String> compileDependencies =
-                componentVariant(extension.getVersionsProvidingConfiguration(), project, Usage.JAVA_API);
-        List<String> runtimeDependencies =
-                componentVariant(extension.getVersionsProvidingConfiguration(), project, Usage.JAVA_RUNTIME);
+        List<String> compileDependencies = componentVariant(
+                extension.getVersionsProvidingConfiguration(),
+                extension.getPlatformDependency(),
+                project,
+                Usage.JAVA_API);
+        List<String> runtimeDependencies = componentVariant(
+                extension.getVersionsProvidingConfiguration(),
+                extension.getPlatformDependency(),
+                project,
+                Usage.JAVA_RUNTIME);
 
         Stream.concat(compileDependencies.stream(), runtimeDependencies.stream())
                 .distinct()
@@ -67,7 +79,10 @@ public class PublishedMetadata implements Serializable {
 
     @SuppressWarnings({"UnstableApiUsage", "unchecked"})
     private List<String> componentVariant(
-            Provider<String> versionsProvidingConfiguration, Project project, String usage) {
+            Provider<String> versionsProvidingConfiguration,
+            Provider<Dependency> platformDependencyProvider,
+            Project project,
+            String usage) {
         Configuration versionsSource;
         if (versionsProvidingConfiguration.isPresent()) {
             versionsSource = project.getConfigurations()
@@ -81,8 +96,29 @@ public class PublishedMetadata implements Serializable {
                     project.getExtensions().findByType(SourceSetContainer.class));
         }
 
-        Configuration singleComponentVariantResolver = project.getConfigurations()
-                .detachedConfiguration(project.getDependencies().create(gav));
+        List<Dependency> dependencies = new ArrayList<>();
+        dependencies.add(project.getDependencies().create(gav));
+        if (platformDependencyProvider.isPresent()) {
+            if (!ModuleDependency.class.isAssignableFrom(
+                    platformDependencyProvider.get().getClass())) {
+                throw new IllegalArgumentException("Unable to determine dependency '"
+                        + platformDependencyProvider.get().getName() + "' type");
+            }
+
+            ModuleDependency platformDependency = (ModuleDependency) platformDependencyProvider.get();
+            // A platform dependency must have the platform attribute specified.
+            Category category = platformDependency.getAttributes().getAttribute(CATEGORY_ATTRIBUTE_TYPED);
+            if (category == null
+                    || (!category.getName().equals(REGULAR_PLATFORM)
+                            && !category.getName().equals(ENFORCED_PLATFORM))) {
+                throw new IllegalArgumentException(
+                        "Dependency '" + platformDependency.getName() + "' is not a platform");
+            }
+            dependencies.add(platformDependency);
+        }
+
+        Configuration singleComponentVariantResolver =
+                project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0]));
         singleComponentVariantResolver.setCanBeConsumed(false);
         singleComponentVariantResolver.shouldResolveConsistentlyWith(versionsSource);
         versionsSource.getAttributes().keySet().forEach(a -> {

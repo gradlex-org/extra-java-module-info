@@ -266,4 +266,25 @@ class EdgeCasesFunctionalTest extends Specification {
         expect:
         build()
     }
+
+    def "resolve against a platform project if specified"() {
+        given:
+        buildFile << """
+            val springBom = "org.springframework:spring-framework-bom:6.2.9"
+            dependencies {
+                implementation(platform(springBom))
+                implementation("org.springframework:spring-jcl")
+            }
+            
+            extraJavaModuleInfo {
+                failOnAutomaticModules.set(true)
+                platformDependency.set(project.provider { project.dependencies.platform(project.dependencies.create(springBom)) as? org.gradle.api.artifacts.ModuleDependency })
+                module("org.springframework:spring-jcl", "spring.jcl")
+            }
+        """
+
+        expect:
+        build()
+    }
+
 }
