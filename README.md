@@ -219,6 +219,8 @@ This needs to be done in all subprojects. You use the `versionsProvidingConfigur
 ```kotlin
 extraJavaModuleInfo {
     versionsProvidingConfiguration = project.provider { project.configurations.named("mainRuntimeClasspath").get() }
+    // or for older Gradle/Kotlin versions
+    // versionsProvidingConfiguration.set(project.provider { project.configurations.named("mainRuntimeClasspath").get() })
 }
 ```
 

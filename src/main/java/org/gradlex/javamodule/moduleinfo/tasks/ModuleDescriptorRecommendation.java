@@ -1,37 +1,6 @@
-/*
- * Copyright the GradleX team.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// SPDX-License-Identifier: Apache-2.0
 package org.gradlex.javamodule.moduleinfo.tasks;
 
-import org.gradle.api.DefaultTask;
-import org.gradle.api.artifacts.ModuleIdentifier;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
-import org.gradle.api.artifacts.result.DependencyResult;
-import org.gradle.api.artifacts.result.ResolvedComponentResult;
-import org.gradle.api.artifacts.result.ResolvedDependencyResult;
-import org.gradle.api.file.FileSystemOperations;
-import org.gradle.api.provider.ListProperty;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.TaskAction;
-
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -55,6 +24,21 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.artifacts.ModuleIdentifier;
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.artifacts.result.DependencyResult;
+import org.gradle.api.artifacts.result.ResolvedComponentResult;
+import org.gradle.api.artifacts.result.ResolvedDependencyResult;
+import org.gradle.api.file.FileSystemOperations;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.TaskAction;
 
 public abstract class ModuleDescriptorRecommendation extends DefaultTask {
 
@@ -92,7 +76,9 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
         }
 
         boolean containsAnyRequires(String moduleName) {
-            return requires.contains(moduleName) || requiresTransitive.contains(moduleName) || requiresStatic.contains(moduleName);
+            return requires.contains(moduleName)
+                    || requiresTransitive.contains(moduleName)
+                    || requiresStatic.contains(moduleName);
         }
 
         String dsl() {
@@ -118,10 +104,8 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
                 out.add("    // ignoreServiceProvider('" + item + "')");
             }
             out.add("}");
-            return String.join("\n", out)
-                    .replace('\'', '"');
+            return String.join("\n", out).replace('\'', '"');
         }
-
     }
 
     interface Java8SafeToolProvider {
@@ -146,16 +130,17 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
                 throw new RuntimeException("This functionality requires Gradle to run with JDK 11+", e);
             }
         }
-
     }
 
     @InputFiles
     public abstract ListProperty<File> getRuntimeArtifacts();
+
     @Input
     public abstract ListProperty<ResolvedComponentResult> getRuntimeResolvedComponentResults();
 
     @InputFiles
     public abstract ListProperty<File> getCompileArtifacts();
+
     @Input
     public abstract ListProperty<ResolvedComponentResult> getCompileResolvedComponentResults();
 
@@ -171,8 +156,16 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
         Java8SafeToolProvider jarTool = Java8SafeToolProvider.findFirst("jar");
 
         Map<ModuleIdentifier, Artifact> artifacts = new HashMap<>();
-        extractArtifactsAndTheirDependencies(artifacts, getRuntimeArtifacts().get(), getRuntimeResolvedComponentResults().get(), artifact -> artifact.runtimeDependencies);
-        extractArtifactsAndTheirDependencies(artifacts, getCompileArtifacts().get(), getCompileResolvedComponentResults().get(), artifact -> artifact.compileDependencies);
+        extractArtifactsAndTheirDependencies(
+                artifacts,
+                getRuntimeArtifacts().get(),
+                getRuntimeResolvedComponentResults().get(),
+                artifact -> artifact.runtimeDependencies);
+        extractArtifactsAndTheirDependencies(
+                artifacts,
+                getCompileArtifacts().get(),
+                getCompileResolvedComponentResults().get(),
+                artifact -> artifact.compileDependencies);
 
         Path temporaryFolder = Files.createTempDirectory("jdeps-task");
         for (Map.Entry<ModuleIdentifier, Artifact> entry : artifacts.entrySet()) {
@@ -188,11 +181,14 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
             if (artifact.automatic) {
                 for (ModuleIdentifier dependency : artifact.allDependencies()) {
                     Artifact dependencyArtifact = artifacts.get(dependency);
-                    // If the dependency modifier was not identified by jdeps, try to find it the "best" possible requires modifier
+                    // If the dependency modifier was not identified by jdeps, try to find it the "best" possible
+                    // requires modifier
                     // using the same heuristic that is utilized by "requireAllDefinedDependencies()".
                     if (!artifact.containsAnyRequires(dependencyArtifact.moduleName)) {
-                        boolean hasCompileDependency = artifact.compileDependencies.contains(dependencyArtifact.coordinates);
-                        boolean hasRuntimeDependency = artifact.runtimeDependencies.contains(dependencyArtifact.coordinates);
+                        boolean hasCompileDependency =
+                                artifact.compileDependencies.contains(dependencyArtifact.coordinates);
+                        boolean hasRuntimeDependency =
+                                artifact.runtimeDependencies.contains(dependencyArtifact.coordinates);
                         if (hasCompileDependency && hasRuntimeDependency) {
                             artifact.requiresTransitive.add(dependencyArtifact.moduleName);
                         } else if (hasRuntimeDependency) {
@@ -206,7 +202,8 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
             }
         }
 
-        modulesToRecommend.sort(Comparator.<Artifact, String>comparing(entry -> entry.coordinates.getGroup()).thenComparing(entry->entry.coordinates.getName()));
+        modulesToRecommend.sort(Comparator.<Artifact, String>comparing(entry -> entry.coordinates.getGroup())
+                .thenComparing(entry -> entry.coordinates.getName()));
 
         for (Artifact artifact : modulesToRecommend) {
             System.out.println(artifact.dsl());
@@ -219,16 +216,18 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
         getFileSystemOperations().delete(spec -> spec.delete(temporaryFolder));
     }
 
-    private static void extractArtifactsAndTheirDependencies(Map<ModuleIdentifier, Artifact> jarsToAnalyze,
-                                                             List<File> artifacts,
-                                                             List<ResolvedComponentResult> resolvedComponentResults,
-                                                             Function<Artifact, Set<ModuleIdentifier>> depsSink) {
+    private static void extractArtifactsAndTheirDependencies(
+            Map<ModuleIdentifier, Artifact> jarsToAnalyze,
+            List<File> artifacts,
+            List<ResolvedComponentResult> resolvedComponentResults,
+            Function<Artifact, Set<ModuleIdentifier>> depsSink) {
         for (ResolvedComponentResult artifact : resolvedComponentResults) {
             ComponentIdentifier identifier = artifact.getId();
             if (identifier instanceof ModuleComponentIdentifier) {
                 ModuleIdentifier moduleIdentifier = ((ModuleComponentIdentifier) identifier).getModuleIdentifier();
                 int index = resolvedComponentResults.indexOf(artifact);
-                jarsToAnalyze.computeIfAbsent(moduleIdentifier, (ignore) -> new Artifact(moduleIdentifier, artifacts.get(index)));
+                jarsToAnalyze.computeIfAbsent(
+                        moduleIdentifier, (ignore) -> new Artifact(moduleIdentifier, artifacts.get(index)));
             }
         }
         for (ResolvedComponentResult resolvedComponent : resolvedComponentResults) {
@@ -242,7 +241,9 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
             }
             for (DependencyResult dependency : resolvedComponent.getDependencies()) {
                 if (dependency instanceof ResolvedDependencyResult) {
-                    ModuleVersionIdentifier dependantModuleVersion = ((ResolvedDependencyResult) dependency).getSelected().getModuleVersion();
+                    ModuleVersionIdentifier dependantModuleVersion = ((ResolvedDependencyResult) dependency)
+                            .getSelected()
+                            .getModuleVersion();
                     if (dependantModuleVersion != null) {
                         depsSink.apply(artifact).add(dependantModuleVersion.getModule());
                     }
@@ -256,7 +257,9 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
     private static final Pattern PROVIDES_PATTERN = Pattern.compile("^ {4}provides (.*) with$");
 
     @SuppressWarnings("Since15")
-    private void storeJdepsToolParsedMetadata(Java8SafeToolProvider jdeps, Path outputPath, Artifact targetArtifact, Collection<Artifact> jars) throws IOException {
+    private void storeJdepsToolParsedMetadata(
+            Java8SafeToolProvider jdeps, Path outputPath, Artifact targetArtifact, Collection<Artifact> jars)
+            throws IOException {
         List<String> modulePath = new ArrayList<>();
         for (Artifact artifact : jars) {
             if (!artifact.equals(targetArtifact)) {
@@ -279,7 +282,8 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
         }
         String[] result = out.toString().split("\\R");
         String writingToMessage = result.length == 2
-                ? result[1] // Skipping "Warning: --ignore-missing-deps specified. Missing dependencies from xyz are ignored"
+                ? result[1] // Skipping "Warning: --ignore-missing-deps specified. Missing dependencies from xyz are
+                // ignored"
                 : result[0];
         String path = writingToMessage.replace("writing to ", "");
         String moduleInfoJava = new String(Files.readAllBytes(Paths.get(path)));
@@ -319,8 +323,7 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
                 "--file",
                 artifact.jar.getAbsolutePath(),
                 "--release",
-                String.valueOf(getRelease().get())
-        );
+                String.valueOf(getRelease().get()));
         if (retVal != 0) {
             throw new RuntimeException(String.format("jar returned error %d\n%s\n%s", retVal, out, err));
         }
@@ -333,7 +336,8 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
             artifact.moduleName = matcher.group(1);
             artifact.automatic = true;
         } else {
-            Matcher matcher = MODULE_INFO_CLASS_MODULE_NAME_PATTERN.matcher(result[0].startsWith("releases: ") ? result[2] : result[0]);
+            Matcher matcher = MODULE_INFO_CLASS_MODULE_NAME_PATTERN.matcher(
+                    result[0].startsWith("releases: ") ? result[2] : result[0]);
             if (!matcher.matches()) {
                 throw new RuntimeException("Cannot extract module name from: " + out);
             }
@@ -341,5 +345,4 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
             artifact.automatic = false;
         }
     }
-
 }

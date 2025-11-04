@@ -1,19 +1,4 @@
-/*
- * Copyright the GradleX team.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// SPDX-License-Identifier: Apache-2.0
 package org.gradlex.javamodule.moduleinfo;
 
 import java.io.File;
@@ -37,8 +22,7 @@ class ModuleNameUtil {
         // Derive the version, and the module name if needed, from JAR file name
         String fn = jarFile.getName();
         int i = fn.lastIndexOf(File.separator);
-        if (i != -1)
-            fn = fn.substring(i + 1);
+        if (i != -1) fn = fn.substring(i + 1);
 
         // drop ".jar"
         String name = fn.substring(0, fn.length() - 4);
@@ -57,15 +41,15 @@ class ModuleNameUtil {
         while ((next = name.indexOf('.', off)) != -1) {
             String id = name.substring(off, next);
             if (!isJavaIdentifier(id)) {
-                throw new IllegalArgumentException(name + ": Invalid module name"
-                        + ": '" + id + "' is not a Java identifier");
+                throw new IllegalArgumentException(
+                        name + ": Invalid module name" + ": '" + id + "' is not a Java identifier");
             }
-            off = next+1;
+            off = next + 1;
         }
         String last = name.substring(off);
         if (!isJavaIdentifier(last)) {
-            throw new IllegalArgumentException(name + ": Invalid module name"
-                    + ": '" + last + "' is not a Java identifier");
+            throw new IllegalArgumentException(
+                    name + ": Invalid module name" + ": '" + last + "' is not a Java identifier");
         }
         return name;
     }
@@ -78,31 +62,26 @@ class ModuleNameUtil {
         mn = REPEATING_DOTS.matcher(mn).replaceAll(".");
 
         // drop leading dots
-        if (!mn.isEmpty() && mn.charAt(0) == '.')
-            mn = LEADING_DOTS.matcher(mn).replaceAll("");
+        if (!mn.isEmpty() && mn.charAt(0) == '.') mn = LEADING_DOTS.matcher(mn).replaceAll("");
 
         // drop trailing dots
         int len = mn.length();
-        if (len > 0 && mn.charAt(len-1) == '.')
-            mn = TRAILING_DOTS.matcher(mn).replaceAll("");
+        if (len > 0 && mn.charAt(len - 1) == '.') mn = TRAILING_DOTS.matcher(mn).replaceAll("");
 
         return mn;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean isJavaIdentifier(String str) {
-        if (str.isEmpty() || RESERVED.contains(str))
-            return false;
+        if (str.isEmpty() || RESERVED.contains(str)) return false;
 
         int first = Character.codePointAt(str, 0);
-        if (!Character.isJavaIdentifierStart(first))
-            return false;
+        if (!Character.isJavaIdentifierStart(first)) return false;
 
         int i = Character.charCount(first);
         while (i < str.length()) {
             int cp = Character.codePointAt(str, i);
-            if (!Character.isJavaIdentifierPart(cp))
-                return false;
+            if (!Character.isJavaIdentifierPart(cp)) return false;
             i += Character.charCount(cp);
         }
 
@@ -164,6 +143,5 @@ class ModuleNameUtil {
             "true",
             "false",
             "null",
-            "_"
-    );
+            "_");
 }

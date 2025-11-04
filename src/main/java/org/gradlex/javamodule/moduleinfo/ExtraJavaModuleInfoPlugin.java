@@ -1,21 +1,25 @@
-/*
- * Copyright the GradleX team.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// SPDX-License-Identifier: Apache-2.0
 package org.gradlex.javamodule.moduleinfo;
 
+import static org.gradle.api.attributes.Category.CATEGORY_ATTRIBUTE;
+import static org.gradle.api.attributes.Category.LIBRARY;
+import static org.gradle.api.attributes.Usage.JAVA_RUNTIME;
+import static org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE;
+import static org.gradle.api.plugins.JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME;
+import static org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPluginExtension.JAVA_MODULE_ATTRIBUTE;
+
+import java.io.CharArrayReader;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Transformer;
@@ -39,33 +43,14 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 import org.gradlex.javamodule.moduleinfo.tasks.ModuleDescriptorRecommendation;
 
-import java.io.CharArrayReader;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static org.gradle.api.attributes.Category.CATEGORY_ATTRIBUTE;
-import static org.gradle.api.attributes.Category.LIBRARY;
-import static org.gradle.api.attributes.Usage.JAVA_RUNTIME;
-import static org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE;
-import static org.gradle.api.plugins.JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME;
-import static org.gradlex.javamodule.moduleinfo.ExtraJavaModuleInfoPluginExtension.JAVA_MODULE_ATTRIBUTE;
-
 /**
  * Entry point of the plugin.
  */
 public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
     private static final GradleVersion MINIMUM_SUPPORTED_VERSION = GradleVersion.version("6.8");
-    private static final boolean MIN_GRADLE_9_0 = GradleVersion.current().compareTo(GradleVersion.version("9.0.0")) >= 0;
+    private static final boolean MIN_GRADLE_9_0 =
+            GradleVersion.current().compareTo(GradleVersion.version("9.0.0")) >= 0;
 
     @Override
     public void apply(Project project) {
@@ -74,7 +59,8 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         }
 
         // register the plugin extension as 'extraJavaModuleInfo {}' configuration block
-        ExtraJavaModuleInfoPluginExtension extension = project.getExtensions().create("extraJavaModuleInfo", ExtraJavaModuleInfoPluginExtension.class);
+        ExtraJavaModuleInfoPluginExtension extension =
+                project.getExtensions().create("extraJavaModuleInfo", ExtraJavaModuleInfoPluginExtension.class);
         extension.getFailOnMissingModuleInfo().convention(true);
         extension.getFailOnAutomaticModules().convention(false);
         extension.getFailOnModifiedDerivedModuleNames().convention(false);
@@ -94,43 +80,40 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             project.getTasks().register(name, ModuleDescriptorRecommendation.class, task -> {
                 Transformer<List<File>, Configuration> artifactsTransformer = configuration -> {
                     //noinspection CodeBlock2Expr
-                    return configuration.getIncoming()
-                            .getArtifacts()
-                            .getArtifacts()
-                            .stream()
-                            .sorted(Comparator.comparing(artifact -> artifact.getId().getComponentIdentifier().toString()))
+                    return configuration.getIncoming().getArtifacts().getArtifacts().stream()
+                            .sorted(Comparator.comparing(artifact ->
+                                    artifact.getId().getComponentIdentifier().toString()))
                             .map(ResolvedArtifactResult::getFile)
                             .collect(Collectors.toList());
                 };
 
                 Transformer<List<ResolvedComponentResult>, Configuration> componentsTransformer = configuration -> {
-                    Set<ComponentIdentifier> artifacts = configuration.getIncoming()
-                            .getArtifacts()
-                            .getArtifacts()
-                            .stream()
-                            .map(artifact -> artifact.getId().getComponentIdentifier())
-                            .collect(Collectors.toSet());
-                    return configuration.getIncoming()
-                            .getResolutionResult()
-                            .getAllComponents()
-                            .stream()
+                    Set<ComponentIdentifier> artifacts =
+                            configuration.getIncoming().getArtifacts().getArtifacts().stream()
+                                    .map(artifact -> artifact.getId().getComponentIdentifier())
+                                    .collect(Collectors.toSet());
+                    return configuration.getIncoming().getResolutionResult().getAllComponents().stream()
                             .filter(component -> artifacts.contains(component.getId()))
-                            .sorted(Comparator.comparing(artifact -> artifact.getId().toString()))
+                            .sorted(Comparator.comparing(
+                                    artifact -> artifact.getId().toString()))
                             .collect(Collectors.toList());
                 };
 
-                Provider<Configuration> compileClasspath = project.getConfigurations().named(sourceSet.getCompileClasspathConfigurationName());
+                Provider<Configuration> compileClasspath =
+                        project.getConfigurations().named(sourceSet.getCompileClasspathConfigurationName());
                 task.getCompileArtifacts().set(compileClasspath.map(artifactsTransformer));
                 task.getCompileResolvedComponentResults().set(compileClasspath.map(componentsTransformer));
 
-                Provider<Configuration> runtimeClasspath = project.getConfigurations().named(sourceSet.getRuntimeClasspathConfigurationName());
+                Provider<Configuration> runtimeClasspath =
+                        project.getConfigurations().named(sourceSet.getRuntimeClasspathConfigurationName());
                 task.getRuntimeArtifacts().set(runtimeClasspath.map(artifactsTransformer));
                 task.getRuntimeResolvedComponentResults().set(runtimeClasspath.map(componentsTransformer));
 
                 task.getRelease().convention(21);
 
                 task.setGroup(HelpTasksPlugin.HELP_GROUP);
-                task.setDescription("Generates module descriptors for 'org.gradlex.extra-java-module-info' plugin based on the dependency and class file analysis of automatic modules and non-modular dependencies");
+                task.setDescription(
+                        "Generates module descriptors for 'org.gradlex.extra-java-module-info' plugin based on the dependency and class file analysis of automatic modules and non-modular dependencies");
             });
         });
     }
@@ -144,18 +127,22 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             c.getAttributes().attribute(CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, LIBRARY));
 
             // Automatically add dependencies for Jars where we know the coordinates
-            c.withDependencies(d -> extension.getModuleSpecs().get().values().stream().flatMap(m ->
-                    m.getMergedJars().stream()).filter(s -> s.contains(":")).forEach(s ->
-                    d.add(project.getDependencies().create(s))));
+            c.withDependencies(d -> extension.getModuleSpecs().get().values().stream()
+                    .flatMap(m -> m.getMergedJars().stream())
+                    .filter(s -> s.contains(":"))
+                    .forEach(s -> d.add(project.getDependencies().create(s))));
 
             // Automatically get versions from the runtime classpath
             if (GradleVersion.current().compareTo(GradleVersion.version("6.8")) >= 0) {
                 //noinspection UnstableApiUsage
-                c.shouldResolveConsistentlyWith(project.getConfigurations().named(RUNTIME_CLASSPATH_CONFIGURATION_NAME).get());
+                c.shouldResolveConsistentlyWith(project.getConfigurations()
+                        .named(RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                        .get());
             }
         });
 
-        // If 'internal' is added by 'org.gradlex.jvm-dependency-conflict-resolution', extend from it to get access to versions
+        // If 'internal' is added by 'org.gradlex.jvm-dependency-conflict-resolution', extend from it to get access to
+        // versions
         project.getConfigurations().configureEach(otherConfiguration -> {
             if ("internal".equals(otherConfiguration.getName())) {
                 javaModulesMergeJars.extendsFrom(otherConfiguration);
@@ -168,23 +155,42 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             // by default, activate plugin for all source sets
             extension.activate(sourceSet);
 
-            // outgoing variants may express that they already provide a modular Jar and can hence skip the transform altogether
-            Configuration runtimeElements = project.getConfigurations().findByName(sourceSet.getRuntimeElementsConfigurationName());
-            Configuration apiElements = project.getConfigurations().findByName(sourceSet.getApiElementsConfigurationName());
+            // outgoing variants may express that they already provide a modular Jar and can hence skip the transform
+            // altogether
+            Configuration runtimeElements =
+                    project.getConfigurations().findByName(sourceSet.getRuntimeElementsConfigurationName());
+            Configuration apiElements =
+                    project.getConfigurations().findByName(sourceSet.getApiElementsConfigurationName());
             if (GradleVersion.current().compareTo(GradleVersion.version("7.4")) >= 0) {
                 if (runtimeElements != null) {
-                    runtimeElements.getOutgoing().getAttributes().attributeProvider(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars());
+                    runtimeElements
+                            .getOutgoing()
+                            .getAttributes()
+                            .attributeProvider(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars());
                 }
                 if (apiElements != null) {
-                    apiElements.getOutgoing().getAttributes().attributeProvider(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars());
+                    apiElements
+                            .getOutgoing()
+                            .getAttributes()
+                            .attributeProvider(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars());
                 }
             } else {
                 project.afterEvaluate(p -> {
                     if (runtimeElements != null) {
-                        runtimeElements.getOutgoing().getAttributes().attribute(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars().get());
+                        runtimeElements
+                                .getOutgoing()
+                                .getAttributes()
+                                .attribute(
+                                        JAVA_MODULE_ATTRIBUTE,
+                                        extension.getSkipLocalJars().get());
                     }
                     if (apiElements != null) {
-                        apiElements.getOutgoing().getAttributes().attribute(JAVA_MODULE_ATTRIBUTE, extension.getSkipLocalJars().get());
+                        apiElements
+                                .getOutgoing()
+                                .getAttributes()
+                                .attribute(
+                                        JAVA_MODULE_ATTRIBUTE,
+                                        extension.getSkipLocalJars().get());
                     }
                 });
             }
@@ -192,28 +198,46 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
         // Jars may be transformed (or merged into) Module Jars
         registerTransform("jar", project, extension, javaModulesMergeJars, artifactType, JAVA_MODULE_ATTRIBUTE);
-        // Classpath entries may also be zip files that may be merged into Module Jars (from the docs: "Class paths to the .jar, .zip or .class files)"
+        // Classpath entries may also be zip files that may be merged into Module Jars (from the docs: "Class paths to
+        // the .jar, .zip or .class files)"
         registerTransform("zip", project, extension, javaModulesMergeJars, artifactType, JAVA_MODULE_ATTRIBUTE);
     }
 
-    private void registerTransform(String fileExtension, Project project, ExtraJavaModuleInfoPluginExtension extension, Configuration javaModulesMergeJars, Attribute<String> artifactType, Attribute<Boolean> javaModule) {
+    private void registerTransform(
+            String fileExtension,
+            Project project,
+            ExtraJavaModuleInfoPluginExtension extension,
+            Configuration javaModulesMergeJars,
+            Attribute<String> artifactType,
+            Attribute<Boolean> javaModule) {
         DependencyHandler dependencies = project.getDependencies();
 
-        // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them without modification
-        dependencies.getArtifactTypes().maybeCreate(fileExtension).getAttributes().attribute(javaModule, false);
+        // all Jars have a javaModule=false attribute by default; the transform also recognizes modules and returns them
+        // without modification
+        dependencies
+                .getArtifactTypes()
+                .maybeCreate(fileExtension)
+                .getAttributes()
+                .attribute(javaModule, false);
 
-        // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills the input parameter
+        // register the transform for Jars and "javaModule=false -> javaModule=true"; the plugin extension object fills
+        // the input parameter
         dependencies.registerTransform(ExtraJavaModuleInfoTransform.class, t -> {
             t.parameters(p -> {
                 p.getModuleSpecs().set(extension.getModuleSpecs());
                 p.getFailOnMissingModuleInfo().set(extension.getFailOnMissingModuleInfo());
                 p.getFailOnAutomaticModules().set(extension.getFailOnAutomaticModules());
                 p.getFailOnModifiedDerivedModuleNames().set(extension.getFailOnModifiedDerivedModuleNames());
-                p.getDeriveAutomaticModuleNamesFromFileNames().set(extension.getDeriveAutomaticModuleNamesFromFileNames());
+                p.getDeriveAutomaticModuleNamesFromFileNames()
+                        .set(extension.getDeriveAutomaticModuleNamesFromFileNames());
 
-                // See: https://github.com/adammurdoch/dependency-graph-as-task-inputs/blob/main/plugins/src/main/java/TestPlugin.java
-                Provider<Set<ResolvedArtifactResult>> artifacts = project.provider(() ->
-                        javaModulesMergeJars.getIncoming().artifactView(v -> v.lenient(true)).getArtifacts().getArtifacts());
+                // See:
+                // https://github.com/adammurdoch/dependency-graph-as-task-inputs/blob/main/plugins/src/main/java/TestPlugin.java
+                Provider<Set<ResolvedArtifactResult>> artifacts = project.provider(() -> javaModulesMergeJars
+                        .getIncoming()
+                        .artifactView(v -> v.lenient(true))
+                        .getArtifacts()
+                        .getArtifacts());
                 p.getMergeJarIds().set(artifacts.map(new IdExtractor()));
                 p.getMergeJars().set(artifacts.map(new FileExtractor(project.getLayout())));
 
@@ -236,17 +260,21 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
             try {
                 Method getModulesProperties = javaModuleDependencies.getClass().getMethod("getModulesProperties");
                 RegularFileProperty file = (RegularFileProperty) getModulesProperties.invoke(javaModuleDependencies);
-                return project.getProviders().fileContents(file).getAsText().map(c -> {
-                    Properties p = new Properties();
-                    try {
-                        p.load(new CharArrayReader(c.toCharArray()));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    @SuppressWarnings({"rawtypes", "unchecked"})
-                    Map<String, String> result = (Map) p;
-                    return result;
-                }).getOrElse(Collections.emptyMap());
+                return project.getProviders()
+                        .fileContents(file)
+                        .getAsText()
+                        .map(c -> {
+                            Properties p = new Properties();
+                            try {
+                                p.load(new CharArrayReader(c.toCharArray()));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                            @SuppressWarnings({"rawtypes", "unchecked"})
+                            Map<String, String> result = (Map) p;
+                            return result;
+                        })
+                        .getOrElse(Collections.emptyMap());
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
             }
@@ -276,14 +304,18 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
     private static class IdExtractor implements Transformer<List<String>, Collection<ResolvedArtifactResult>> {
         @Override
         public List<String> transform(Collection<ResolvedArtifactResult> artifacts) {
-            return artifacts.stream().map(a -> {
-                ComponentIdentifier componentIdentifier = a.getId().getComponentIdentifier();
-                if (componentIdentifier instanceof ModuleComponentIdentifier) {
-                    return ((ModuleComponentIdentifier) componentIdentifier).getModuleIdentifier().toString();
-                } else {
-                    return componentIdentifier.getDisplayName();
-                }
-            }).collect(Collectors.toList());
+            return artifacts.stream()
+                    .map(a -> {
+                        ComponentIdentifier componentIdentifier = a.getId().getComponentIdentifier();
+                        if (componentIdentifier instanceof ModuleComponentIdentifier) {
+                            return ((ModuleComponentIdentifier) componentIdentifier)
+                                    .getModuleIdentifier()
+                                    .toString();
+                        } else {
+                            return componentIdentifier.getDisplayName();
+                        }
+                    })
+                    .collect(Collectors.toList());
         }
     }
 
@@ -297,7 +329,9 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         @Override
         public List<RegularFile> transform(Collection<ResolvedArtifactResult> artifacts) {
             Directory projectDirectory = projectLayout.getProjectDirectory();
-            return artifacts.stream().map(a -> projectDirectory.file(a.getFile().getAbsolutePath())).collect(Collectors.toList());
+            return artifacts.stream()
+                    .map(a -> projectDirectory.file(a.getFile().getAbsolutePath()))
+                    .collect(Collectors.toList());
         }
     }
 
