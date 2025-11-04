@@ -52,7 +52,7 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
     public abstract Property<Boolean> getFailOnModifiedDerivedModuleNames();
     public abstract Property<Boolean> getSkipLocalJars();
     public abstract Property<Boolean> getDeriveAutomaticModuleNamesFromFileNames();
-    public abstract Property<String> getVersionsProvidingConfiguration();
+    public abstract Property<Configuration> getVersionsProvidingConfiguration();
 
     /**
      * Add full module information for a given Jar file.

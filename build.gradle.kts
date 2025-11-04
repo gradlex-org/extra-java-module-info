@@ -1,5 +1,6 @@
 plugins {
     id("groovy")
+    `java-gradle-plugin`
     id("org.gradlex.internal.plugin-publish-conventions") version "0.6"
 }
 
@@ -15,7 +16,9 @@ java {
 dependencies {
     implementation("org.ow2.asm:asm:9.9")
 
-    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0")
+    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0") {
+        exclude(group = "org.codehaus.groovy")
+    }
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -33,21 +36,21 @@ pluginPublishConventions {
     }
 }
 
-tasks.test {
-    description = "Runs tests against the Gradle version the plugin is built with"
+tasks.withType<Test>().configureEach {
+    group = "verification"
     classpath = sourceSets.test.get().runtimeClasspath
+    testClassesDirs = sourceSets.test.get().output.classesDirs
     useJUnitPlatform()
     maxParallelForks = 4
 }
 
+tasks.named("test") {
+    description = "Runs tests against the Gradle version the plugin is built with"
+}
+
 listOf("6.8.3", "6.9.4", "7.6.5", "8.14.2").forEach { gradleVersionUnderTest ->
     val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
-        group = "verification"
         description = "Runs tests against Gradle $gradleVersionUnderTest"
-        testClassesDirs = sourceSets.test.get().output.classesDirs
-        classpath = sourceSets.test.get().runtimeClasspath
-        useJUnitPlatform()
-        maxParallelForks = 4
         systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
         if (gradleVersionUnderTest.startsWith("6")) {
             javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(11) }

@@ -78,6 +78,8 @@ extraJavaModuleInfo {
         //         "org.mycompany.server", "org.mycompany.client")
         // or simply export all packages
         // exportAllPackages()
+        // or export all packages except specific named ones
+        // exportAllPackagesExcept("org.mycompany.notgood1", "org.mycompany.notgood2")
         
         requiresTransitive("org.apache.commons.logging")
         requires("java.sql")
@@ -216,7 +218,7 @@ This needs to be done in all subprojects. You use the `versionsProvidingConfigur
 
 ```kotlin
 extraJavaModuleInfo {
-    versionsProvidingConfiguration = "mainRuntimeClasspath"
+    versionsProvidingConfiguration = project.provider { project.configurations.named("mainRuntimeClasspath").get() }
 }
 ```
 

@@ -177,6 +177,69 @@ class EdgeCasesFunctionalTest extends Specification {
         run().task(':run').outcome == TaskOutcome.SUCCESS
     }
 
+    def "can automatically export all packages except specified of a legacy Jar"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            
+            import javax.json.JsonString;
+            import javax.json.JsonValue;
+            
+            public class Main {
+                public static void main(String[] args) {
+                    JsonString jsonString = new JsonString() {
+                        @Override
+                        public boolean equals(Object obj) {
+                            return false;
+                        }
+                        @Override
+                        public CharSequence getChars() {
+                            return null;
+                        }
+                        @Override
+                        public String getString() {
+                            return null;
+                        }
+                        @Override
+                        public int hashCode() {
+                            return 0;
+                        }
+                        @Override
+                        public JsonValue.ValueType getValueType() {
+                            return null;
+                        }
+                    };
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {
+                exports org.gradle.sample.app;
+                
+                requires org.glassfish.java.json;
+                requires java.json;
+            }
+        """
+        buildFile << """          
+            dependencies {
+                implementation("org.glassfish:jakarta.json:1.1.6")
+                implementation("jakarta.json:jakarta.json-api:1.1.6")
+            }
+            
+            extraJavaModuleInfo {
+                module("org.glassfish:jakarta.json", "org.glassfish.java.json") {
+                    exportAllPackagesExcept("javax.json", "javax.json.spi", "javax.json.stream")
+                    overrideModuleName()
+                }
+                knownModule("jakarta.json:jakarta.json-api", "java.json")
+            }
+        """
+
+        expect:
+        def result = failRun()
+        result.output.matches(/(?s).*Package javax\.json[.a-z]* in both.*/)
+    }
+
     def "deriveAutomaticModuleNamesFromFileNames produces a build time error for invalid module names"() {
         given:
         buildFile << """          

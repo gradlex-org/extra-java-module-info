@@ -76,10 +76,13 @@ public class PublishedMetadata implements Serializable {
     }
 
     @SuppressWarnings({"UnstableApiUsage", "unchecked"})
-    private List<String> componentVariant(Provider<String> versionsProvidingConfiguration, Project project, String usage) {
+    private List<String> componentVariant(Provider<Configuration> versionsProvidingConfiguration, Project project, String usage) {
         Configuration versionsSource;
         if (versionsProvidingConfiguration.isPresent()) {
-            versionsSource = project.getConfigurations().named(versionsProvidingConfiguration.get()).get();
+            versionsSource = versionsProvidingConfiguration.get();
+            if (!versionsSource.isCanBeResolved()) {
+                throw new IllegalArgumentException("Configuration '" + versionsSource.getName() + "' must be resolvable");
+            }
         } else {
             // version provider is not configured, create on adhoc based on ALL classpaths of the project
             versionsSource = maybeCreateDefaultVersionSourcConfiguration(project.getConfigurations(), project.getObjects(),

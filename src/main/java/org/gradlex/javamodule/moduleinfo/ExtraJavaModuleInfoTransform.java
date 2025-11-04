@@ -309,6 +309,10 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 byte[] existingModuleInfo = copyAndExtractProviders(inputStream, outputStream, moduleInfo.getRemovedPackages(), !moduleInfo.getMergedJars().isEmpty(), providers, packages);
                 mergeJars(moduleInfo, outputStream, providers, packages);
                 outputStream.putNextEntry(newReproducibleEntry("module-info.class"));
+
+                if (moduleInfo.exportAllPackages) {
+                    moduleInfo.exportAllPackagesExceptions.forEach(it -> packages.remove(packageToPath(it)));
+                }
                 outputStream.write(addModuleInfo(moduleInfo, providers, versionFromFilePath(originalJar.toPath()),
                         moduleInfo.exportAllPackages ? packages : Collections.emptySet(),
                         existingModuleInfo));
@@ -358,7 +362,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                             : entryName.substring(0, i)
                             : "";
 
-                    if (!removedPackages.contains(packagePath.replace('/', '.'))) {
+                    if (!removedPackages.contains(pathToPackage(packagePath))) {
                         if (entryName.endsWith(".class") && !packagePath.isEmpty()) {
                             packages.add(packagePath);
                         }
@@ -424,6 +428,24 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         return classWriter.toByteArray();
     }
 
+    /**
+     * Convert a Java package name to a path
+     * @param packageName The package name
+     * @return The package name converted to a path
+     */
+    private static String packageToPath(String packageName) {
+        return packageName.replace('.', '/');
+    }
+
+    /**
+     * Convert a path to a Java package name
+     * @param path The path
+     * @return The path converted to a package name
+     */
+    private static String pathToPackage(String path) {
+        return path.replace('/', '.');
+    }
+
     private void addModuleInfoEntires(ModuleInfo moduleInfo, Map<String, List<String>> providers, Set<String> autoExportedPackages, ModuleVisitor moduleVisitor) {
         for (String packageName : autoExportedPackages) {
             moduleVisitor.visitExport(packageName, 0);
@@ -431,13 +453,13 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         for (Map.Entry<String, Set<String>> entry : moduleInfo.exports.entrySet()) {
             String packageName = entry.getKey();
             Set<String> modules = entry.getValue();
-            moduleVisitor.visitExport(packageName.replace('.', '/'), 0, modules.toArray(new String[0]));
+            moduleVisitor.visitExport(packageToPath(packageName), 0, modules.toArray(new String[0]));
         }
 
         for (Map.Entry<String, Set<String>> entry : moduleInfo.opens.entrySet()) {
             String packageName = entry.getKey();
             Set<String> modules = entry.getValue();
-            moduleVisitor.visitOpen(packageName.replace('.', '/'), 0, modules.toArray(new String[0]));
+            moduleVisitor.visitOpen(packageToPath(packageName), 0, modules.toArray(new String[0]));
         }
 
         if (moduleInfo.requireAllDefinedDependencies) {
@@ -482,7 +504,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_TRANSITIVE, null);
         }
         for (String usesName : moduleInfo.uses) {
-            moduleVisitor.visitUse(usesName.replace('.', '/'));
+            moduleVisitor.visitUse(packageToPath(usesName));
         }
         for (Map.Entry<String, List<String>> entry : providers.entrySet()) {
             String name = entry.getKey();
@@ -497,8 +519,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             }
             if (!implementations.isEmpty()) {
                 moduleVisitor.visitProvide(
-                        name.replace('.', '/'),
-                        implementations.stream().map(impl -> impl.replace('.', '/')).toArray(String[]::new)
+                        packageToPath(name),
+                        implementations.stream().map(ExtraJavaModuleInfoTransform::packageToPath).toArray(String[]::new)
                 );
             }
         }
