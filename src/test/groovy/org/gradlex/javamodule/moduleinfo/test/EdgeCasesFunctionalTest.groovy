@@ -278,7 +278,7 @@ class EdgeCasesFunctionalTest extends Specification {
             
             extraJavaModuleInfo {
                 failOnAutomaticModules.set(true)
-                platformDependency.set(project.provider { project.dependencies.platform(project.dependencies.create(springBom)) as? org.gradle.api.artifacts.ModuleDependency })
+                platformDependency.set(project.provider { project.dependencies.platform(project.dependencies.create(springBom)) })
                 module("org.springframework:spring-jcl", "spring.jcl")
             }
         """
