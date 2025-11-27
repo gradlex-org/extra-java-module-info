@@ -2,13 +2,17 @@
 <verification-metadata xmlns="https://schema.gradle.org/dependency-verification" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://schema.gradle.org/dependency-verification https://schema.gradle.org/dependency-verification/dependency-verification-1.3.xsd">
    <configuration>
       <verify-metadata>false</verify-metadata>
-      <verify-signatures>true</verify-signatures>
+      <!-- use 'TRUE' instead of 'true' so that Renovate ignores it: https://github.com/renovatebot/renovate/discussions/39029 -->
+      <verify-signatures>TRUE</verify-signatures>
       <keyring-format>armored</keyring-format>
       <key-servers enabled="false"/>
       <trusted-artifacts>
          <trust file=".*-javadoc[.]jar" regex="true"/>
          <trust file=".*-sources[.]jar" regex="true"/>
          <trust file="^gradle-\d+\.\d+(?:\.\d+)?(?:-(?:rc|milestone)-\d+)?-src\.zip$" regex="true"/>
+         <!-- explicitly trust unsigned artifacts -->
+         <trust file="asciidoctor-gradle-base-4.0.5.jar"/>
+         <trust file="asciidoctor-gradle-jvm-4.0.5.jar"/>
       </trusted-artifacts>
       <trusted-keys>
          <!-- PRODUCTION CODE: ASM -->
@@ -80,6 +84,10 @@
          <trusted-key id="AD296CA014321485EB6780FF8B8E0CB0F6A7657E" group="org.asciidoctor"/>
          <!-- ✅ Signed by Lasse Collin - Tukaani -->
          <trusted-key id="3690C240CE51B4670D30AD1C38EE757D69184620" group="org.tukaani" name="xz"/>
+         <!-- ✅ Signed by Cedric Beust - JCommander -->
+         <trusted-key id="C70B844F002F21F6D2B9C87522E44AC0622B91C3" group="com.beust" name="jcommander"/>
+         <!-- ✅ Signed by Thomas E. Enebo - JRuby Team -->
+         <trusted-key id="416952B945B78A34C6C7678562EBFC78FE4156D1" group="org.jruby" name="jruby-complete"/>
 
 
          <!-- CODE FORMATTING - Spotless Gradle Plugin with transitive dependencies -->
@@ -142,18 +150,12 @@
          <trusted-key id="34441E504A937F43EB0DAEF96A65176A0FB1CD0B" group="org.apache.groovy" name="groovy"/>
          <!-- ✅ Signed Spockframework -->
          <trusted-key id="76E94E8FF0AB5AF3B6F8366972FEFD1572EB75E1" group="org.spockframework" name="spock-core"/>
+
+         <!-- TestLens -->
+         <!-- ✅ Signed by TestLens Team -->
+         <trusted-key id="C7C5042998FCB6E396E8D262BA19949FA2609216" group="app.testlens" name="junit-platform-instrumentation"/>
       </trusted-keys>
    </configuration>
    <components>
-      <component group="org.asciidoctor" name="asciidoctor-gradle-base" version="4.0.5">
-         <artifact name="asciidoctor-gradle-base-4.0.5.jar">
-            <sha256 value="3b0a5c953c98977da3cec1bfd66c0f7438e3e07c06bda00abae8c53e4dd2185a" origin="Downloaded the file from https://plugins.gradle.org/m2/org/asciidoctor/asciidoctor-gradle-base/4.0.5 and generated the checksum locally" reason="Artifact is not signed"/>
-         </artifact>
-      </component>
-      <component group="org.asciidoctor" name="asciidoctor-gradle-jvm" version="4.0.5">
-         <artifact name="asciidoctor-gradle-jvm-4.0.5.jar">
-            <sha256 value="3e020e7f350cb6ff2658ff124ea63d42da3dacf6da3b71efe4c7670413369ce9" origin="Downloaded the file from https://plugins.gradle.org/m2/org/asciidoctor/asciidoctor-gradle-jvm/4.0.5 and generated the checksum locally" reason="Artifact is not signed"/>
-         </artifact>
-      </component>
    </components>
 </verification-metadata>
