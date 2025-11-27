@@ -9,7 +9,7 @@ jobs:
   dependency-submission:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: gradle/actions/dependency-submission@v5
         with:
           build-scan-publish: true
