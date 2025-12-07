@@ -259,6 +259,15 @@ configurations.runtimeClasspath {
 }
 ```
 
+In addition to creating a common configuration for resolution, a platform project can also be enabled to enforce
+versions.
+
+```kotlin
+extraJavaModuleInfo {
+    platformDependency = project.provider { project.dependencies.platform(project.dependencies.create("org.example:bom:1.0.0")) }
+}
+```
+
 ## I have many automatic modules in my project. How can I convert them into proper modules and control what they export or require?
 
 The plugin provides a set of `<sourceSet>moduleDescriptorRecommendations` tasks that generate the real module declarations utilizing [jdeps](https://docs.oracle.com/en/java/javase/11/tools/jdeps.html) and dependency metadata.
