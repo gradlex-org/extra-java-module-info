@@ -24,5 +24,5 @@ apply(plugin = "groovy")
 
 tasks.named<GroovyCompile>("compileTestGroovy") { targetCompatibility = "11" } // allow tests to run against 6.x
 
-dependencies { testImplementation("org.spockframework:spock-core:2.3-groovy-4.0") } //
+dependencies { testImplementation("org.spockframework:spock-core:2.4-groovy-5.0") } //
 // ====================================================================================
