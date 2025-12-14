@@ -27,6 +27,7 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> requiresStaticTransitive = new LinkedHashSet<>();
     final Map<String, Set<String>> ignoreServiceProviders = new LinkedHashMap<>();
     final Set<String> uses = new LinkedHashSet<>();
+    final Map<String, Set<String>> providers = new LinkedHashMap<>();
 
     boolean exportAllPackages;
     boolean requireAllDefinedDependencies;
@@ -90,6 +91,22 @@ public class ModuleInfo extends ModuleSpec {
      */
     public void requiresStaticTransitive(String requiresStaticTransitive) {
         addOrThrow(this.requiresStaticTransitive, requiresStaticTransitive);
+    }
+
+    /**
+     * @param provides corresponds to the directive in a 'module-info.java' file
+     * @param with specifys the package(s) containing provided service classes
+     */
+    public void provides(String provides, String... with) {
+        addOrThrow(this.providers, provides, with);
+    }
+
+    /**
+     * Getter for the providers map (needed for the transformation logic)
+     * @return
+     */
+    public Map<String, Set<String>> getProviders() {
+        return providers;
     }
 
     /**
