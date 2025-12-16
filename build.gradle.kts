@@ -1,6 +1,6 @@
 version = "1.13.1"
 
-dependencies { implementation("org.ow2.asm:asm:9.9") }
+dependencies { implementation("org.ow2.asm:asm:9.9.1") }
 
 publishingConventions {
     pluginPortal("${project.group}.${project.name}") {
