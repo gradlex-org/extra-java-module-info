@@ -2,8 +2,10 @@
 package org.gradlex.javamodule.moduleinfo;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.gradle.api.model.ObjectFactory;
@@ -27,6 +29,7 @@ public class ModuleInfo extends ModuleSpec {
     final Set<String> requiresStaticTransitive = new LinkedHashSet<>();
     final Map<String, Set<String>> ignoreServiceProviders = new LinkedHashMap<>();
     final Set<String> uses = new LinkedHashSet<>();
+    final Set<String> exportAllPackagesExceptions = new LinkedHashSet<>();
 
     boolean exportAllPackages;
     boolean requireAllDefinedDependencies;
@@ -119,7 +122,24 @@ public class ModuleInfo extends ModuleSpec {
      * Automatically export all packages of the Jar. Can be used instead of individual 'exports()' statements.
      */
     public void exportAllPackages() {
+        exportAllPackagesExcept(Collections.emptyList());
+    }
+
+    /**
+     * Automatically export all packages of the Jar. Can be used instead of individual 'exports()' statements.
+     * @param exceptions A list of packages not to export
+     */
+    public void exportAllPackagesExcept(String... exceptions) {
+        exportAllPackagesExcept(Arrays.asList(exceptions));
+    }
+
+    /**
+     * Automatically export all packages of the Jar. Can be used instead of individual 'exports()' statements.
+     * @param exceptions A list of packages not to export
+     */
+    public void exportAllPackagesExcept(List<String> exceptions) {
         this.exportAllPackages = true;
+        exportAllPackagesExceptions.addAll(exceptions);
     }
 
     /**
