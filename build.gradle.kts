@@ -19,6 +19,10 @@ publishingConventions {
 
 testingConventions { testGradleVersions("6.8.3", "6.9.4", "7.6.5", "8.14.2") }
 
+// Turn off classfile lint as long as we still compile with Java 8
+// /org/objectweb/asm/ClassReader.class: Cannot find annotation method 'forRemoval()' in type 'Deprecated'
+tasks.compileJava { options.compilerArgs.add("-Xlint:-classfile") }
+
 // === the following custom configuration should be removed once tests are migrated to Java
 apply(plugin = "groovy")
 
