@@ -39,7 +39,9 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public abstract class ModuleDescriptorRecommendation extends DefaultTask {
 
     private static final class Artifact {
@@ -256,7 +258,6 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
     private static final Pattern EXPORTS_PATTERN = Pattern.compile("^ {4}exports (.*);$");
     private static final Pattern PROVIDES_PATTERN = Pattern.compile("^ {4}provides (.*) with$");
 
-    @SuppressWarnings("Since15")
     private void storeJdepsToolParsedMetadata(
             Java8SafeToolProvider jdeps, Path outputPath, Artifact targetArtifact, Collection<Artifact> jars)
             throws IOException {
