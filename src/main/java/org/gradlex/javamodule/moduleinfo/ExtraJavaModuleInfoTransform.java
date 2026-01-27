@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.gradlex.javamodule.moduleinfo;
 
+import static java.util.Collections.emptySet;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.versionFromFilePath;
 import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.automaticModulNameFromFileName;
@@ -17,6 +18,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -337,7 +339,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                         moduleInfo,
                         providers,
                         versionFromFilePath(originalJar.toPath()),
-                        moduleInfo.exportAllPackages ? packages : Collections.emptySet(),
+                        moduleInfo.exportAllPackages ? packages : emptySet(),
+                        moduleInfo.getRemovedPackages(),
+                        moduleInfo.ignoreServiceProviders,
                         existingModuleInfo));
                 outputStream.closeEntry();
             }
@@ -428,6 +432,8 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             Map<String, List<String>> providers,
             @Nullable String version,
             Set<String> autoExportedPackages,
+            List<String> removedPackages,
+            Map<String, Set<String>> ignoreServiceProviders,
             @Nullable byte[] existingModuleInfo) {
         ClassReader classReader =
                 moduleInfo.preserveExisting && existingModuleInfo != null ? new ClassReader(existingModuleInfo) : null;
@@ -449,6 +455,42 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 public ModuleVisitor visitModule(String name, int access, String version) {
                     ModuleVisitor moduleVisitor = super.visitModule(name, access, version);
                     return new ModuleVisitor(Opcodes.ASM9, moduleVisitor) {
+
+                        @Override
+                        public void visitPackage(String packaze) {
+                            if (!removedPackages.contains(pathToPackage(packaze))) {
+                                super.visitPackage(packaze);
+                            }
+                        }
+
+                        @Override
+                        public void visitExport(String packaze, int access, String... modules) {
+                            if (!removedPackages.contains(pathToPackage(packaze))) {
+                                super.visitExport(packaze, access, modules);
+                            }
+                        }
+
+                        @Override
+                        public void visitUse(String service) {
+                            String packaze = service.substring(0, service.lastIndexOf("/"));
+                            // if package is removed, also remove 'use' directives based on the package
+                            if (!removedPackages.contains(pathToPackage(packaze))) {
+                                super.visitUse(service);
+                            }
+                        }
+
+                        @Override
+                        public void visitProvide(String service, String... providers) {
+                            String[] filteredProviders = Arrays.stream(providers)
+                                    .filter(p -> ignoreServiceProviders
+                                            .getOrDefault(service, emptySet())
+                                            .contains(p))
+                                    .toArray(String[]::new);
+                            if (filteredProviders.length > 0) {
+                                super.visitProvide(service, filteredProviders);
+                            }
+                        }
+
                         @Override
                         public void visitEnd() {
                             addModuleInfoEntires(moduleInfo, Collections.emptyMap(), autoExportedPackages, this);
