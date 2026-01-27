@@ -42,10 +42,12 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 import org.gradlex.javamodule.moduleinfo.tasks.ModuleDescriptorRecommendation;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Entry point of the plugin.
  */
+@NullMarked
 public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
     private static final GradleVersion MINIMUM_SUPPORTED_VERSION = GradleVersion.version("6.8");

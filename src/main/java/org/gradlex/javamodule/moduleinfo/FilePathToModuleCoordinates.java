@@ -5,12 +5,14 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Attempts to parse 'group', 'name', 'version' coordinates from a paths like:
  *   .gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.36/6c62681a2f655b49963a5983b8b0950a6120ae14/slf4j-api-1.7.36.jar
  *   .m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar
  */
+@NullMarked
 final class FilePathToModuleCoordinates {
 
     @Nullable

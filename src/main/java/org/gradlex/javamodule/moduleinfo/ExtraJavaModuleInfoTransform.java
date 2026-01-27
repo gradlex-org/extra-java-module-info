@@ -54,6 +54,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.jspecify.annotations.NullMarked;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -65,6 +66,7 @@ import org.objectweb.asm.Opcodes;
  * The transformation fails the build if a Jar does not contain information and no extra information
  * was defined for it. This way we make sure that all Jars are turned into modules.
  */
+@NullMarked
 @CacheableTransform
 public abstract class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
 

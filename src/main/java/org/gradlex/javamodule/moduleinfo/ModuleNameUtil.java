@@ -6,10 +6,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Implementation based on 'jdk.internal.module.ModulePath#deriveModuleDescriptor' and related methods.
  */
+@NullMarked
 class ModuleNameUtil {
 
     private static final Pattern DASH_VERSION = Pattern.compile("-(\\d+(\\.|$))");

@@ -14,15 +14,16 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * A data class to collect all the module information we want to add.
  * Here the class is used as extension that can be configured in the build script
  * and as input to the ExtraModuleInfoTransform that add the information to Jars.
  */
-@SuppressWarnings("unused")
+@NullMarked
 public abstract class ExtraJavaModuleInfoPluginExtension {
-    static Attribute<Boolean> JAVA_MODULE_ATTRIBUTE = Attribute.of("javaModule", Boolean.class);
+    static final Attribute<Boolean> JAVA_MODULE_ATTRIBUTE = Attribute.of("javaModule", Boolean.class);
 
     @Inject
     protected abstract ObjectFactory getObjects();
