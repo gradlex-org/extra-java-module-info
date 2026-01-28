@@ -1,6 +1,7 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
 ## Version 1.13.2
+* [Fixed] [#179](https://github.com/gradlex-org/extra-java-module-info/issues/179) - Combine 'preserveExisting' and 'exports'
 * [Fixed] [#219](https://github.com/gradlex-org/extra-java-module-info/issues/219) - Combine 'preserveExisting' and 'removePackage'
 * [Fixed] [#223](https://github.com/gradlex-org/extra-java-module-info/issues/223) - Combine 'preserveExisting' and 'ignoreServiceProvider'
 

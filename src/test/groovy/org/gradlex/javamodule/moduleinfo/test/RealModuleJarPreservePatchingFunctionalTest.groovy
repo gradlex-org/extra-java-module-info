@@ -78,4 +78,38 @@ class RealModuleJarPreservePatchingFunctionalTest extends Specification {
         run()
     }
 
+    def "can replace a package export in a preserved module-info"() {
+        given:
+        buildFile << ''' 
+            dependencies {
+                implementation("org.controlsfx:controlsfx:11.2.3")
+                // undeclared transitive dependencies of controlsfx
+                implementation("org.openjfx:javafx-base:11:linux")
+                implementation("org.openjfx:javafx-controls:11:linux")
+                implementation("org.openjfx:javafx-graphics:11:linux")
+            }
+            extraJavaModuleInfo {
+                // original module-info contains: exports impl.org.controlsfx.skin to org.controlsfx.samples;
+                module("org.controlsfx:controlsfx", "org.controlsfx.controls") {
+                    preserveExisting()
+                    exports("impl.org.controlsfx.skin")
+                }
+            }            
+        '''
+        file("src/main/java/module-info.java") << """
+            module org.example {
+                requires org.controlsfx.controls;
+            }
+        """
+        file("src/main/java/org/example/Main.java") << """
+            package org.example;
+            public class Main {
+                impl.org.controlsfx.skin.DecorationPane pane;
+                public static void main(String[] args) {}
+            }
+        """
+
+        expect:
+        run()
+    }
 }

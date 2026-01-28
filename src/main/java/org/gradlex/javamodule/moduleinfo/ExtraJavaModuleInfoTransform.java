@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -440,10 +441,11 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         ClassReader classReader =
                 moduleInfo.preserveExisting && existingModuleInfo != null ? new ClassReader(existingModuleInfo) : null;
         ClassWriter classWriter = new ClassWriter(classReader, 0);
-        int openModule = moduleInfo.openModule ? Opcodes.ACC_OPEN : 0;
-        String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
 
         if (classReader == null) {
+            int openModule = moduleInfo.openModule ? Opcodes.ACC_OPEN : 0;
+            String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
+
             classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
             ModuleVisitor moduleVisitor =
                     classWriter.visitModule(moduleInfo.getModuleName(), openModule, moduleVersion);
@@ -452,23 +454,28 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             moduleVisitor.visitEnd();
             classWriter.visitEnd();
         } else {
+            Set<String> explicitlyHandledPackage = new HashSet<>();
+            explicitlyHandledPackage.addAll(moduleInfo.exports.keySet());
+            explicitlyHandledPackage.addAll(autoExportedPackages);
+            explicitlyHandledPackage.addAll(removedPackages);
+
             ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM9, classWriter) {
                 @Override
                 public ModuleVisitor visitModule(String name, int access, String version) {
-                    ModuleVisitor moduleVisitor = super.visitModule(name, access, version);
+                    ModuleVisitor moduleVisitor = cv.visitModule(name, access, version);
                     return new ModuleVisitor(Opcodes.ASM9, moduleVisitor) {
 
                         @Override
                         public void visitPackage(String packaze) {
                             if (!removedPackages.contains(pathToPackage(packaze))) {
-                                super.visitPackage(packaze);
+                                mv.visitPackage(packaze);
                             }
                         }
 
                         @Override
                         public void visitExport(String packaze, int access, String... modules) {
-                            if (!removedPackages.contains(pathToPackage(packaze))) {
-                                super.visitExport(packaze, access, modules);
+                            if (!explicitlyHandledPackage.contains(pathToPackage(packaze))) {
+                                mv.visitExport(packaze, access, modules);
                             }
                         }
 
@@ -477,7 +484,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                             String packaze = service.substring(0, service.lastIndexOf("/"));
                             // if package is removed, also remove 'use' directives based on the package
                             if (!removedPackages.contains(pathToPackage(packaze))) {
-                                super.visitUse(service);
+                                mv.visitUse(service);
                             }
                         }
 
@@ -489,14 +496,14 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                                             .contains(p))
                                     .toArray(String[]::new);
                             if (filteredProviders.length > 0) {
-                                super.visitProvide(service, filteredProviders);
+                                mv.visitProvide(service, filteredProviders);
                             }
                         }
 
                         @Override
                         public void visitEnd() {
-                            addModuleInfoEntries(moduleInfo, Collections.emptyMap(), autoExportedPackages, this);
-                            super.visitEnd();
+                            addModuleInfoEntries(moduleInfo, Collections.emptyMap(), autoExportedPackages, mv);
+                            mv.visitEnd();
                         }
                     };
                 }
