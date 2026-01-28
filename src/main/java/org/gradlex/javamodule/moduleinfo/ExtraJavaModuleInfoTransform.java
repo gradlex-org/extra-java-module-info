@@ -448,7 +448,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             ModuleVisitor moduleVisitor =
                     classWriter.visitModule(moduleInfo.getModuleName(), openModule, moduleVersion);
             moduleVisitor.visitRequire("java.base", 0, null);
-            addModuleInfoEntires(moduleInfo, providers, autoExportedPackages, moduleVisitor);
+            addModuleInfoEntries(moduleInfo, providers, autoExportedPackages, moduleVisitor);
             moduleVisitor.visitEnd();
             classWriter.visitEnd();
         } else {
@@ -495,7 +495,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
 
                         @Override
                         public void visitEnd() {
-                            addModuleInfoEntires(moduleInfo, Collections.emptyMap(), autoExportedPackages, this);
+                            addModuleInfoEntries(moduleInfo, Collections.emptyMap(), autoExportedPackages, this);
                             super.visitEnd();
                         }
                     };
@@ -524,7 +524,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         return path.replace('/', '.');
     }
 
-    private void addModuleInfoEntires(
+    private void addModuleInfoEntries(
             ModuleInfo moduleInfo,
             Map<String, List<String>> providers,
             Set<String> autoExportedPackages,
