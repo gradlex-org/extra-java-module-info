@@ -307,6 +307,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         @Override
         public List<String> transform(Collection<ResolvedArtifactResult> artifacts) {
             return artifacts.stream()
+                    .sorted(Comparator.comparing(ResolvedArtifactResult::getFile))
                     .map(a -> {
                         ComponentIdentifier componentIdentifier = a.getId().getComponentIdentifier();
                         if (componentIdentifier instanceof ModuleComponentIdentifier) {
@@ -332,6 +333,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         public List<RegularFile> transform(Collection<ResolvedArtifactResult> artifacts) {
             Directory projectDirectory = projectLayout.getProjectDirectory();
             return artifacts.stream()
+                    .sorted(Comparator.comparing(ResolvedArtifactResult::getFile))
                     .map(a -> projectDirectory.file(a.getFile().getAbsolutePath()))
                     .collect(Collectors.toList());
         }

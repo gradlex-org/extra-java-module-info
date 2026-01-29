@@ -253,6 +253,11 @@ val mainRuntimeClasspath = configurations.create("mainRuntimeClasspath") {
 // depend on all subprojects to create a dependency graph with "everything"
 dependencies { mainRuntimeClasspath(project(":app")) }
 
+// If the mergeJar feature is used, also use the "global classpath" to discover jars-to-merge (optional)
+configurations.getByName("javaModulesMergeJars") {
+  extendsFrom(configurations.getByName("mainRuntimeClasspath"))
+}
+
 // Use the global classpath for consisten resolution (optional)
 configurations.runtimeClasspath {
     shouldResolveConsistentlyWith(mainRuntimeClasspath)
