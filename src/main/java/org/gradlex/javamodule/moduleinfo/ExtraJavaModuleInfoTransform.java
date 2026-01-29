@@ -337,12 +337,17 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                         providers,
                         packages);
                 mergeJars(moduleInfo, outputStream, providers, packages);
+                if (moduleInfo.exportAllPackages) {
+                    moduleInfo.exportAllPackagesExceptions.forEach(it -> packages.remove(packageToPath(it)));
+                } else {
+                    packages.clear();
+                }
                 outputStream.putNextEntry(newReproducibleEntry("module-info.class"));
                 outputStream.write(addModuleInfo(
                         moduleInfo,
                         providers,
                         versionFromFilePath(originalJar.toPath()),
-                        moduleInfo.exportAllPackages ? packages : emptySet(),
+                        packages,
                         moduleInfo.getRemovedPackages(),
                         moduleInfo.ignoreServiceProviders,
                         existingModuleInfo));
