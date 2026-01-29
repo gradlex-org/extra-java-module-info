@@ -7,12 +7,13 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import org.gradle.api.model.ObjectFactory;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
  * Data class to hold the information that should be added as module-info.class to an existing Jar file.
  */
-@SuppressWarnings("unused")
+@NullMarked
 public class ModuleInfo extends ModuleSpec {
 
     @Nullable

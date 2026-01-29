@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.gradlex.javamodule.moduleinfo;
 
+import static java.util.Collections.emptySet;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.gaCoordinatesFromFilePathMatch;
 import static org.gradlex.javamodule.moduleinfo.FilePathToModuleCoordinates.versionFromFilePath;
 import static org.gradlex.javamodule.moduleinfo.ModuleNameUtil.automaticModulNameFromFileName;
@@ -17,10 +18,12 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +57,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.jspecify.annotations.NullMarked;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -65,6 +69,7 @@ import org.objectweb.asm.Opcodes;
  * The transformation fails the build if a Jar does not contain information and no extra information
  * was defined for it. This way we make sure that all Jars are turned into modules.
  */
+@NullMarked
 @CacheableTransform
 public abstract class ExtraJavaModuleInfoTransform implements TransformAction<ExtraJavaModuleInfoTransform.Parameter> {
 
@@ -337,7 +342,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                         moduleInfo,
                         providers,
                         versionFromFilePath(originalJar.toPath()),
-                        moduleInfo.exportAllPackages ? packages : Collections.emptySet(),
+                        moduleInfo.exportAllPackages ? packages : emptySet(),
+                        moduleInfo.getRemovedPackages(),
+                        moduleInfo.ignoreServiceProviders,
                         existingModuleInfo));
                 outputStream.closeEntry();
             }
@@ -390,7 +397,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                     String packagePath =
                             i > 0 ? mrJarMatcher.matches() ? mrJarMatcher.group(1) : entryName.substring(0, i) : "";
 
-                    if (!removedPackages.contains(packagePath.replace('/', '.'))) {
+                    if (!removedPackages.contains(pathToPackage(packagePath))) {
                         if (entryName.endsWith(".class") && !packagePath.isEmpty()) {
                             packages.add(packagePath);
                         }
@@ -428,31 +435,75 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             Map<String, List<String>> providers,
             @Nullable String version,
             Set<String> autoExportedPackages,
+            List<String> removedPackages,
+            Map<String, Set<String>> ignoreServiceProviders,
             @Nullable byte[] existingModuleInfo) {
         ClassReader classReader =
                 moduleInfo.preserveExisting && existingModuleInfo != null ? new ClassReader(existingModuleInfo) : null;
         ClassWriter classWriter = new ClassWriter(classReader, 0);
-        int openModule = moduleInfo.openModule ? Opcodes.ACC_OPEN : 0;
-        String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
 
         if (classReader == null) {
+            int openModule = moduleInfo.openModule ? Opcodes.ACC_OPEN : 0;
+            String moduleVersion = moduleInfo.getModuleVersion() == null ? version : moduleInfo.getModuleVersion();
+
             classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
             ModuleVisitor moduleVisitor =
                     classWriter.visitModule(moduleInfo.getModuleName(), openModule, moduleVersion);
             moduleVisitor.visitRequire("java.base", 0, null);
-            addModuleInfoEntires(moduleInfo, providers, autoExportedPackages, moduleVisitor);
+            addModuleInfoEntries(moduleInfo, providers, autoExportedPackages, moduleVisitor);
             moduleVisitor.visitEnd();
             classWriter.visitEnd();
         } else {
+            Set<String> explicitlyHandledPackage = new HashSet<>();
+            explicitlyHandledPackage.addAll(moduleInfo.exports.keySet());
+            explicitlyHandledPackage.addAll(autoExportedPackages);
+            explicitlyHandledPackage.addAll(removedPackages);
+
             ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM9, classWriter) {
                 @Override
                 public ModuleVisitor visitModule(String name, int access, String version) {
-                    ModuleVisitor moduleVisitor = super.visitModule(name, access, version);
+                    ModuleVisitor moduleVisitor = cv.visitModule(name, access, version);
                     return new ModuleVisitor(Opcodes.ASM9, moduleVisitor) {
+
+                        @Override
+                        public void visitPackage(String packaze) {
+                            if (!removedPackages.contains(pathToPackage(packaze))) {
+                                mv.visitPackage(packaze);
+                            }
+                        }
+
+                        @Override
+                        public void visitExport(String packaze, int access, String... modules) {
+                            if (!explicitlyHandledPackage.contains(pathToPackage(packaze))) {
+                                mv.visitExport(packaze, access, modules);
+                            }
+                        }
+
+                        @Override
+                        public void visitUse(String service) {
+                            String packaze = service.substring(0, service.lastIndexOf("/"));
+                            // if package is removed, also remove 'use' directives based on the package
+                            if (!removedPackages.contains(pathToPackage(packaze))) {
+                                mv.visitUse(service);
+                            }
+                        }
+
+                        @Override
+                        public void visitProvide(String service, String... providers) {
+                            String[] filteredProviders = Arrays.stream(providers)
+                                    .filter(p -> ignoreServiceProviders
+                                            .getOrDefault(service, emptySet())
+                                            .contains(p))
+                                    .toArray(String[]::new);
+                            if (filteredProviders.length > 0) {
+                                mv.visitProvide(service, filteredProviders);
+                            }
+                        }
+
                         @Override
                         public void visitEnd() {
-                            addModuleInfoEntires(moduleInfo, Collections.emptyMap(), autoExportedPackages, this);
-                            super.visitEnd();
+                            addModuleInfoEntries(moduleInfo, Collections.emptyMap(), autoExportedPackages, mv);
+                            mv.visitEnd();
                         }
                     };
                 }
@@ -462,7 +513,25 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         return classWriter.toByteArray();
     }
 
-    private void addModuleInfoEntires(
+    /**
+     * Convert a Java package name to a path
+     * @param packageName The package name
+     * @return The package name converted to a path
+     */
+    private static String packageToPath(String packageName) {
+        return packageName.replace('.', '/');
+    }
+
+    /**
+     * Convert a path to a Java package name
+     * @param path The path
+     * @return The path converted to a package name
+     */
+    private static String pathToPackage(String path) {
+        return path.replace('/', '.');
+    }
+
+    private void addModuleInfoEntries(
             ModuleInfo moduleInfo,
             Map<String, List<String>> providers,
             Set<String> autoExportedPackages,
@@ -473,13 +542,13 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         for (Map.Entry<String, Set<String>> entry : moduleInfo.exports.entrySet()) {
             String packageName = entry.getKey();
             Set<String> modules = entry.getValue();
-            moduleVisitor.visitExport(packageName.replace('.', '/'), 0, modules.toArray(new String[0]));
+            moduleVisitor.visitExport(packageToPath(packageName), 0, modules.toArray(new String[0]));
         }
 
         for (Map.Entry<String, Set<String>> entry : moduleInfo.opens.entrySet()) {
             String packageName = entry.getKey();
             Set<String> modules = entry.getValue();
-            moduleVisitor.visitOpen(packageName.replace('.', '/'), 0, modules.toArray(new String[0]));
+            moduleVisitor.visitOpen(packageToPath(packageName), 0, modules.toArray(new String[0]));
         }
 
         if (moduleInfo.requireAllDefinedDependencies) {
@@ -524,7 +593,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             moduleVisitor.visitRequire(requireName, Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_TRANSITIVE, null);
         }
         for (String usesName : moduleInfo.uses) {
-            moduleVisitor.visitUse(usesName.replace('.', '/'));
+            moduleVisitor.visitUse(packageToPath(usesName));
         }
         for (Map.Entry<String, List<String>> entry : providers.entrySet()) {
             String name = entry.getKey();
@@ -539,9 +608,9 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             }
             if (!implementations.isEmpty()) {
                 moduleVisitor.visitProvide(
-                        name.replace('.', '/'),
+                        packageToPath(name),
                         implementations.stream()
-                                .map(impl -> impl.replace('.', '/'))
+                                .map(ExtraJavaModuleInfoTransform::packageToPath)
                                 .toArray(String[]::new));
             }
         }

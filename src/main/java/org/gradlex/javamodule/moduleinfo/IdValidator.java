@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.gradlex.javamodule.moduleinfo;
 
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 class IdValidator {
     private static final String COORDINATES_PATTERN = "^[a-zA-Z0-9._-]+:[a-zA-Z0-9._-]+(\\|[a-zA-Z0-9._-]+)?$";
     private static final String FILE_NAME_PATTERN = "^[a-zA-Z0-9._-]+\\.(jar|zip)$";

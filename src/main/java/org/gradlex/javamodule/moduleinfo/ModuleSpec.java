@@ -9,12 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.provider.Provider;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
  * Details that real Modules and Automatic-Module-Names share.
  */
-@SuppressWarnings("unused")
+@NullMarked
 public abstract class ModuleSpec implements Serializable {
 
     private final String identifier;

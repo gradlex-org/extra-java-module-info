@@ -1,5 +1,11 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.14
+* [Fixed] [#179](https://github.com/gradlex-org/extra-java-module-info/issues/179) - Combine 'preserveExisting' and 'exports'
+* [Fixed] [#219](https://github.com/gradlex-org/extra-java-module-info/issues/219) - Combine 'preserveExisting' and 'removePackage'
+* [Fixed] [#223](https://github.com/gradlex-org/extra-java-module-info/issues/223) - Combine 'preserveExisting' and 'ignoreServiceProvider'
+* [Fixed] [#227](https://github.com/gradlex-org/extra-java-module-info/issues/227) - Stable order for the mergeJar path input
+
 ## Version 1.13.1
 * [Fixed] [#197](https://github.com/gradlex-org/extra-java-module-info/issues/197) - Slightly adjust Gradle API usage for better 9.0.0 compatibility
 

@@ -42,10 +42,12 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 import org.gradlex.javamodule.moduleinfo.tasks.ModuleDescriptorRecommendation;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Entry point of the plugin.
  */
+@NullMarked
 public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
 
     private static final GradleVersion MINIMUM_SUPPORTED_VERSION = GradleVersion.version("6.8");
@@ -305,6 +307,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         @Override
         public List<String> transform(Collection<ResolvedArtifactResult> artifacts) {
             return artifacts.stream()
+                    .sorted(Comparator.comparing(ResolvedArtifactResult::getFile))
                     .map(a -> {
                         ComponentIdentifier componentIdentifier = a.getId().getComponentIdentifier();
                         if (componentIdentifier instanceof ModuleComponentIdentifier) {
@@ -330,6 +333,7 @@ public abstract class ExtraJavaModuleInfoPlugin implements Plugin<Project> {
         public List<RegularFile> transform(Collection<ResolvedArtifactResult> artifacts) {
             Directory projectDirectory = projectLayout.getProjectDirectory();
             return artifacts.stream()
+                    .sorted(Comparator.comparing(ResolvedArtifactResult::getFile))
                     .map(a -> projectDirectory.file(a.getFile().getAbsolutePath()))
                     .collect(Collectors.toList());
         }

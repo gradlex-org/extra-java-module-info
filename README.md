@@ -242,7 +242,7 @@ configurations.create("allDependencies") {
     attributes { attribute(consistentResolutionAttribute, "global") }
 }
 
-// Define a "global claspath" (as Resolvable Configuration)
+// Define a "global classpath" (as Resolvable Configuration)
 val mainRuntimeClasspath = configurations.create("mainRuntimeClasspath") {
     isCanBeConsumed = false
     isCanBeResolved = true
@@ -250,8 +250,13 @@ val mainRuntimeClasspath = configurations.create("mainRuntimeClasspath") {
 }
 
 // Add a dependency to the 'main' project(s) (:app ins this example) that transitively 
-// depend on all subprojects to create a depenedency graph wih "everything"
+// depend on all subprojects to create a dependency graph with "everything"
 dependencies { mainRuntimeClasspath(project(":app")) }
+
+// If the mergeJar feature is used, also use the "global classpath" to discover jars-to-merge (optional)
+configurations.getByName("javaModulesMergeJars") {
+  extendsFrom(configurations.getByName("mainRuntimeClasspath"))
+}
 
 // Use the global classpath for consisten resolution (optional)
 configurations.runtimeClasspath {

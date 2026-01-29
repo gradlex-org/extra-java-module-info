@@ -121,7 +121,7 @@
 
          <!-- CODE FORMATTING - Palantir Java formatter with transitive dependencies -->
          <!-- ✅ Signed by Palantir -->
-         <trusted-key id="1D9866E375A1435ACE0BE0ADE3461D2D16725F94" group="com.palantir.javaformat"/>
+         <trusted-key id="BF3A87D91B70BE32CAD64A2645D0CAA6D26B0F7D" group="com.palantir.javaformat"/>
          <!-- ✅ Signed by Tatu Saloranta - Jackson -->
          <trusted-key id="28118C070CB22A0175A2E8D43D12CA2AC19F3181">
             <trusting group="com.fasterxml.jackson.core"/>

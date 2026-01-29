@@ -29,8 +29,10 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+@NullMarked
 public class PublishedMetadata implements Serializable {
     private static final Attribute<String> CATEGORY_ATTRIBUTE_UNTYPED =
             Attribute.of(CATEGORY_ATTRIBUTE.getName(), String.class);
