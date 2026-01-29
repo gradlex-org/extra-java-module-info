@@ -52,7 +52,7 @@ Add this to the build file of your convention plugin's build
 
 ```kotlin
 dependencies {
-    implementation("org.gradlex:extra-java-module-info:1.13.1")
+    implementation("org.gradlex:extra-java-module-info:1.14")
 }
 ```
 

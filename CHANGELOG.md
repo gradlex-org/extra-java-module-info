@@ -2,6 +2,7 @@
 
 ## Version 1.14
 * [New] [#207](https://github.com/gradlex-org/extra-java-module-info/issues/207) - Add 'exportAllPackagesExcept("org.exception", ...)' (Thanks [Tim Hurman](https://github.com/timhamoni) for contributing)
+* [New] [#212](https://github.com/gradlex-org/extra-java-module-info/issues/212) - Add 'provides("service", "service.impl", ...)' (Thanks [Sandy Dunlop](https://github.com/sandydunlop) for contributing)
 * [Fixed] [#179](https://github.com/gradlex-org/extra-java-module-info/issues/179) - Combine 'preserveExisting' and 'exports' (Thanks to [JabRef](https://github.com/JabRef/jabref) for providing a use case)
 * [Fixed] [#219](https://github.com/gradlex-org/extra-java-module-info/issues/219) - Combine 'preserveExisting' and 'removePackage' (Thanks to [stewue](https://github.com/stewue) for providing a use case)
 * [Fixed] [#223](https://github.com/gradlex-org/extra-java-module-info/issues/223) - Combine 'preserveExisting' and 'ignoreServiceProvider'
