@@ -163,12 +163,15 @@ The plugin also allows you to ignore some unwanted services from being automatic
 ```kotlin
 extraJavaModuleInfo {               
     module("groovy-all-2.4.15.jar", "groovy.all", "2.4.15") {
-       requiresTransitive("java.scripting")
-       requires("java.logging")
-       requires("java.desktop")
-       ignoreServiceProvider("org.codehaus.groovy.runtime.ExtensionModule")
-       ignoreServiceProvider("org.codehaus.groovy.plugins.Runners")
-       ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+        requiresTransitive("java.scripting")
+        requires("java.logging")
+        requires("java.desktop")
+        ignoreServiceProvider("org.codehaus.groovy.runtime.ExtensionModule")
+        ignoreServiceProvider("org.codehaus.groovy.plugins.Runners")
+        ignoreServiceProvider("org.codehaus.groovy.source.Extensions")
+        
+        // or add a service provider registration if it is missing 
+        // provides("org.hibernate.dialect.Dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
     }
 }
 ```
