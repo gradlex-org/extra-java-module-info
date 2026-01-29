@@ -458,6 +458,7 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
             explicitlyHandledPackage.addAll(moduleInfo.exports.keySet());
             explicitlyHandledPackage.addAll(autoExportedPackages);
             explicitlyHandledPackage.addAll(removedPackages);
+            Map<String, Set<String>> additionalProviders = moduleInfo.getProviders();
 
             ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM9, classWriter) {
                 @Override
@@ -610,6 +611,15 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
                 moduleVisitor.visitProvide(
                         packageToPath(name),
                         implementations.stream()
+                                .map(ExtraJavaModuleInfoTransform::packageToPath)
+                                .toArray(String[]::new));
+            }
+        }
+        for (Map.Entry<String, Set<String>> provider : moduleInfo.getProviders().entrySet()) {
+            if (!provider.getValue().isEmpty()) {
+                moduleVisitor.visitProvide(
+                        packageToPath(provider.getKey()),
+                        provider.getValue().stream()
                                 .map(ExtraJavaModuleInfoTransform::packageToPath)
                                 .toArray(String[]::new));
             }
