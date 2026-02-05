@@ -7,6 +7,7 @@ import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.model.ObjectFactory;
@@ -44,6 +45,8 @@ public abstract class ExtraJavaModuleInfoPluginExtension {
     public abstract Property<Boolean> getDeriveAutomaticModuleNamesFromFileNames();
 
     public abstract Property<String> getVersionsProvidingConfiguration();
+
+    public abstract Property<Dependency> getPlatformDependency();
 
     /**
      * Add full module information for a given Jar file.
