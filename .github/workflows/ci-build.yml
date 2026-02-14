@@ -23,5 +23,5 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
       - name: Set up TestLens
-        uses: testlens-app/setup-testlens@v1.6.1
+        uses: testlens-app/setup-testlens@v1.7.0
       - run: "./gradlew build"
