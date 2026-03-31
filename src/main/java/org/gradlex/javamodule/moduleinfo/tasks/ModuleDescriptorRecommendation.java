@@ -38,10 +38,14 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
+@DisableCachingByDefault
 public abstract class ModuleDescriptorRecommendation extends DefaultTask {
 
     private static final class Artifact {
@@ -135,12 +139,14 @@ public abstract class ModuleDescriptorRecommendation extends DefaultTask {
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ListProperty<File> getRuntimeArtifacts();
 
     @Input
     public abstract ListProperty<ResolvedComponentResult> getRuntimeResolvedComponentResults();
 
     @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract ListProperty<File> getCompileArtifacts();
 
     @Input
