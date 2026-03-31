@@ -27,7 +27,11 @@
 
          <!-- BUILD: PLUGIN PUBLISHING - Gradle plugin publishing plugin with transitive dependency -->
          <!-- ✅ Signed by Gradle Inc. -->
-         <trusted-key id="1BD97A6A154E7810EE0BC832E2F38302C8075E3D" group="com.gradle.publish" name="plugin-publish-plugin"/>
+         <trusted-key id="1BD97A6A154E7810EE0BC832E2F38302C8075E3D">
+            <trusting group="com.gradle.publish"/>
+            <trusting group="org.gradle.exemplar"/>
+            <trusting group="org.gradle.plugin"/>
+         </trusted-key>
          <!-- ✅ Signed by ASF - Robert Scholte -->
          <trusted-key id="B02137D875D833D9B23392ECAE5A7FB608A0221C" group="org.apache.maven" name="maven-model"/>
 
@@ -61,8 +65,6 @@
          </trusted-key>
          <!-- ✅ Signed by Hamcrest - Tom Denley -->
          <trusted-key id="4DB1A49729B053CAF015CEE9A6ADFC93EF34893E" group="org.hamcrest" name="hamcrest-core"/>
-         <!-- ✅ Signed by Gradle Inc. -->
-         <trusted-key id="1BD97A6A154E7810EE0BC832E2F38302C8075E3D" group="org.gradle.exemplar"/>
          <!-- ✅ Signed by ASF - Gary David Gregory -->
          <trusted-key id="2DB4F1EF0FA761ECC4EA935C86FDC7E2A11262CB">
             <trusting group="org.apache.commons"/>
