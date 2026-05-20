@@ -11,8 +11,9 @@
          <trust file=".*-sources[.]jar" regex="true"/>
          <trust file="^gradle-\d+\.\d+(?:\.\d+)?(?:-(?:rc|milestone)-\d+)?-src\.zip$" regex="true"/>
          <!-- explicitly trust unsigned artifacts -->
-         <trust file="asciidoctor-gradle-base-4.0.5.jar"/>
-         <trust file="asciidoctor-gradle-jvm-4.0.5.jar"/>
+         <trust file="asciidoctor5-core-plugin-5.0.0-alpha.1.jar"/>
+         <trust file="asciidoctor5-jvm-core-plugin-5.0.0-alpha.1.jar"/>
+         <trust file="jrubygradle-resolver-2.1.2.jar"/>
       </trusted-artifacts>
       <trusted-keys>
          <!-- PRODUCTION CODE: ASM -->
@@ -81,13 +82,12 @@
 
          <!-- CODE DOCUMENTATION - Asciidoctor Gradle Plugin with transitive dependencies -->
          <!-- ✅ Signed by Schalk W. Cronjé - ysb33r -->
-         <trusted-key id="EA022560A81E5BD48DB3D18B54AC8E2D98CFEAC6" group="org.ysb33r.gradle"/>
+         <trusted-key id="93135AA35CDF701AB4E1513AB163E784347A4C24">
+            <trusting group="org.ysb33r.gradle"/>
+            <trusting group="org.ysb33r.gradle.jruby"/>
+         </trusted-key>
          <!-- ✅ Signed by Robert Panzer - AsciidoctorJ -->
-         <trusted-key id="AD296CA014321485EB6780FF8B8E0CB0F6A7657E" group="org.asciidoctor"/>
-         <!-- ✅ Signed by Lasse Collin - Tukaani -->
-         <trusted-key id="3690C240CE51B4670D30AD1C38EE757D69184620" group="org.tukaani" name="xz"/>
-         <!-- ✅ Signed by Cedric Beust - JCommander -->
-         <trusted-key id="C70B844F002F21F6D2B9C87522E44AC0622B91C3" group="com.beust" name="jcommander"/>
+         <trusted-key id="051927E24FA091722E05A3B23C03136EA34A60F7" group="org.asciidoctor"/>
          <!-- ✅ Signed by Thomas E. Enebo - JRuby Team -->
          <trusted-key id="416952B945B78A34C6C7678562EBFC78FE4156D1" group="org.jruby" name="jruby-complete"/>
 
@@ -104,6 +104,8 @@
             <trusting group="com.squareup.okhttp3"/>
             <trusting group="com.squareup.okio"/>
          </trusted-key>
+         <!-- ✅ Signed by Lasse Collin - Tukaani -->
+         <trusted-key id="3690C240CE51B4670D30AD1C38EE757D69184620" group="org.tukaani" name="xz"/>
          <!-- ✅ Signed by Matthias Sohn - JGit -->
          <trusted-key id="7C669810892CBD3148FA92995B05CCDE140C2876" group="org.eclipse.jgit" name="org.eclipse.jgit"/>
          <!-- ✅ Signed by Niall Gallagher - concurrent-trees -->
