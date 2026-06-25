@@ -1,4 +1,4 @@
-version = "1.14"
+version = "1.14.1"
 
 dependencies { implementation("org.ow2.asm:asm:9.10.1") }
 
