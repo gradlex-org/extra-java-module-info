@@ -46,7 +46,8 @@ class FilePathToModuleCoordinatesTest extends Specification {
         def path = path('/Users/jendrik/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.6/399b42b491c5dfa6595ae6fd79dcba61b93538a7/lwjgl-glfw-3.3.6-natives-macos-arm64.jar')
 
         expect:
-        !gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", null)
+        !gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", "")
+        gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", null) // matches all classifiers
         gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", "natives-macos-arm64")
     }
 
@@ -95,7 +96,8 @@ class FilePathToModuleCoordinatesTest extends Specification {
         def path = path('/Users/someone/.m2/repository/org/lwjgl/lwjgl-glfw/3.3.6/lwjgl-glfw-3.3.6-natives-macos-arm64.jar')
 
         expect:
-        !gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", null)
+        !gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", "")
+        gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", null) // matches all classifiers
         gaCoordinatesFromFilePathMatch(path, "org.lwjgl:lwjgl-glfw", "natives-macos-arm64")
     }
 

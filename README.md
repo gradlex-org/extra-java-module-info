@@ -104,8 +104,10 @@ extraJavaModuleInfo {
     
     // when the Jar has a classifier - 'linux-x86_64' in this example:
     module("io.netty:netty-transport-native-epoll|linux-x86_64",
-           "io.netty.transport.epoll.linux.x86_64") 
-    // when you somehow cannot address a Jar via coordinates, you may use the Jar name:
+           "io.netty.transport.epoll.linux.x86_64")
+    // when there are multiple Jars and you only want to match the one without classifier
+    module("org.lwjgl:lwjgl-glfw|", "org.lwjgl.glfw")
+    // when you cannot address a Jar via coordinates, you may use the Jar name:
     module("commons-logging-1.2.jar", "org.apache.commons.loggin")
 }
 ```

@@ -45,7 +45,7 @@ final class FilePathToModuleCoordinates {
 
         String classifierFromGradleCache = isInGradleCache(path);
         if (classifierFromGradleCache != null) {
-            if (classifierFromGradleCache.isEmpty()) {
+            if (classifier == null) {
                 return coordinatesFromPath.equals(ga);
             }
             return coordinatesFromPath.equals(ga) && classifierFromGradleCache.equals(classifier);
@@ -53,7 +53,7 @@ final class FilePathToModuleCoordinates {
 
         String classifierFromM2Cache = isInM2Cache(path);
         if (classifierFromM2Cache != null) {
-            if (classifierFromM2Cache.isEmpty()) {
+            if (classifier == null) {
                 return coordinatesFromPath.endsWith(ga);
             }
             return coordinatesFromPath.endsWith(ga) && classifierFromM2Cache.equals(classifier);
