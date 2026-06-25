@@ -63,4 +63,41 @@ class ClassifiedJarsFunctionalTest extends Specification {
         build().task(':compileJava').outcome == TaskOutcome.SUCCESS
     }
 
+    def "does not accidentally patch classified Jar"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            public class Main {
+                public static void main(String[] args) {
+                    org.lwjgl.glfw.GLFW.glfwInit();
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires org.lwjgl.glfw;
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("org.lwjgl:lwjgl-glfw:3.2.2")
+                implementation("org.lwjgl:lwjgl-glfw:3.2.2:natives-macos")
+                implementation("org.lwjgl:lwjgl:3.2.2:natives-macos")
+            }
+            extraJavaModuleInfo {
+                module("org.lwjgl:lwjgl", "org.lwjgl") {
+                    preserveExisting()
+                    requiresStatic("org.lwjgl.natives")
+                }
+                module("org.lwjgl:lwjgl-glfw", "org.lwjgl.glfw") {
+                    preserveExisting()
+                    requiresStatic("org.lwjgl.glfw.natives")
+                }
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
 }

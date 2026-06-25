@@ -39,7 +39,6 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import javax.annotation.Nullable;
@@ -224,22 +223,11 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         Map<String, ModuleSpec> moduleSpecs = getParameters().getModuleSpecs().get();
 
         Optional<ModuleSpec> moduleSpec = moduleSpecs.values().stream()
-                .filter(spec -> gaCoordinatesFromFilePathMatch(originalJar.toPath(), spec.getIdentifier()))
+                .filter(spec -> gaCoordinatesFromFilePathMatch(
+                        originalJar.toPath(), spec.getIdentifier(), spec.getClassifier()))
                 .findFirst();
         if (moduleSpec.isPresent()) {
-            String ga = moduleSpec.get().getIdentifier();
-            if (moduleSpecs.containsKey(ga)) {
-                return moduleSpecs.get(ga);
-            } else {
-                // maybe with classifier
-                Stream<String> idsWithClassifier = moduleSpecs.keySet().stream().filter(id -> id.startsWith(ga + "|"));
-                for (String idWithClassifier : idsWithClassifier.collect(Collectors.toList())) {
-                    if (nameHasClassifier(originalJar, moduleSpecs.get(idWithClassifier))) {
-                        return moduleSpecs.get(idWithClassifier);
-                    }
-                }
-            }
-            return null;
+            return moduleSpec.get();
         }
 
         String originalJarName = originalJar.getName();
@@ -747,10 +735,6 @@ public abstract class ExtraJavaModuleInfoTransform implements TransformAction<Ex
         } catch (ReflectiveOperationException ignored) {
         }
         return null;
-    }
-
-    private boolean nameHasClassifier(File jar, ModuleSpec spec) {
-        return jar.getName().endsWith("-" + spec.getClassifier() + ".jar");
     }
 
     private static boolean isModuleInfoClass(String jarEntryName) {

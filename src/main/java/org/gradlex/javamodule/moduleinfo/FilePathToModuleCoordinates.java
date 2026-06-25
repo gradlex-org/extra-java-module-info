@@ -4,8 +4,8 @@ package org.gradlex.javamodule.moduleinfo;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Attempts to parse 'group', 'name', 'version' coordinates from a paths like:
@@ -17,31 +17,57 @@ final class FilePathToModuleCoordinates {
 
     @Nullable
     static String versionFromFilePath(Path path) {
-        if (isInGradleCache(path)) {
+        if (null != isInGradleCache(path)) {
             return getVersionFromGradleCachePath(path);
         }
-        if (isInM2Cache(path)) {
+        if (null != isInM2Cache(path)) {
             return getVersionFromM2CachePath(path);
         }
         return null;
     }
 
-    static boolean gaCoordinatesFromFilePathMatch(Path path, String ga) {
+    static boolean gaCoordinatesFromFilePathMatch(Path path, String gaAndClassifier) {
+        if (gaAndClassifier.contains("|")) {
+            String[] split = gaAndClassifier.split("\\|");
+            return gaCoordinatesFromFilePathMatch(path, split[0], split[1]);
+        }
+        return gaCoordinatesFromFilePathMatch(path, gaAndClassifier, null);
+    }
+
+    static boolean gaCoordinatesFromFilePathMatch(Path path, String ga, @Nullable String classifier) {
         String name = nameCoordinateFromFilePath(path);
         String group = groupCoordinateFromFilePath(path);
         if (name == null || group == null) {
             return false;
         }
-        return (isInGradleCache(path) && ga.equals(group + ":" + name))
-                || (isInM2Cache(path) && (group + ":" + name).endsWith("." + ga));
+
+        String coordinatesFromPath = group + ":" + name;
+
+        String classifierFromGradleCache = isInGradleCache(path);
+        if (classifierFromGradleCache != null) {
+            if (classifierFromGradleCache.isEmpty()) {
+                return coordinatesFromPath.equals(ga);
+            }
+            return coordinatesFromPath.equals(ga) && classifierFromGradleCache.equals(classifier);
+        }
+
+        String classifierFromM2Cache = isInM2Cache(path);
+        if (classifierFromM2Cache != null) {
+            if (classifierFromM2Cache.isEmpty()) {
+                return coordinatesFromPath.endsWith(ga);
+            }
+            return coordinatesFromPath.endsWith(ga) && classifierFromM2Cache.equals(classifier);
+        }
+
+        return false;
     }
 
     @Nullable
     private static String groupCoordinateFromFilePath(Path path) {
-        if (isInGradleCache(path)) {
+        if (null != isInGradleCache(path)) {
             return path.getName(path.getNameCount() - 5).toString();
         }
-        if (isInM2Cache(path)) {
+        if (null != isInM2Cache(path)) {
             return StreamSupport.stream(path.subpath(0, path.getNameCount() - 3).spliterator(), false)
                     .map(Path::toString)
                     .collect(Collectors.joining("."));
@@ -49,19 +75,21 @@ final class FilePathToModuleCoordinates {
         return null;
     }
 
-    static boolean isInGradleCache(Path path) {
+    @Nullable
+    static String isInGradleCache(Path path) {
         String name = nameCoordinateFromFilePath(path);
         if (name == null) {
-            return false;
+            return null;
         }
         String version = getVersionFromGradleCachePath(path);
         return matchesPath(path, name, version);
     }
 
-    static boolean isInM2Cache(Path path) {
+    @Nullable
+    static String isInM2Cache(Path path) {
         String name = nameCoordinateFromFilePath(path);
         if (name == null) {
-            return false;
+            return null;
         }
         String version = getVersionFromM2CachePath(path);
         return matchesPath(path, name, version);
@@ -75,12 +103,12 @@ final class FilePathToModuleCoordinates {
 
         String nameFromGradleCachePath = path.getName(path.getNameCount() - 4).toString();
         String versionFromGradleCachePath = getVersionFromGradleCachePath(path);
-        if (matchesPath(path, nameFromGradleCachePath, versionFromGradleCachePath)) {
+        if (null != matchesPath(path, nameFromGradleCachePath, versionFromGradleCachePath)) {
             return nameFromGradleCachePath;
         }
         String nameFromM2CachePath = path.getName(path.getNameCount() - 3).toString();
         String versionFromM2CachePath = getVersionFromM2CachePath(path);
-        if (matchesPath(path, nameFromM2CachePath, versionFromM2CachePath)) {
+        if (null != matchesPath(path, nameFromM2CachePath, versionFromM2CachePath)) {
             return nameFromM2CachePath;
         }
 
@@ -95,8 +123,34 @@ final class FilePathToModuleCoordinates {
         return path.getName(path.getNameCount() - 2).toString();
     }
 
-    private static boolean matchesPath(Path path, String name, String version) {
+    /**
+     * @return the classifier or 'null' if there is no match.
+     */
+    @Nullable
+    private static String matchesPath(Path path, String potentialName, String potentialVersion) {
         String jarFileName = path.getFileName().toString();
-        return jarFileName.startsWith(name + "-") && !jarFileName.startsWith(version);
+        boolean fuzzyMatchVersion = potentialVersion.contains("-");
+        String potentialVersionNormalized =
+                fuzzyMatchVersion ? potentialVersion.substring(0, potentialVersion.indexOf("-")) : potentialVersion;
+
+        if (jarFileName.startsWith(potentialVersionNormalized)) {
+            return null;
+        }
+
+        String baseName = potentialName + "-" + potentialVersionNormalized;
+        if (jarFileName.startsWith(baseName)) {
+            if (fuzzyMatchVersion) {
+                // Potential classifiers are ignored as we do not know what is version and what is classifier.
+                // For example in '33.2.1-android' is '-android' part of the version or a classifier?
+                return "";
+            } else {
+                if (jarFileName.startsWith(baseName + ".")) {
+                    return "";
+                }
+                return jarFileName.substring(baseName.length() + 1, jarFileName.length() - 4);
+            }
+        }
+
+        return null;
     }
 }

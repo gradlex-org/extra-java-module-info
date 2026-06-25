@@ -1,5 +1,9 @@
 # Extra Java Module Info Gradle Plugin - Changelog
 
+## Version 1.14.1
+* [Fixed] [#246](https://github.com/gradlex-org/extra-java-module-info/issues/246) - More correct classifier handling (Thanks to [Geolykt](https://github.com/Geolykt) for reporting)
+  * ⚠️ For matching a Jar with classifier, the _identifier_ now needs to be included - e.g. `org.dojotoolkit:dojo|distribution` instead of `org.dojotoolkit:dojo`
+
 ## Version 1.14
 * [New] [#207](https://github.com/gradlex-org/extra-java-module-info/issues/207) - Add 'exportAllPackagesExcept("org.exception", ...)' (Thanks [Tim Hurman](https://github.com/timhamoni) for contributing)
 * [New] [#212](https://github.com/gradlex-org/extra-java-module-info/issues/212) - Add 'provides("service", "service.impl", ...)' (Thanks [Sandy Dunlop](https://github.com/sandydunlop) for contributing)
