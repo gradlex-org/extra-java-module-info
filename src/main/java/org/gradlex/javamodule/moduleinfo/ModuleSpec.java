@@ -33,8 +33,9 @@ public abstract class ModuleSpec implements Serializable {
         validateIdentifier(identifier);
         validateModuleName(moduleName);
         if (identifier.contains("|")) {
-            this.identifier = identifier.split("\\|")[0];
-            this.classifier = identifier.split("\\|")[1];
+            String[] split = identifier.split("\\|");
+            this.identifier = split[0];
+            this.classifier = split.length > 1 ? split[1] : "";
         } else {
             this.identifier = identifier;
             this.classifier = null;

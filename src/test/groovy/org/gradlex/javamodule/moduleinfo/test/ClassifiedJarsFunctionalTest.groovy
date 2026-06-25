@@ -63,6 +63,39 @@ class ClassifiedJarsFunctionalTest extends Specification {
         build().task(':compileJava').outcome == TaskOutcome.SUCCESS
     }
 
+    def "patches classified Jar if no classifier is specified"() {
+        given:
+        file("src/main/java/org/gradle/sample/app/Main.java") << """
+            package org.gradle.sample.app;
+            public class Main {
+                public static void main(String[] args) {
+                    com.sun.javafx.scene.control.ContextMenuContent menu;
+                }
+            }
+        """
+        file("src/main/java/module-info.java") << """
+            module org.gradle.sample.app {               
+                requires javafx.controls;
+            }
+        """
+        buildFile << """
+            dependencies {
+                implementation("org.openjfx:javafx-controls:11:linux")
+                implementation("org.openjfx:javafx-graphics:11:linux")
+                implementation("org.openjfx:javafx-base:11:linux")
+            }
+            extraJavaModuleInfo {
+                module("org.openjfx:javafx-controls", "javafx.controls") {
+                    preserveExisting()
+                    exports("com.sun.javafx.scene.control")
+                }
+            }
+        """
+
+        expect:
+        build().task(':compileJava').outcome == TaskOutcome.SUCCESS
+    }
+
     def "does not accidentally patch classified Jar"() {
         given:
         file("src/main/java/org/gradle/sample/app/Main.java") << """
@@ -85,11 +118,11 @@ class ClassifiedJarsFunctionalTest extends Specification {
                 implementation("org.lwjgl:lwjgl:3.2.2:natives-macos")
             }
             extraJavaModuleInfo {
-                module("org.lwjgl:lwjgl", "org.lwjgl") {
+                module("org.lwjgl:lwjgl|", "org.lwjgl") {
                     preserveExisting()
                     requiresStatic("org.lwjgl.natives")
                 }
-                module("org.lwjgl:lwjgl-glfw", "org.lwjgl.glfw") {
+                module("org.lwjgl:lwjgl-glfw|", "org.lwjgl.glfw") {
                     preserveExisting()
                     requiresStatic("org.lwjgl.glfw.natives")
                 }

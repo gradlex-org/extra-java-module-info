@@ -74,7 +74,7 @@ class EdgeCasesFunctionalTest extends Specification {
                 failOnMissingModuleInfo.set(false)
                 automaticModule("org.apache.qpid:qpid-broker-core", "org.apache.qpid.broker") {
                     mergeJar("org.apache.qpid:qpid-broker-plugins-management-http")
-                    mergeJar("org.dojotoolkit:dojo|distribution") // This is a Zip, selected by 'distribution' classifier in dependencies of 'qpid-broker-plugins-management-http'  
+                    mergeJar("org.dojotoolkit:dojo") // This is a Zip, selected by 'distribution' classifier in dependencies of 'qpid-broker-plugins-management-http'  
                     mergeJar("org.webjars.bower:dgrid")
                     mergeJar("org.webjars.bower:dstore")
                 }
