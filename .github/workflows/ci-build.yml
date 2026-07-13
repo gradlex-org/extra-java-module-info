@@ -10,15 +10,15 @@ jobs:
   gradle-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7.0.0
+      - uses: actions/setup-java@v5.5.0
         with:
           distribution: temurin
           # Java 11 for Gradle 6.x support
           java-version: |
             11
             17
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
         with:
           build-scan-terms-of-use-url: https://gradle.com/help/legal-terms-of-use
           build-scan-terms-of-use-agree: yes
