@@ -16,7 +16,7 @@ jobs:
         with:
           build-scan-terms-of-use-url: https://gradle.com/help/legal-terms-of-use
           build-scan-terms-of-use-agree: yes
-      - uses: testlens-app/setup-testlens@3f82d2dc6cd5c03f02ce5f7885a21195d85f8d14 # v1.9.3
+      - uses: testlens-app/setup-testlens@d29a2be31512b3aeda3adcef09fbe0d55af90c51 # v1.9.4
       - run: "./gradlew :publishPlugin --no-configuration-cache"
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
