@@ -11,9 +11,9 @@ publishingConventions {
     }
     gitHub("https://github.com/gradlex-org/extra-java-module-info")
     developer {
-        id.set("jjohannes")
-        name.set("Jendrik Johannes")
-        email.set("jendrik@gradlex.org")
+        id = "jjohannes"
+        name = "Jendrik Johannes"
+        email = "jendrik@gradlex.org"
     }
 }
 
