@@ -33,6 +33,7 @@
             <trusting group="org.gradle.exemplar"/>
             <trusting group="org.gradle.plugin"/>
          </trusted-key>
+         <trusted-key id="F3FF33E96F18AA62DD580F9651FBF517CE6D6B80" group="org.gradle.plugin" name="compatibility-plugin"/>
          <!-- ✅ Signed by ASF - Robert Scholte -->
          <trusted-key id="B02137D875D833D9B23392ECAE5A7FB608A0221C" group="org.apache.maven" name="maven-model"/>
 
