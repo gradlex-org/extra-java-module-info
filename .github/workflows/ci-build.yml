@@ -20,7 +20,6 @@ jobs:
             17
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
-          build-scan-terms-of-use-url: https://gradle.com/help/legal-terms-of-use
-          build-scan-terms-of-use-agree: yes
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
       - uses: testlens-app/setup-testlens@d29a2be31512b3aeda3adcef09fbe0d55af90c51 # v1.9.4
       - run: "./gradlew build"
